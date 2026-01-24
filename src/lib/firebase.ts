@@ -2,15 +2,15 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// TODO: Replace with your Firebase project configuration
-// Estas variables vendrán de tu configuración de Firebase en Vercel
+// Configuración Real de Firebase (Extraída de tu captura)
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID
+    apiKey: "AIzaSyCVeeO7sSa03s4IQJpLEVhvvd_EBaSF9BU",
+    authDomain: "all-u-moves.firebaseapp.com",
+    projectId: "all-u-moves",
+    storageBucket: "all-u-moves.firebasestorage.app",
+    messagingSenderId: "831589732343",
+    appId: "1:831589732343:web:1685eb95479e95eb8de8f2",
+    measurementId: "G-JCB2CJBMXN"
 };
 
 // Initialize Firebase
