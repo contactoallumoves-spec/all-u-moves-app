@@ -12,6 +12,7 @@ import { Button } from '../ui/Button';
 
 export function Sidebar() {
     const location = useLocation();
+    const navigate = useNavigate();
 
     const links = [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -28,7 +29,7 @@ export function Sidebar() {
             </div>
 
             <div className="px-6 mb-6">
-                <Button className="w-full justify-start gap-2 shadow-brand-200/50" size="lg">
+                <Button className="w-full justify-start gap-2 shadow-brand-200/50" size="lg" onClick={() => navigate('/eval/new')}>
                     <PlusCircle size={20} />
                     Nueva Evaluación
                 </Button>

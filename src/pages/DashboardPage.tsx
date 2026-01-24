@@ -2,7 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { Users, Calendar, Activity, ArrowRight } from 'lucide-react';
 
+import { useNavigate } from 'react-router-dom';
+
 export default function DashboardPage() {
+    const navigate = useNavigate();
     return (
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -12,7 +15,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex gap-3">
                     <Button variant="outline">Ver Agenda</Button>
-                    <Button>Iniciar Consulta</Button>
+                    <Button onClick={() => navigate('/eval/new')}>Iniciar Consulta</Button>
                 </div>
             </div>
 
