@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 33% 97%; /* #f9f8f6 brand-50 */
+    --foreground: 222 47% 11%; /* #0f172a ink-900 */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+ 
+    --primary: 15 29% 39%; /* #946353 brand-600 */
+    --primary-foreground: 40 33% 97%;
+ 
+    --secondary: 40 20% 92%; /* #f2efe9 brand-100 */
+    --secondary-foreground: 15 29% 39%;
+ 
+    --muted: 40 20% 92%;
+    --muted-foreground: 25 10% 55%; /* #bea490 brand-400 */
+ 
+    --accent: 40 20% 92%;
+    --accent-foreground: 15 29% 39%;
+ 
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 33 26% 85%; /* #e6ded4 brand-200 */
+    --input: 33 26% 85%;
+    --ring: 15 29% 39%;
+ 
+    --radius: 0.75rem;
+  }
+ 
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+ 
+    /* Dark mode adjustments would go here, 
+       but for now we focus on the light/premium theme */
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
