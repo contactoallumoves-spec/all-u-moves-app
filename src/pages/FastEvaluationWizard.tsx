@@ -2,18 +2,28 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
-import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { CLUSTERS, RED_FLAGS } from '../data/clusters';
 
 export default function FastEvaluationWizard() {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
 
+    const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+
+    // Derived state: Suggestions based on selected clusters
+    const activeSuggestions = {
+        tests: Array.from(new Set(selectedClusters.flatMap(cid => CLUSTERS.find(c => c.id === cid)?.suggestions.tests || []))),
+        education: Array.from(new Set(selectedClusters.flatMap(cid => CLUSTERS.find(c => c.id === cid)?.suggestions.education || []))),
+        tasks: Array.from(new Set(selectedClusters.flatMap(cid => CLUSTERS.find(c => c.id === cid)?.suggestions.tasks || []))),
+    };
+
     const steps = [
         { id: 1, title: 'Datos Básicos' },
-        { id: 2, title: 'Banderas' },
-        { id: 3, title: 'Eval. Física' },
-        { id: 4, title: 'Plan' },
+        { id: 2, title: 'Síntomas (Clusters)' },
+        { id: 3, title: 'Banderas' },
+        { id: 4, title: 'Plan Automático' },
     ];
 
     const nextStep = () => setStep(s => Math.min(s + 1, 4));
