@@ -17,7 +17,7 @@ export const generateProgressReport = async (
 
         doc.setFontSize(12);
         doc.setTextColor(100);
-        doc.text(`Paciente: ${patientName}`, 14, 30);
+        doc.text(`Usuaria: ${patientName}`, 14, 30);
         doc.text(`Fecha: ${new Date().toLocaleDateString('es-CL')}`, 14, 36);
 
         // 2. Chart Capture

@@ -82,8 +82,8 @@ export function HistoryForm({ data, onChange }: { data: any, onChange: (data: an
                                 key={item.id}
                                 onClick={() => toggleCondition(item.id)}
                                 className={`px-3 py-2 rounded-lg text-sm border transition-all ${(data.comorbidities || []).includes(item.id)
-                                        ? 'bg-red-50 border-red-200 text-red-700 font-medium'
-                                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                    ? 'bg-red-50 border-red-200 text-red-700 font-medium'
+                                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                                     }`}
                             >
                                 {item.label}
@@ -114,7 +114,7 @@ export function HistoryForm({ data, onChange }: { data: any, onChange: (data: an
                         <h4 className="text-sm font-bold text-brand-700">Motivo de Consulta</h4>
                         <textarea
                             className="w-full p-3 border rounded-xl min-h-[80px] mt-1 focus:ring-2 focus:ring-brand-500/20 outline-none"
-                            placeholder="Relato de la paciente..."
+                            placeholder="Relato de la usuaria..."
                             value={data.motive || ''}
                             onChange={e => onChange({ ...data, motive: e.target.value })}
                         />

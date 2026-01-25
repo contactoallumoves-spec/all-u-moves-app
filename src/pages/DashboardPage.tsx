@@ -96,7 +96,7 @@ export default function DashboardPage() {
                     <p className="text-brand-500 mt-1">Aquí está el resumen de tu práctica hoy.</p>
                 </div>
                 <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => navigate('/users')}>Ver Pacientes</Button>
+                    <Button variant="outline" onClick={() => navigate('/users')}>Ver Usuarias</Button>
                     <Button onClick={() => navigate('/users')}>Iniciar Consulta</Button> {/* Redirect to users to pick a patient first */}
                 </div>
             </div>
@@ -139,7 +139,7 @@ export default function DashboardPage() {
             <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-brand-800">Pacientes Recientes</h2>
+                        <h2 className="text-xl font-bold text-brand-800">Usuarias Recientes</h2>
                         <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate('/users')}>
                             Ver todas <ArrowRight className="ml-1 w-3 h-3" />
                         </Button>
@@ -150,7 +150,7 @@ export default function DashboardPage() {
                             {loading && <div className="p-8 text-center text-brand-300">Cargando...</div>}
 
                             {!loading && recentPatients.length === 0 && (
-                                <div className="p-8 text-center text-brand-300 italic">No hay pacientes recientes.</div>
+                                <div className="p-8 text-center text-brand-300 italic">No hay usuarias recientes.</div>
                             )}
 
                             {!loading && recentPatients.map((user) => (

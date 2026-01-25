@@ -240,7 +240,7 @@ export default function CompleteEvaluation() {
                     </Button>
                     <div>
                         <h1 className="text-2xl font-serif font-bold text-brand-900">Evaluación Kinesiológica</h1>
-                        <p className="text-brand-500">Paciente: {patient?.firstName} {patient?.lastName}</p>
+                        <p className="text-brand-500">Usuaria: {patient?.firstName} {patient?.lastName}</p>
 
                         {/* Location Selector */}
                         <div className="flex gap-2 mt-2 items-center">

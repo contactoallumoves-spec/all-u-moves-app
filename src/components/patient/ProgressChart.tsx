@@ -6,9 +6,10 @@ import { useState } from 'react';
 
 interface ProgressChartProps {
     history: any[];
+    className?: string;
 }
 
-export function ProgressChart({ history }: ProgressChartProps) {
+export function ProgressChart({ history, className }: ProgressChartProps) {
     const [visible, setVisible] = useState({
         eva: true,
         oxford: true,
@@ -64,7 +65,7 @@ export function ProgressChart({ history }: ProgressChartProps) {
     const toggle = (key: keyof typeof visible) => setVisible(prev => ({ ...prev, [key]: !prev[key] }));
 
     return (
-        <div className="h-56 w-full mt-2">
+        <div className={`w-full mt-2 ${className || 'h-56'}`}>
 
             {/* Interactive Legend */}
             <div className="flex flex-wrap justify-end gap-2 mb-4">
@@ -82,23 +83,23 @@ export function ProgressChart({ history }: ProgressChartProps) {
                 </button>
             </div>
 
-            <ResponsiveContainer width="100%" height="80%">
-                <AreaChart data={data} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height="85%">
+                <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                         <linearGradient id="colorEva" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#f87171" stopOpacity={0.8} />
+                            <stop offset="5%" stopColor="#f87171" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#f87171" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="colorOxford" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#818cf8" stopOpacity={0.8} />
+                            <stop offset="5%" stopColor="#818cf8" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="colorSane" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
+                            <stop offset="5%" stopColor="#4ade80" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="colorPsfs" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.8} />
+                            <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#fbbf24" stopOpacity={0} />
                         </linearGradient>
                     </defs>
@@ -108,13 +109,14 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         tick={{ fontSize: 10, fill: '#9ca3af' }}
                         axisLine={false}
                         tickLine={false}
+                        dy={5}
                     />
                     <YAxis
                         domain={[0, 10]}
                         tick={{ fontSize: 10, fill: '#9ca3af' }}
                         axisLine={false}
                         tickLine={false}
-                        width={30}
+                        width={25}
                     />
                     <Tooltip
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -135,6 +137,7 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         fillOpacity={1}
                         fill="url(#colorEva)"
                         strokeWidth={2}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
                         connectNulls
                         hide={!visible.eva}
                     />
@@ -147,6 +150,7 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         fillOpacity={1}
                         fill="url(#colorOxford)"
                         strokeWidth={2}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
                         connectNulls
                         hide={!visible.oxford}
                     />
@@ -159,6 +163,7 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         fillOpacity={1}
                         fill="url(#colorSane)"
                         strokeWidth={2}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
                         connectNulls
                         hide={!visible.sane}
                     />
@@ -171,6 +176,7 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         fillOpacity={1}
                         fill="url(#colorPsfs)"
                         strokeWidth={2}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
                         connectNulls
                         hide={!visible.psfs}
                     />

@@ -90,11 +90,11 @@ export default function PatientsPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-serif font-bold text-brand-900">Directorio de Pacientes</h1>
+                    <h1 className="text-3xl font-serif font-bold text-brand-900">Directorio de Usuarias</h1>
                     <p className="text-brand-500 mt-1">Gestión de fichas clínicas y contactos.</p>
                 </div>
                 <Button onClick={() => setShowModal(true)}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Nueva Paciente
+                    <PlusCircle className="mr-2 h-4 w-4" /> Nueva Usuaria
                 </Button>
             </div>
 
@@ -116,7 +116,7 @@ export default function PatientsPage() {
                     ) : patients.length === 0 ? (
                         <div className="text-center py-16 bg-brand-50/30 rounded-xl border-dashed border-2 border-brand-100 m-4">
                             <UserIcon className="h-12 w-12 text-brand-300 mx-auto mb-3" />
-                            <p className="text-brand-500 font-medium">No hay pacientes registradas</p>
+                            <p className="text-brand-500 font-medium">No hay usuarias registradas</p>
                             <p className="text-sm text-brand-400 mt-1">Comienza agregando la primera ficha.</p>
                         </div>
                     ) : (

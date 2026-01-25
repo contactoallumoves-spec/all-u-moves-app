@@ -24,7 +24,7 @@ export function ProgressDetailModal({ isOpen, onClose, history, patientName }: P
             await generateProgressReport(patientName, history, 'progress-chart-container');
         } catch (error) {
             console.error(error);
-            alert("Error al generar reporte. Asegúrate de haber instalado las dependencias.");
+            alert("Error al generar reporte. Dependencias faltantes: verifica que html2canvas esté instalado.");
         } finally {
             setIsExporting(false);
         }
@@ -90,7 +90,7 @@ export function ProgressDetailModal({ isOpen, onClose, history, patientName }: P
                         <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
                             <div>
                                 <h2 className="text-2xl font-serif font-bold text-brand-900">Progreso Detallado</h2>
-                                <p className="text-brand-500 text-sm">Paciente: {patientName}</p>
+                                <p className="text-brand-500 text-sm">Usuaria: {patientName}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 {/* View Toggles */}
@@ -132,9 +132,8 @@ export function ProgressDetailModal({ isOpen, onClose, history, patientName }: P
                             {viewMode === 'chart' ? (
                                 <div className="h-full flex flex-col">
                                     <div className="flex-1 min-h-[400px]" id="progress-chart-container">
-                                        {/* We reuse the component but in a larger container. 
-                                            Ideally ProgressChart handles size automatically via ResponsiveContainer */}
-                                        <ProgressChart history={history} />
+                                        {/* We reuse the component, now with dynamic height */}
+                                        <ProgressChart history={history} className="h-full min-h-[350px]" />
                                     </div>
                                     <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <div className="p-4 bg-brand-50 rounded-xl border border-brand-100">

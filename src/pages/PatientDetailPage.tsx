@@ -214,7 +214,7 @@ export default function PatientDetailPage() {
     };
 
     if (loading) return <div className="p-8 text-center text-brand-500">Cargando ficha...</div>;
-    if (!patient) return <div className="p-8 text-center">Paciente no encontrada</div>;
+    if (!patient) return <div className="p-8 text-center">Usuaria no encontrada</div>;
 
     return (
         <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in">
@@ -410,14 +410,18 @@ export default function PatientDetailPage() {
                     </Card>
 
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm uppercase tracking-wider text-brand-500">Progreso</CardTitle>
+                            <button
+                                onClick={() => setIsExpanded(true)}
+                                className="text-brand-400 hover:text-brand-600 transition-colors p-1 hover:bg-brand-50 rounded-full"
+                                title="Expandir gráfico"
+                            >
+                                <Maximize2 size={16} />
+                            </button>
                         </CardHeader>
                         <CardContent>
                             <div className="relative group cursor-pointer" onClick={() => setIsExpanded(true)}>
-                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-brand-50 p-1 rounded-full text-brand-600">
-                                    <Maximize2 size={16} />
-                                </div>
                                 <ProgressChart history={history} />
                             </div>
 
