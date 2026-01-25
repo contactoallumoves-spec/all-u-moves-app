@@ -2,12 +2,20 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useState } from 'react';
 
 interface ProgressChartProps {
     history: any[];
 }
 
 export function ProgressChart({ history }: ProgressChartProps) {
+    const [visible, setVisible] = useState({
+        eva: true,
+        oxford: true,
+        sane: true,
+        psfs: true
+    });
+
     // 1. Filter sessions/evals that have chartable data
     const data = history
         .filter(item => {
@@ -53,15 +61,28 @@ export function ProgressChart({ history }: ProgressChartProps) {
         return <div className="h-40 flex items-center justify-center text-xs text-gray-400">Sin datos suficientes para graficar.</div>;
     }
 
+    const toggle = (key: keyof typeof visible) => setVisible(prev => ({ ...prev, [key]: !prev[key] }));
+
     return (
-        <div className="h-48 w-full mt-2">
-            <div className="flex justify-end gap-3 mb-2 text-[10px] text-gray-500">
-                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-400"></div> Dolor (EVA)</span>
-                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-indigo-400"></div> Fuerza (Oxford)</span>
-                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-400"></div> SANE (/10)</span>
-                <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> PSFS (Avg)</span>
+        <div className="h-56 w-full mt-2">
+
+            {/* Interactive Legend */}
+            <div className="flex flex-wrap justify-end gap-2 mb-4">
+                <button onClick={() => toggle('eva')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.eva ? 'bg-red-50 border-red-200 text-red-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
+                    <div className="w-2 h-2 rounded-full bg-red-400 shadow-sm"></div> Dolor (EVA)
+                </button>
+                <button onClick={() => toggle('oxford')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.oxford ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
+                    <div className="w-2 h-2 rounded-full bg-indigo-400 shadow-sm"></div> Fuerza (Oxford)
+                </button>
+                <button onClick={() => toggle('sane')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.sane ? 'bg-green-50 border-green-200 text-green-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
+                    <div className="w-2 h-2 rounded-full bg-green-400 shadow-sm"></div> SANE (/10)
+                </button>
+                <button onClick={() => toggle('psfs')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.psfs ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
+                    <div className="w-2 h-2 rounded-full bg-orange-400 shadow-sm"></div> PSFS (Avg)
+                </button>
             </div>
-            <ResponsiveContainer width="100%" height="85%">
+
+            <ResponsiveContainer width="100%" height="80%">
                 <AreaChart data={data} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                     <defs>
                         <linearGradient id="colorEva" x1="0" y1="0" x2="0" y2="1">
@@ -100,9 +121,9 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         itemStyle={{ fontSize: '12px' }}
                         labelStyle={{ fontSize: '12px', fontWeight: 'bold', color: '#374151', marginBottom: '4px' }}
                         formatter={(value: any, name: any, props: any) => {
-                            if (name === 'SANE') return `${props.payload.saneRaw}%`;
-                            if (name === 'PSFS') return props.payload.psfsRaw;
-                            return value;
+                            if (name === 'SANE' && visible.sane) return [`${props.payload.saneRaw}%`, name];
+                            if (name === 'PSFS' && visible.psfs) return [props.payload.psfsRaw, name];
+                            return [value, name];
                         }}
                     />
                     {/* EVA (Pain) Area */}
@@ -115,6 +136,7 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         fill="url(#colorEva)"
                         strokeWidth={2}
                         connectNulls
+                        hide={!visible.eva}
                     />
                     {/* Oxford (Strength) Area */}
                     <Area
@@ -126,6 +148,7 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         fill="url(#colorOxford)"
                         strokeWidth={2}
                         connectNulls
+                        hide={!visible.oxford}
                     />
                     {/* SANE Area */}
                     <Area
@@ -137,6 +160,7 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         fill="url(#colorSane)"
                         strokeWidth={2}
                         connectNulls
+                        hide={!visible.sane}
                     />
                     {/* PSFS Area */}
                     <Area
@@ -148,6 +172,7 @@ export function ProgressChart({ history }: ProgressChartProps) {
                         fill="url(#colorPsfs)"
                         strokeWidth={2}
                         connectNulls
+                        hide={!visible.psfs}
                     />
                 </AreaChart>
             </ResponsiveContainer>

@@ -403,17 +403,50 @@ export default function PatientDetailPage() {
                         </CardHeader>
                         <CardContent>
                             <ProgressChart history={history} />
-                            <div className="mt-4 flex justify-between text-xs text-center">
+
+                            {/* Dynamic Stats */}
+                            <div className="mt-4 flex justify-between text-xs text-center border-t border-gray-50 pt-4">
                                 <div>
-                                    <div className="font-bold text-brand-900 text-lg">3/5</div>
+                                    <div className="font-bold text-brand-900 text-lg">
+                                        {(() => {
+                                            const item = history.find(h => (h.raw?.pelvic?.oxford !== undefined) || (h.raw?.reassessment?.oxford !== undefined));
+                                            if (!item) return '-/5';
+                                            const val = item.raw?.reassessment?.oxford ?? item.raw?.pelvic?.oxford;
+                                            return `${val}/5`;
+                                        })()}
+                                    </div>
                                     <div className="text-brand-400">Oxford</div>
                                 </div>
                                 <div>
-                                    <div className="font-bold text-brand-900 text-lg">7.5</div>
-                                    <div className="text-brand-400">ICIQ-UI</div>
+                                    <div className="font-bold text-brand-900 text-lg">
+                                        {(() => {
+                                            // Priority: ICIQ -> SANE -> Any other
+                                            const iciqItem = history.find(h => h.raw?.functional?.questionnaire?.score !== undefined);
+                                            if (iciqItem) return iciqItem.raw.functional.questionnaire.score;
+
+                                            const saneItem = history.find(h => h.raw?.proms?.sane !== undefined);
+                                            if (saneItem) return `${saneItem.raw.proms.sane}%`;
+
+                                            return '-';
+                                        })()}
+                                    </div>
+                                    <div className="text-brand-400">
+                                        {history.some(h => h.raw?.functional?.questionnaire?.score) ? 'ICIQ-UI' : 'SANE'}
+                                    </div>
                                 </div>
                                 <div>
-                                    <div className="font-bold text-brand-900 text-lg">80%</div>
+                                    <div className="font-bold text-brand-900 text-lg">
+                                        {(() => {
+                                            const sessions = history.filter(h => h.type === 'session' && h.raw?.adherence);
+                                            if (sessions.length === 0) return '-';
+                                            const total = sessions.reduce((acc, s) => {
+                                                if (s.raw.adherence === 'alta') return acc + 100;
+                                                if (s.raw.adherence === 'media') return acc + 50;
+                                                return acc;
+                                            }, 0);
+                                            return `${Math.round(total / sessions.length)}%`;
+                                        })()}
+                                    </div>
                                     <div className="text-brand-400">Adherencia</div>
                                 </div>
                             </div>
