@@ -225,7 +225,7 @@ export default function PatientDetailPage() {
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => pdfService.generateFullHistoryReport(patient!, history)}>
                         <FileText className="w-4 h-4 mr-2" />
-                        Ficha PDF
+                        Exportar Evoluciones
                     </Button>
                     <Button variant="outline" onClick={() => navigate(`/eval/new/${id}`)}>
                         <Plus className="w-4 h-4 mr-2" />

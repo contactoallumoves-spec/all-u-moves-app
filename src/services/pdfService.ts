@@ -234,51 +234,163 @@ export const pdfService = {
         doc.setFontSize(10);
 
         items.forEach((item) => {
-            // Check page break
-            if (y > h - 40) {
+            // Check page break (more conservative as items are larger now)
+            if (y > h - 80) {
                 doc.addPage();
                 this._drawHeader(doc, patient, "Historial Clínico (Cont.)", colors);
                 y = 50;
             }
 
-            const dateStr = item.date?.toDate ? new Date(item.date.toDate()).toLocaleDateString('es-CL') : 'Fecha desc.';
+            const dateStr = item.date?.toDate ? new Date(item.date.toDate()).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha desconocida';
 
-            // Box
-            doc.setFillColor(250, 250, 252);
-            doc.setDrawColor(colors.line[0], colors.line[1], colors.line[2]);
-            doc.roundedRect(margin, y, w - (margin * 2), 25, 3, 3, "FD");
+            // --- Item Container ---
+            // Draw background for the whole item block? No, just clean sections.
 
-            // Type Pill
-            const isEval = item.type === 'evaluation';
-            doc.setFillColor(isEval ? colors.primary[0] : 100, isEval ? colors.primary[1] : 100, isEval ? colors.primary[2] : 100);
-            doc.roundedRect(margin + 5, y + 5, 25, 6, 2, 2, "F");
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(7);
-            doc.setFont("helvetica", "bold");
-            doc.text(isEval ? "EVALUACIÓN" : "SESIÓN", margin + 7, y + 9);
+            // 1. Header Line (Date + Type)
+            doc.setFillColor(item.type.includes('eval') ? colors.primary[0] : 240, item.type.includes('eval') ? colors.primary[1] : 240, item.type.includes('eval') ? colors.primary[2] : 245);
+            if (item.type.includes('eval')) {
+                doc.setTextColor(255, 255, 255);
+            } else {
+                doc.setTextColor(60, 60, 70);
+            }
 
-            // Date
-            doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+            // Pill
+            doc.roundedRect(margin, y, w - (margin * 2), 8, 2, 2, "F");
+
             doc.setFontSize(9);
-            doc.setFont("helvetica", "normal");
-            doc.text(dateStr, margin + 35, y + 9);
+            doc.setFont("helvetica", "bold");
+            const title = item.type === 'session' ? `SESIÓN DE CONTROL - ${dateStr}` : `EVALUACIÓN (${item.type === 'eval_fast' ? 'RÁPIDA' : 'COMPLETA'}) - ${dateStr}`;
+            doc.text(title, margin + 5, y + 5.5);
 
-            // Title/Details
+            y += 15;
+
+            // 2. Content
             doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-            doc.setFontSize(11);
-            doc.setFont("helvetica", "bold");
-            const title = item.type === 'session' ? `Sesión de Control` : `Evaluación ${item.raw.type || ''}`;
-            doc.text(title, margin + 5, y + 18);
-
-            // Extra Info
-            doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
-            const info = item.type === 'session'
-                ? `EVA: ${item.raw.symptomsScore}/10  |  Notas: ${item.raw.notes ? item.raw.notes.substring(0, 50) + '...' : '-'}`
-                : `Diagnostico: ${item.raw.diagnosis || '-'}`;
-            doc.text(info, margin + 5, y + 23);
+            doc.setFontSize(10);
 
-            y += 30;
+            if (item.type === 'session') {
+                // SESION CONTENT
+
+                // EVA / Notes
+                if (item.raw.symptomsScore !== undefined) {
+                    doc.setFont("helvetica", "bold");
+                    doc.text(`EVA:`, margin, y);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(`${item.raw.symptomsScore}/10`, margin + 15, y);
+                }
+                if (item.raw.adherence) {
+                    doc.setFont("helvetica", "bold");
+                    doc.text(`Adherencia:`, margin + 60, y);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(`${item.raw.adherence}`, margin + 85, y);
+                }
+                y += 6;
+
+                if (item.raw.notes) {
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Notas:", margin, y);
+                    y += 5;
+                    doc.setFont("helvetica", "normal");
+                    const splitNotes = doc.splitTextToSize(item.raw.notes, w - (margin * 2));
+                    doc.text(splitNotes, margin, y);
+                    y += (splitNotes.length * 5) + 5;
+                }
+
+                // Interventions
+                if (item.raw.interventions && item.raw.interventions.length > 0) {
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Intervenciones / Presets:", margin, y);
+                    y += 5;
+                    doc.setFont("helvetica", "normal");
+
+                    item.raw.interventions.forEach((inte: string) => {
+                        let label = (ITEMS_CATALOG as any)[inte] || inte;
+                        const detail = item.raw.interventionDetails?.[inte];
+                        const line = detail ? `• ${label}: ${detail}` : `• ${label}`;
+
+                        // Check page break inside loop
+                        if (y > h - 20) { doc.addPage(); y = 20; }
+
+                        doc.text(line, margin + 5, y);
+                        y += 5;
+                    });
+                    y += 2;
+                }
+
+                // Custom Activities
+                if (item.raw.customActivities && item.raw.customActivities.length > 0) {
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Actividades Específicas:", margin, y);
+                    y += 5;
+                    doc.setFont("helvetica", "normal");
+
+                    item.raw.customActivities.forEach((act: any) => {
+                        const line = `• [${act.category}] ${act.name} ${act.params ? `(${act.params})` : ''}`;
+                        if (y > h - 20) { doc.addPage(); y = 20; }
+                        doc.text(line, margin + 5, y);
+                        y += 5;
+                    });
+                }
+
+                // Reassessment
+                if (item.raw.reassessment) {
+                    y += 2;
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Re-evaluación:", margin, y);
+                    y += 5;
+                    doc.setFont("helvetica", "normal");
+                    let reText = "";
+                    if (item.raw.reassessment.oxford) reText += `Oxford: ${item.raw.reassessment.oxford}/5  `;
+                    if (item.raw.reassessment.tonicity) reText += `Tonicidad: ${item.raw.reassessment.tonicity}  `;
+                    if (item.raw.reassessment.breating) reText += `Resp: ${item.raw.reassessment.breating}`;
+
+                    doc.text(reText, margin + 5, y);
+                    y += 5;
+                }
+
+
+            } else {
+                // EVALUATION CONTENT
+                if (item.summary) {
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Resumen:", margin, y);
+                    y += 5;
+                    doc.setFont("helvetica", "normal");
+                    const splitSum = doc.splitTextToSize(item.summary, w - (margin * 2));
+                    doc.text(splitSum, margin, y);
+                    y += (splitSum.length * 5) + 5;
+                }
+
+                if (item.findings && item.findings.length > 0) {
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Hallazgos Principales:", margin, y);
+                    y += 5;
+                    doc.setFont("helvetica", "normal");
+                    // Join with commas or bullet points
+                    const findingsText = item.findings.join(", ");
+                    const splitFind = doc.splitTextToSize(findingsText, w - (margin * 2));
+                    doc.text(splitFind, margin, y);
+                    y += (splitFind.length * 5) + 5;
+                }
+
+                // Clusters
+                if (item.raw.clusters?.active?.length > 0) {
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Hipótesis / Clusters:", margin, y);
+                    y += 5;
+                    doc.setFont("helvetica", "normal");
+                    const clusterText = item.raw.clusters.active.join(", ");
+                    doc.text(clusterText, margin, y);
+                    y += 6;
+                }
+            }
+
+            // Separator
+            y += 5;
+            doc.setDrawColor(230, 230, 230);
+            doc.line(margin, y, w - margin, y);
+            y += 10;
         });
 
         doc.save(`Historial_Completo_${patient.firstName}.pdf`);
