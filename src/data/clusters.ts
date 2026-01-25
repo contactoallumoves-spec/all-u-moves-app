@@ -119,6 +119,7 @@ export const CLUSTERS: Cluster[] = [
             education: ['edu_blow_before_cough', 'edu_presion_intra_abd'],
             tasks: ['task_knack_practice'],
         }
+    },
     {
         id: 'sexual_pain',
         label: 'Dolor Sexual / Dispareunia',
