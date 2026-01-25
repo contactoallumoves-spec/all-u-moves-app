@@ -40,7 +40,11 @@ export default function CompleteEvaluation() {
         pelvic: { skin: '', hiatus: '', valsalva: '', oxford: 0, endurance: false, coordination: false, painMap: '', painPoints: [] as string[] },
 
         msk: { irdSupra: '', irdInfra: '', doming: false, posture: '', motorControl: '', breathing: '', beighton: 0 },
-        functional: { aslrLeft: 0, aslrRight: 0, aslrNotes: '', squatQuality: '', bridgeQuality: '', impactTests: [] as string[] }, // [NEW]
+        functional: {
+            aslrLeft: 0, aslrRight: 0, aslrNotes: '', squatQuality: '', bridgeQuality: '', impactTests: [] as string[],
+            modality: '', toleranceTests: [] as string[] // [NEW]
+        },
+
         questionnaire: { q1_freq: 0, q2_vol: 0, q3_impact: 0, score: 0 }, // [NEW]
 
         plan: { diagnosis: '', goals: '', frequency: '', tasks: [] as string[], education: [] as string[] },
@@ -274,6 +278,20 @@ export default function CompleteEvaluation() {
                                 value={evalData.plan.diagnosis}
                                 onChange={e => setEvalData({ ...evalData, plan: { ...evalData.plan, diagnosis: e.target.value } })}
                             />
+
+                            {/* CIF Suggestions [NEW] */}
+                            {currentSuggestions?.suggestions?.cif && currentSuggestions.suggestions.cif.length > 0 && (
+                                <div className="mt-2 text-xs bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100">
+                                    <span className="font-bold block mb-1">Sugerencias CIF (Clasificación):</span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {currentSuggestions.suggestions.cif.map(c => (
+                                            <span key={c.code} className="bg-white border border-blue-200 px-2 py-1 rounded shadow-sm">
+                                                <strong>{c.code}</strong>: {c.description}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <h3 className="font-bold text-brand-800 pt-4">Plan Sugerido (Editable)</h3>
 

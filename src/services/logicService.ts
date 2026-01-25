@@ -8,6 +8,7 @@ export interface LogicResult {
         tasks: string[];
         education: string[];
         tests: string[];
+        cif: { code: string; description: string }[]; // [NEW]
     };
     redFlags: string[]; // IDs
 }
@@ -22,6 +23,7 @@ export const logicService = {
         const uniqueTasks = new Set<string>();
         const uniqueEducation = new Set<string>();
         const uniqueTests = new Set<string>();
+        const uniqueCif = new Map<string, string>(); // Code -> Description
 
         // 1. Match Clusters
         CLUSTERS.forEach(cluster => {
@@ -36,6 +38,11 @@ export const logicService = {
                 cluster.suggestions.tasks.forEach(t => uniqueTasks.add(t));
                 cluster.suggestions.education.forEach(e => uniqueEducation.add(e));
                 cluster.suggestions.tests.forEach(t => uniqueTests.add(t));
+
+                // Aggregate CIF [NEW]
+                if (cluster.suggestions.cif) {
+                    cluster.suggestions.cif.forEach(c => uniqueCif.set(c.code, c.description));
+                }
             }
         });
 
@@ -45,7 +52,8 @@ export const logicService = {
             suggestions: {
                 tasks: Array.from(uniqueTasks),
                 education: Array.from(uniqueEducation),
-                tests: Array.from(uniqueTests)
+                tests: Array.from(uniqueTests),
+                cif: Array.from(uniqueCif.entries()).map(([code, description]) => ({ code, description }))
             },
             redFlags: [] // To be implemented with RedFlag logic
         };

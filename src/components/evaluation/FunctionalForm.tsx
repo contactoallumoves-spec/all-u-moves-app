@@ -13,7 +13,45 @@ export function FunctionalForm({ data, onChange }: { data: any, onChange: (data:
 
     return (
         <div className="space-y-6">
-            <h3 className="font-serif font-bold text-xl text-brand-800 border-b border-brand-100 pb-2">Evaluación Funcional</h3>
+            <h3 className="font-serif font-bold text-xl text-brand-800 border-b border-brand-100 pb-2">Evaluación Funcional / Fitness / Yoga</h3>
+
+            {/* Modality Focus [NEW] */}
+            <Card>
+                <CardContent className="p-4 space-y-4">
+                    <h4 className="font-bold text-sm uppercase text-brand-500">Enfoque de Actividad</h4>
+                    <select
+                        className="w-full p-2 border rounded-md"
+                        value={data.modality || ''}
+                        onChange={e => onChange({ ...data, modality: e.target.value })}
+                    >
+                        <option value="">Seleccionar Enfoque...</option>
+                        <option value="fitness">Fitness General (Inicial/Intermedio)</option>
+                        <option value="yoga">Yoga</option>
+                        <option value="pilates_mat">Pilates Mat</option>
+                        <option value="pilates_reformer">Pilates Reformer</option>
+                    </select>
+
+                    {(data.modality === 'yoga' || data.modality?.includes('pilates')) && (
+                        <div className="animate-in fade-in pt-2">
+                            <h5 className="font-bold text-sm text-brand-700 mb-2">Screening de Tolerancia (Yoga/Pilates)</h5>
+                            <div className="flex flex-wrap gap-2">
+                                {['Extensión Muñeca (Apoyo)', 'Flexión Columna (Roll Up)', 'Extensión Columna (Cobra)', 'Inversiones'].map(test => {
+                                    const isPainful = (data.toleranceTests || []).includes(test);
+                                    return (
+                                        <button
+                                            key={test}
+                                            onClick={() => toggleArrayItem('toleranceTests', test)}
+                                            className={`px-3 py-2 rounded-lg text-sm border transition-all ${isPainful ? 'bg-red-50 border-red-200 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}
+                                        >
+                                            {test}: {isPainful ? 'Dolor/Limitado' : 'OK'}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
             {/* Load Transfer */}
             <Card>
