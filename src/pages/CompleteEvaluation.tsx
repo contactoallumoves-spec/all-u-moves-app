@@ -6,7 +6,7 @@ import { EvaluationService } from '../services/evaluationService';
 import { logicService } from '../services/logicService'; // [NEW]
 import { Patient } from '../types/patient';
 import { Button } from '../components/ui/Button';
-import { ArrowLeft, Save, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, CheckCircle2, Sparkles, Brain } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 // Import sub-forms

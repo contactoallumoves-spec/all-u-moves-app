@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc, updateDoc, getDoc, orderBy, limit } from 'firebase/firestore';
 
 export interface Session {
     id?: string;
@@ -7,6 +7,7 @@ export interface Session {
     date: any; // Firestore Timestamp
     notes: string;
     interventions: string[]; // IDs of interventions
+    interventionDetails?: Record<string, string>; // [NEW] Parameters details
     symptomsScore: number; // 0-10
     adherence: string; // low/medium/high
     tasks: { id: string; label: string; active: boolean }[];
@@ -22,6 +23,28 @@ export interface Session {
 const COLLECTION_NAME = 'sessions';
 
 export const SessionService = {
+    // [NEW] Get recent sessions for dashboard
+    async getRecent(limitCount: number) {
+        try {
+            // In a real app we would check active=true or similar
+            // For now just fetching all sorted by date desc
+            const q = query(
+                collection(db, COLLECTION_NAME),
+                orderBy("date", "desc"),
+                limit(limitCount)
+            );
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: doc.data().date?.toDate()
+            })) as Session[];
+        } catch (error) {
+            console.error("Error getting recent sessions", error);
+            return [];
+        }
+    },
+
     async create(session: Omit<Session, 'id'>) {
         try {
             const docRef = await addDoc(collection(db, COLLECTION_NAME), {
