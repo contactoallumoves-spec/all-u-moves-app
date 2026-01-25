@@ -109,7 +109,7 @@ export const CLUSTERS: Cluster[] = [
     {
         id: 'chronic_cough',
         label: 'Tos Crónica / Hiperpresión',
-        category: 'general',
+        category: 'lifestyle',
         description: 'Gestión de presión intra-abdominal repetitiva.',
         triggers: {
             symptoms: ['tos_cronica', 'alergia_estacional']
