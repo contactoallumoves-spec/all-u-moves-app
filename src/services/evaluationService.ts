@@ -20,6 +20,7 @@ export interface Evaluation {
         tasks: string[];
     };
     status: 'draft' | 'completed';
+    details?: any; // To store full form data
 }
 
 const COLLECTION_NAME = 'evaluations';
