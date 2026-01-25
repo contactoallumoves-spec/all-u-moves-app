@@ -4,6 +4,7 @@ import { ProgressChart } from './ProgressChart';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState } from 'react';
+import { generateProgressReport } from '../../utils/pdfExport'; // Static import
 
 interface ProgressDetailModalProps {
     isOpen: boolean;
@@ -19,12 +20,11 @@ export function ProgressDetailModal({ isOpen, onClose, history, patientName }: P
     const handleExport = async () => {
         setIsExporting(true);
         try {
-            // Setup dynamic import if needed, but for now we assume it's linked via handy utility
-            const { generateProgressReport } = await import('../../utils/pdfExport');
             await generateProgressReport(patientName, history, 'progress-chart-container');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Error al generar reporte. Dependencias faltantes: verifica que html2canvas esté instalado.");
+            // Show real error for debugging
+            alert(`Error al generar reporte: ${error.message || error}`);
         } finally {
             setIsExporting(false);
         }
