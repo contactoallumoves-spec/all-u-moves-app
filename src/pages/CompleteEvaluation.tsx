@@ -12,7 +12,9 @@ import { cn } from '../lib/utils';
 // Import sub-forms
 import { PelvicFloorForm } from '../components/evaluation/PelvicFloorForm';
 import { MSKForm } from '../components/evaluation/MSKForm';
+import { FunctionalForm } from '../components/evaluation/FunctionalForm'; // [NEW]
 import { SymptomSelector } from '../components/evaluation/SymptomSelector'; // [NEW]
+
 import { getLabel } from '../data/catalog';
 
 
@@ -23,13 +25,16 @@ export default function CompleteEvaluation() {
     const [patient, setPatient] = useState<Patient | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'anamnesis' | 'pelvic' | 'msk' | 'plan'>('anamnesis');
+    const [activeTab, setActiveTab] = useState<'anamnesis' | 'pelvic' | 'msk' | 'functional' | 'plan'>('anamnesis');
+
 
     // Consolidated Form State
     const [evalData, setEvalData] = useState({
         anamnesis: { motive: '', history: '' },
-        pelvic: { skin: '', hiatus: '', oxford: 0, endurance: false, coordination: false, painMap: '' },
-        msk: { irdSupra: '', irdInfra: '', doming: false, posture: '', motorControl: '' },
+        pelvic: { skin: '', hiatus: '', valsalva: '', oxford: 0, endurance: false, coordination: false, painMap: '', painPoints: [] as string[] },
+        msk: { irdSupra: '', irdInfra: '', doming: false, posture: '', motorControl: '', breathing: '', beighton: 0 },
+        functional: { aslrLeft: 0, aslrRight: 0, aslrNotes: '', squatQuality: '', bridgeQuality: '', impactTests: [] as string[] }, // [NEW]
+
         plan: { diagnosis: '', goals: '', frequency: '', tasks: [] as string[], education: [] as string[] },
         symptoms: [] as string[] // [NEW] Hybrid Input
     });
@@ -123,7 +128,9 @@ export default function CompleteEvaluation() {
         { id: 'anamnesis', label: '1. Anamnesis & Síntomas' },
         { id: 'pelvic', label: '2. Suelo Pélvico' },
         { id: 'msk', label: '3. Físico / MSK' },
-        { id: 'plan', label: '4. Plan & Sugerencias' },
+        { id: 'functional', label: '4. Funcional / Impacto' }, // [NEW]
+        { id: 'plan', label: '5. Plan & Sugerencias' },
+
     ];
 
     return (
@@ -210,11 +217,20 @@ export default function CompleteEvaluation() {
                         <MSKForm
                             data={evalData.msk}
                             onChange={(d) => setEvalData({ ...evalData, msk: d })}
+                    </div>
+                )}
+
+                {activeTab === 'functional' && (
+                    <div className="animate-in slide-in-from-right-4 duration-300">
+                        <FunctionalForm
+                            data={evalData.functional}
+                            onChange={(d) => setEvalData({ ...evalData, functional: d })}
                         />
                     </div>
                 )}
 
                 {activeTab === 'plan' && (
+
                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         {/* Logic Engine Trigger */}
                         <div className="bg-purple-50 border border-purple-100 rounded-xl p-6 text-center">
