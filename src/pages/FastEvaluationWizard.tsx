@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
-import { ArrowLeft, ArrowRight, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { CLUSTERS, RED_FLAGS } from '../data/clusters';
 
