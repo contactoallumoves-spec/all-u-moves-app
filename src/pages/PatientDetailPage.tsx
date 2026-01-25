@@ -326,8 +326,8 @@ export default function PatientDetailPage() {
 
             {/* Detail Modal */}
             {selectedItem && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-4xl p-8 shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar">
                         <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
                             <div>
                                 <h2 className="text-2xl font-serif font-bold text-brand-900">{selectedItem.title}</h2>
