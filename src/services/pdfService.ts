@@ -405,10 +405,14 @@ export const pdfService = {
 
         doc.setFontSize(12);
         doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-        doc.text(`${patient.firstName} ${patient.lastName} - RUT: ${patient.rut || '-'}`, margin, margin + 18);
+        doc.text(`${patient.firstName} ${patient.lastName}`, margin, margin + 18);
+        doc.setFontSize(10);
+        doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+        doc.text(`RUT: ${patient.rut || '-'}`, margin, margin + 23);
+        doc.text("Lugar de Atención: Consulta Kinesiológica", margin, margin + 28);
 
         doc.setDrawColor(colors.line[0], colors.line[1], colors.line[2]);
-        doc.line(margin, margin + 25, 190, margin + 25);
+        doc.line(margin, margin + 33, 190, margin + 33);
     },
 
     // Robust Round Image using "Donut Mask" technique
