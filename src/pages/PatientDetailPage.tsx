@@ -6,7 +6,7 @@ import { SessionService } from '../services/sessionService'; // [NEW]
 import { Patient } from '../types/patient';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-import { ArrowLeft, Clock, Calendar, FileText, Activity, PlayCircle, Plus } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, FileText, Activity, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function PatientDetailPage() {
@@ -305,37 +305,152 @@ export default function PatientDetailPage() {
                         </div>
 
                         <div className="space-y-6">
-                            {/* Content based on type */}
-                            <div className="bg-brand-50/50 p-4 rounded-xl border border-brand-100">
-                                <h3 className="font-bold text-brand-800 text-sm uppercase mb-2">Resumen / Notas</h3>
-                                <p className="text-brand-900">{selectedItem.summary}</p>
-                            </div>
 
-                            {selectedItem.findings && selectedItem.findings.length > 0 && (
-                                <div>
-                                    <h3 className="font-bold text-brand-800 text-sm uppercase mb-2">Hallazgos / Intervenciones</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {selectedItem.findings.map((f: string, i: number) => (
-                                            <span key={i} className="bg-white border border-brand-200 text-brand-700 px-3 py-1 rounded-lg text-sm shadow-sm">
-                                                {f}
-                                            </span>
-                                        ))}
+                            {/* --- SESSION DETAILS --- */}
+                            {selectedItem.type === 'session' && (
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-brand-50 p-4 rounded-xl">
+                                            <span className="text-xs font-bold text-brand-400 uppercase block mb-1">EVA / Síntomas</span>
+                                            <span className="text-2xl font-bold text-brand-700">{selectedItem.raw.symptomsScore}/10</span>
+                                        </div>
+                                        <div className="bg-green-50 p-4 rounded-xl">
+                                            <span className="text-xs font-bold text-green-600 uppercase block mb-1">Adherencia</span>
+                                            <span className="text-2xl font-bold text-green-700 capitalize">{selectedItem.raw.adherence || '-'}</span>
+                                        </div>
                                     </div>
-                                </div>
+
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Notas Subjetivas</h3>
+                                        <p className="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm whitespace-pre-wrap">{selectedItem.raw.notes || 'Sin notas.'}</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Intervenciones Realizadas</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedItem.raw.interventions?.length > 0 ? selectedItem.raw.interventions.map((inte: string, i: number) => (
+                                                <span key={i} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-md text-sm border border-purple-100 shadow-sm">
+                                                    {inte}
+                                                </span>
+                                            )) : <span className="text-sm text-gray-400 italic">No se registraron intervenciones.</span>}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Revisión de Tareas</h3>
+                                        <ul className="space-y-1">
+                                            {selectedItem.raw.tasks?.map((t: any, i: number) => (
+                                                <li key={i} className="flex items-center gap-2 text-sm">
+                                                    <span className={t.active ? "text-green-600" : "text-gray-400 line-through"}>
+                                                        {t.active ? "✓" : "✕"}
+                                                    </span>
+                                                    <span className={t.active ? "text-gray-700" : "text-gray-400"}>{t.label}</span>
+                                                </li>
+                                            ))}
+                                            {(!selectedItem.raw.tasks || selectedItem.raw.tasks.length === 0) && <li className="text-sm text-gray-400 italic">Sin lista de tareas.</li>}
+                                        </ul>
+                                    </div>
+                                </>
                             )}
 
-                            {/* Raw Data Dump (Debug/View all) - Optional, kept clean for now */}
+
+                            {/* --- EVALUATION DETAILS --- */}
+                            {(selectedItem.type === 'eval_fast' || selectedItem.type === 'eval_complete') && (
+                                <>
+                                    {/* Red Flags Alert */}
+                                    {selectedItem.raw.patientData?.redFlags?.length > 0 && (
+                                        <div className="bg-red-50 border border-red-200 p-4 rounded-xl">
+                                            <h3 className="text-red-800 font-bold flex items-center gap-2">
+                                                <Activity className="w-5 h-5" /> Red Flags Detectadas
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {selectedItem.raw.patientData.redFlags.map((flag: string, i: number) => (
+                                                    <span key={i} className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-100">
+                                                        {flag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Evaluation Summary */}
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Resumen del Caso</h3>
+                                        <p className="text-gray-700 text-sm leading-relaxed">{selectedItem.summary}</p>
+                                    </div>
+
+                                    {/* Detailed Physical Exam Data (if available) */}
+                                    {selectedItem.raw.details && (
+                                        <div className="bg-gray-50 p-4 rounded-xl space-y-4">
+                                            <h3 className="font-bold text-gray-700 text-sm uppercase">Detalles Clínicos</h3>
+
+                                            {selectedItem.raw.details.pelvic && (
+                                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                                    <span className="text-gray-500">Fuerza (Oxford):</span>
+                                                    <span className="font-medium">{selectedItem.raw.details.pelvic.oxford || '-'} / 5</span>
+
+                                                    <span className="text-gray-500">Hiato:</span>
+                                                    <span className="font-medium">{selectedItem.raw.details.pelvic.hiatus || '-'}</span>
+
+                                                    <span className="text-gray-500">Dolor Pélvico:</span>
+                                                    <span className="font-medium">{selectedItem.raw.details.pelvic.painMap || 'Sin dolor'}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Active Clusters */}
+                                    {selectedItem.raw.clusters?.active?.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Hipótesis / Clusters Activos</h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedItem.raw.clusters.active.map((c: string, i: number) => (
+                                                    <span key={i} className="bg-brand-100 text-brand-800 px-3 py-1 rounded-full text-xs font-bold">
+                                                        {c}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Plan */}
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Plan de Tratamiento</h3>
+
+                                        {selectedItem.raw.plan?.education?.length > 0 && (
+                                            <div className="mb-2">
+                                                <span className="text-xs font-bold text-brand-400 block">EDUCACIÓN</span>
+                                                <ul className="list-disc pl-5 text-sm text-gray-700">
+                                                    {selectedItem.raw.plan.education.map((e: string, i: number) => (
+                                                        <li key={i}>{e}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        {selectedItem.raw.plan?.tasks?.length > 0 && (
+                                            <div>
+                                                <span className="text-xs font-bold text-brand-400 block">TAREAS / EJERCICIOS</span>
+                                                <ul className="list-disc pl-5 text-sm text-gray-700">
+                                                    {selectedItem.raw.plan.tasks.map((t: string, i: number) => (
+                                                        <li key={i}>{t}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
                             <Button variant="ghost" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(selectedItem)}>
-                                Eliminar Registro
+                                <Trash2 className="w-4 h-4 mr-2" /> Eliminar Registro
                             </Button>
                             <div className="flex gap-2">
                                 <Button variant="outline" onClick={() => setSelectedItem(null)}>
                                     Cerrar
                                 </Button>
-                                {/* Edit Placeholder - To be implemented next step if needed */}
                                 <Button disabled className="bg-brand-100 text-brand-400 cursor-not-allowed">
                                     Editar (Pronto)
                                 </Button>
