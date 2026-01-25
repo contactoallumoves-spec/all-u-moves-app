@@ -36,30 +36,27 @@ export const pdfService = {
         doc.line(margin, margin + 25, pageWidth - margin, margin + 25);
 
         // --- Logo (Top Right) ---
-        // Circular Clipping for Logo
         const logoSize = 25;
         const logoX = pageWidth - margin - logoSize;
         const logoY = margin;
 
         try {
-            doc.saveGraphicsState();
-            doc.setDrawColor(255, 255, 255);
-            doc.setFillColor(255, 255, 255);
-            // Draw circle background for logo
-            doc.circle(logoX + (logoSize / 2), logoY + (logoSize / 2), (logoSize / 2), "F");
-            // Clip
-            doc.rect(logoX, logoY, logoSize, logoSize, "F"); // Placeholder if clip fails, but let's try path
+            // Force cast to any to use internal/advanced API methods if types are missing
+            const d = doc as any;
+            d.saveGraphicsState();
 
-            // Advanced clipping
-            doc.addContent(`${logoX + (logoSize / 2)} ${pageHeight - (logoY + (logoSize / 2))} ${(logoSize / 2)} 0 360 re W n`);
-            // Note: raw PDF op 're' is rect (x y w h), that is NOT circle. 
-            // We need 'm' (move) and 'c' (curve) for circle or just simple image if transparency works.
-            // Simplified approach: Just add the image. If it's transparent PNG it works. 
-            // If we need a circle border:
+            // Create circular clipping path
+            // circle(x, y, r, style) - style null adds path to current path
+            d.circle(logoX + (logoSize / 2), logoY + (logoSize / 2), (logoSize / 2), null);
+            d.clip();
+
             doc.addImage(REPORT_ASSETS.logo, 'PNG', logoX, logoY, logoSize, logoSize);
-            doc.restoreGraphicsState();
+
+            d.restoreGraphicsState();
         } catch (e) {
             console.error("Logo error", e);
+            // Fallback: just add image square
+            doc.addImage(REPORT_ASSETS.logo, 'PNG', logoX, logoY, logoSize, logoSize);
         }
 
         let currentY = 60;
@@ -172,11 +169,15 @@ export const pdfService = {
         const photoY = footerY + 5;
 
         try {
-            // Circle mask attempt for photo
-            // For simply placing image:
+            const d = doc as any;
+            d.saveGraphicsState();
+            d.circle(photoX + (photoSize / 2), photoY + (photoSize / 2), (photoSize / 2), null);
+            d.clip();
             doc.addImage(REPORT_ASSETS.photo, 'JPEG', photoX, photoY, photoSize, photoSize);
+            d.restoreGraphicsState();
         } catch (e) {
             console.error("Photo error", e);
+            doc.addImage(REPORT_ASSETS.photo, 'JPEG', photoX, photoY, photoSize, photoSize);
         }
 
         doc.save(`Resumen_${patient.firstName}.pdf`);
