@@ -195,15 +195,14 @@ export default function CompleteEvaluation() {
     if (loading) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-brand-600" /></div>;
 
     const tabs = [
-        { id: 'safety', label: '0. Seguridad (Flags)' }, // [NEW]
+        { id: 'safety', label: '0. Seguridad (Flags)' },
         { id: 'anamnesis', label: '1. Anamnesis' },
-        { id: 'questionnaires', label: '1.5. Cuestionarios' }, // [NEW]
+        { id: 'questionnaires', label: '1.5. Cuestionarios' },
         { id: 'pelvic', label: '2. Suelo Pélvico' },
         { id: 'msk', label: '3. Físico / MSK' },
-
-        { id: 'functional', label: '4. Funcional / Impacto' }, // [NEW]
-        { id: 'plan', label: '5. Plan & Sugerencias' },
-
+        { id: 'functional', label: '4. Funcional / Impacto' },
+        { id: 'diagnosis', label: '5. Diagnóstico' }, // [NEW] Added back
+        { id: 'plan', label: '6. Plan & Sugerencias' },
     ];
 
     return (
@@ -247,10 +246,159 @@ export default function CompleteEvaluation() {
             <div className="min-h-[400px]">
 
                 {activeTab === 'safety' && (
+                    <div className="animate-in slide-in-from-left-4 duration-300">
+                        <RedFlagsForm
+                            data={evalData.redFlags}
+                            onChange={(d) => setEvalData({ ...evalData, redFlags: d })}
+                        />
+                    </div>
+                )}
+
+                {activeTab === 'questionnaires' && (
+                    <div className="animate-in slide-in-from-right-4 duration-300">
+                        <QuestionnaireForm
+                            data={evalData.questionnaire}
+                            onChange={(d) => setEvalData({ ...evalData, questionnaire: d })}
+                        />
+                    </div>
+                )}
+
+                {activeTab === 'anamnesis' && (
+                    <div className="animate-in slide-in-from-left-4 duration-300">
+                        {/* Hybrid Input Section */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4 mb-6">
+                            <SymptomSelector
+                                selectedSymptoms={evalData.symptoms}
+                                onChange={(s) => setEvalData({ ...evalData, symptoms: s })}
+                            />
+                        </div>
+
+                        <HistoryForm
+                            data={evalData.anamnesis}
+                            onChange={(d) => setEvalData({ ...evalData, anamnesis: d })}
+                        />
+                    </div>
+                )}
+
+                {activeTab === 'pelvic' && (
+                    <div className="animate-in slide-in-from-right-4 duration-300">
+                        <PelvicFloorForm
+                            data={evalData.pelvic as any}
+                            onChange={(d) => setEvalData({ ...evalData, pelvic: d as any })}
+                        />
+                    </div>
+                )}
+
+                {activeTab === 'msk' && (
+                    <div className="animate-in slide-in-from-right-4 duration-300">
+                        <MSKForm
+                            data={evalData.msk}
+                            onChange={(d) => setEvalData({ ...evalData, msk: d })}
+                        />
+                    </div>
+                )}
+
+                {activeTab === 'functional' && (
+                    <div className="animate-in slide-in-from-right-4 duration-300">
+                        <FunctionalForm
+                            data={evalData.functional}
+                            onChange={(d) => setEvalData({ ...evalData, functional: d })}
+                        />
+                    </div>
+                )}
+
+                {/* [NEW] Diagnosis Tab */}
+                {activeTab === 'diagnosis' && (
+                    <div className="animate-in slide-in-from-right-4 duration-300">
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-6">
+                            <h2 className="text-xl font-bold font-serif text-brand-900">Diagnóstico Kinesiológico</h2>
+
+                            {/* CIE-10 Selector */}
+                            <div className="space-y-3">
+                                <h3 className="font-bold text-sm text-brand-600">Diagnóstico Médico (CIE-10)</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {CIE10_CODES.map(code => (
+                                        <button
+                                            key={code.code}
+                                            className={cn(
+                                                "px-3 py-2 rounded-lg text-sm border transition-all text-left",
+                                                evalData.diagnosisCodes.includes(code.code)
+                                                    ? 'bg-brand-100 border-brand-500 text-brand-900 font-bold'
+                                                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                                            )}
+                                            onClick={() => {
+                                                const exists = evalData.diagnosisCodes.includes(code.code);
+                                                setEvalData(prev => ({
+                                                    ...prev,
+                                                    diagnosisCodes: exists
+                                                        ? prev.diagnosisCodes.filter(c => c !== code.code)
+                                                        : [...prev.diagnosisCodes, code.code]
+                                                }));
+                                            }}
+                                        >
+                                            <span className="font-mono text-xs text-brand-500 mr-2">{code.code}</span>
+                                            {code.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* CIF Selector */}
+                            <div className="space-y-3 pt-4 border-t border-dashed">
+                                <h3 className="font-bold text-sm text-brand-600">Clasificación CIF</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {CIF_CODES.map(code => (
+                                        <button
+                                            key={code.code}
+                                            className={cn(
+                                                "px-3 py-2 rounded-lg text-sm border transition-all text-left",
+                                                evalData.cifCodes.includes(code.code)
+                                                    ? 'bg-blue-50 border-blue-500 text-blue-900 font-bold'
+                                                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                                            )}
+                                            onClick={() => {
+                                                const exists = evalData.cifCodes.includes(code.code);
+                                                setEvalData(prev => ({
+                                                    ...prev,
+                                                    cifCodes: exists
+                                                        ? prev.cifCodes.filter(c => c !== code.code)
+                                                        : [...prev.cifCodes, code.code]
+                                                }));
+                                            }}
+                                        >
+                                            <span className="font-mono text-xs text-blue-500 mr-2">{code.code}</span>
+                                            {code.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* SMART Goals Generator */}
+                            <div className="space-y-3 pt-4 border-t border-dashed">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-bold text-sm text-brand-600">Objetivos SMART</h3>
+                                    <Button onClick={generateSmartGoals} size="sm" className="bg-gradient-to-r from-purple-600 to-brand-600 text-white">
+                                        <Brain className="w-4 h-4 mr-2" /> Generar con IA
+                                    </Button>
+                                </div>
+                                {evalData.smartGoals.length > 0 ? (
+                                    <ul className="space-y-2 bg-brand-50/50 p-4 rounded-xl">
+                                        {evalData.smartGoals.map((goal, idx) => (
+                                            <li key={idx} className="flex gap-2 text-sm text-brand-800">
+                                                <span className="font-bold text-brand-400">{idx + 1}.</span> {goal}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">No se han generado objetivos aún.</p>
+                                )}
+                            </div>
+
+                        </div>
+                    </div>
                 )}
 
                 {activeTab === 'plan' && (
-
                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         {/* Logic Engine Trigger */}
                         <div className="bg-purple-50 border border-purple-100 rounded-xl p-6 text-center">
