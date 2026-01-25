@@ -93,6 +93,7 @@ function App() {
 
                 {/* Protected Routes */}
                 <Route path="/" element={user ? <MainLayout><DashboardPage /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/users" element={user ? <MainLayout><PatientsPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/new" element={user ? <MainLayout><NewEvaluationPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/fast" element={user ? <MainLayout><FastEvaluationWizard /></MainLayout> : <Navigate to="/login" />} />
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { PlusCircle, Search, User, Loader2 } from 'lucide-react';
+import { PlusCircle, Search, Loader2 } from 'lucide-react';
 import { PatientService } from '../services/patientService';
 import { Patient } from '../types/patient';
 import { useNavigate } from 'react-router-dom';
