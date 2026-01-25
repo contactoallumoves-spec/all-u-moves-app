@@ -111,8 +111,9 @@ export default function PatientDetailPage() {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // States for Modal and Checklist
-    const [selectedItem, setSelectedItem] = useState<any | null>(null);
+    // States for Modal    // Modal State
+    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [isExpanded, setIsExpanded] = useState(false); // [NEW] Expanded View Modal>(null);
     const [checklist, setChecklist] = useState<{ label: string, checked: boolean }[]>([]);
 
     useEffect(() => {
@@ -402,7 +403,12 @@ export default function PatientDetailPage() {
                             <CardTitle className="text-sm uppercase tracking-wider text-brand-500">Progreso</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ProgressChart history={history} />
+                            <div className="relative group cursor-pointer" onClick={() => setIsExpanded(true)}>
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-brand-50 p-1 rounded-full text-brand-600">
+                                    <Maximize2 size={16} />
+                                </div>
+                                <ProgressChart history={history} />
+                            </div>
 
                             {/* Dynamic Stats */}
                             <div className="mt-4 flex justify-between text-xs text-center border-t border-gray-50 pt-4">
@@ -454,6 +460,14 @@ export default function PatientDetailPage() {
                     </Card>
                 </div>
             </div>
+
+            {/* Premium Detail Modal */}
+            <ProgressDetailModal
+                isOpen={isExpanded}
+                onClose={() => setIsExpanded(false)}
+                history={history}
+                patientName={`${patient?.firstName} ${patient?.lastName}`}
+            />
 
             {/* Detail Modal */}
             {selectedItem && (
