@@ -1,10 +1,11 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Zap, ClipboardList, ArrowLeft } from 'lucide-react';
 
 export default function NewEvaluationPage() {
     const navigate = useNavigate();
+    const { patientId } = useParams();
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -17,7 +18,7 @@ export default function NewEvaluationPage() {
 
             <div className="grid md:grid-cols-2 gap-6">
                 {/* MODO RÁPIDO */}
-                <Card className="relative overflow-hidden group hover:border-brand-300 transition-all cursor-pointer" onClick={() => navigate('/eval/fast')}>
+                <Card className="relative overflow-hidden group hover:border-brand-300 transition-all cursor-pointer" onClick={() => navigate(`/eval/fast/${patientId}`)}>
                     <div className="absolute top-0 left-0 w-1 h-full bg-brand-400 group-hover:bg-brand-600 transition-colors" />
                     <CardContent className="p-8 space-y-4">
                         <div className="w-12 h-12 rounded-2xl bg-brand-100 flex items-center justify-center text-brand-700 mb-4 group-hover:scale-110 transition-transform">

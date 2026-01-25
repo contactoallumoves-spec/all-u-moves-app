@@ -118,7 +118,7 @@ export default function PatientsPage() {
                                                 <Phone size={18} />
                                             </a>
                                         )}
-                                        <Button variant="outline" size="sm" onClick={() => navigate('/eval/new')} className="hidden md:flex">
+                                        <Button variant="outline" size="sm" onClick={() => navigate(`/eval/new/${patient.id}`)} className="hidden md:flex">
                                             Nueva Evaluación
                                         </Button>
                                     </div>
