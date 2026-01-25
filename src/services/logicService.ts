@@ -75,6 +75,20 @@ export const logicService = {
             }
         }
 
+        // Anamnesis Logic [NEW]
+        if (data.anamnesis) {
+            // C-Section Logic
+            if (data.anamnesis.cSections > 0) {
+                inferredSymptoms.push('cesarea_previa');
+            }
+
+            // Comorbidities Mapping
+            const conditions = data.anamnesis.comorbidities || [];
+            if (conditions.includes('constipation')) inferredSymptoms.push('estrenimiento');
+            if (conditions.includes('chronic_cough')) inferredSymptoms.push('tos_cronica');
+            if (conditions.includes('smoking')) inferredSymptoms.push('tos_cronica'); // Risk factor
+        }
+
         return inferredSymptoms;
     }
 };

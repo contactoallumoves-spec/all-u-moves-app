@@ -77,6 +77,48 @@ export const CLUSTERS: Cluster[] = [
             education: ['edu_retorno_gradual', 'edu_calzado'],
             tasks: ['task_walk_run_progression', 'task_calf_strength'],
         }
+    },
+    {
+        id: 'c_section_scar',
+        label: 'Cicatriz de Cesárea',
+        category: 'msk',
+        description: 'Manejo de adherencias y sensibilidad en cicatriz.',
+        triggers: {
+            symptoms: ['cesarea_previa', 'dolor_cicatriz']
+        },
+        suggestions: {
+            tests: ['eval_movilidad_cicatriz', 'eval_sensibilidad'],
+            education: ['edu_masaje_cicatriz', 'edu_fases_cicatrizacion'],
+            tasks: ['task_scar_mobilization', 'task_desensitization'],
+        }
+    },
+    {
+        id: 'constipation',
+        label: 'Estreñimiento / Pujo',
+        category: 'pelvic',
+        description: 'Dificultad defecatoria que puede dañar el suelo pélvico.',
+        triggers: {
+            symptoms: ['estrenimiento', 'pujo_excesivo']
+        },
+        suggestions: {
+            tests: ['eval_bristol'],
+            education: ['edu_postura_defecatoria', 'edu_fibra_hidratacion'],
+            tasks: ['task_iluu_massage', 'task_breathing_relaxation'],
+        }
+    },
+    {
+        id: 'chronic_cough',
+        label: 'Tos Crónica / Hiperpresión',
+        category: 'general',
+        description: 'Gestión de presión intra-abdominal repetitiva.',
+        triggers: {
+            symptoms: ['tos_cronica', 'alergia_estacional']
+        },
+        suggestions: {
+            tests: ['test_control_tos'],
+            education: ['edu_blow_before_cough', 'edu_presion_intra_abd'],
+            tasks: ['task_knack_practice'],
+        }
     }
 ];
 

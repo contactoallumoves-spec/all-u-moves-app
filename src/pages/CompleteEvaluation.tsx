@@ -13,7 +13,9 @@ import { cn } from '../lib/utils';
 import { PelvicFloorForm } from '../components/evaluation/PelvicFloorForm';
 import { MSKForm } from '../components/evaluation/MSKForm';
 import { FunctionalForm } from '../components/evaluation/FunctionalForm'; // [NEW]
+import { HistoryForm } from '../components/evaluation/HistoryForm'; // [NEW]
 import { SymptomSelector } from '../components/evaluation/SymptomSelector'; // [NEW]
+
 
 import { getLabel } from '../data/catalog';
 
@@ -30,8 +32,9 @@ export default function CompleteEvaluation() {
 
     // Consolidated Form State
     const [evalData, setEvalData] = useState({
-        anamnesis: { motive: '', history: '' },
+        anamnesis: { motive: '', history: '', gestations: 0, vaginalBirths: 0, cSections: 0, abortions: 0, comorbidities: [] as string[], surgeryDetails: '' },
         pelvic: { skin: '', hiatus: '', valsalva: '', oxford: 0, endurance: false, coordination: false, painMap: '', painPoints: [] as string[] },
+
         msk: { irdSupra: '', irdInfra: '', doming: false, posture: '', motorControl: '', breathing: '', beighton: 0 },
         functional: { aslrLeft: 0, aslrRight: 0, aslrNotes: '', squatQuality: '', bridgeQuality: '', impactTests: [] as string[] }, // [NEW]
 
@@ -173,34 +176,21 @@ export default function CompleteEvaluation() {
             {/* Form Content */}
             <div className="min-h-[400px]">
                 {activeTab === 'anamnesis' && (
-                    <div className="space-y-6 animate-in slide-in-from-left-4 duration-300">
+                    <div className="animate-in slide-in-from-left-4 duration-300">
                         {/* Hybrid Input Section */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4">
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4 mb-6">
                             <SymptomSelector
                                 selectedSymptoms={evalData.symptoms}
                                 onChange={(s) => setEvalData({ ...evalData, symptoms: s })}
                             />
                         </div>
 
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4">
-                            <h3 className="font-bold text-brand-800">Notas Manuales</h3>
-                            <h4 className="text-sm font-bold text-brand-700">Motivo de Consulta</h4>
-                            <textarea
-                                className="w-full p-3 border rounded-xl min-h-[80px] focus:ring-2 focus:ring-brand-500/20 outline-none"
-                                placeholder="Escribe aquí..."
-                                value={evalData.anamnesis.motive}
-                                onChange={e => setEvalData({ ...evalData, anamnesis: { ...evalData.anamnesis, motive: e.target.value } })}
-                            />
-
-                            <h4 className="text-sm font-bold text-brand-700 pt-2">Historia Actual</h4>
-                            <textarea
-                                className="w-full p-3 border rounded-xl min-h-[120px] focus:ring-2 focus:ring-brand-500/20 outline-none"
-                                placeholder="Detalles extra..."
-                                value={evalData.anamnesis.history}
-                                onChange={e => setEvalData({ ...evalData, anamnesis: { ...evalData.anamnesis, history: e.target.value } })}
-                            />
-                        </div>
+                        <HistoryForm
+                            data={evalData.anamnesis}
+                            onChange={(d) => setEvalData({ ...evalData, anamnesis: d })}
+                        />
                     </div>
+
                 )}
 
                 {activeTab === 'pelvic' && (
