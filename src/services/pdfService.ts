@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Patient } from '../types/patient';
-import { Evaluation } from '../types/clinical'; // Assuming this maps to what we have
+
 
 export const pdfService = {
     generatePatientReport(patient: Patient, evaluation: any) {
