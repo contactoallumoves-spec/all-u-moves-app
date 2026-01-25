@@ -26,7 +26,6 @@ export const ITEMS_CATALOG: Record<string, string> = {
 
     // Fallback constants just in case logic adds new ones
     'edu_lifestyle_general': 'Recomendaciones Generales de Estilo de Vida',
-    'edu_lifestyle_general': 'Recomendaciones Generales de Estilo de Vida',
     'task_rest': 'Descanso Activo',
 
     // --- INTERVENTIONS (PRESETS) ---
