@@ -217,6 +217,7 @@ export default function CompleteEvaluation() {
                         <MSKForm
                             data={evalData.msk}
                             onChange={(d) => setEvalData({ ...evalData, msk: d })}
+                        />
                     </div>
                 )}
 
