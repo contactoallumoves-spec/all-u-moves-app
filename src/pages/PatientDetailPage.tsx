@@ -2,12 +2,47 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
-import { SessionService } from '../services/sessionService'; // [NEW]
+import { SessionService } from '../services/sessionService';
 import { Patient } from '../types/patient';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { ArrowLeft, Clock, Calendar, FileText, Activity, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+
+// Helper to recursively render any object data
+const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
+    if (data === null || data === undefined) return null;
+    if (typeof data !== 'object') return <span className="text-gray-600 font-medium ml-2">{String(data)}</span>;
+    if (Object.keys(data).length === 0) return null;
+
+    return (
+        <div className={`space-y-2 ${level > 0 ? 'ml-3 border-l-2 border-brand-100 pl-3 mt-2' : ''}`}>
+            {Object.entries(data).map(([key, value]) => {
+                if (value === null || value === undefined || value === '') return null;
+                // Beautify key
+                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    return (
+                        <div key={key} className="mt-1">
+                            <span className="text-xs font-bold text-brand-500 uppercase tracking-wide block mb-1">{label}</span>
+                            <DataRenderer data={value} level={level + 1} />
+                        </div>
+                    );
+                }
+
+                return (
+                    <div key={key} className="flex gap-1 text-sm items-start">
+                        <span className="font-semibold text-brand-800 min-w-[140px] text-xs uppercase opacity-80 pt-0.5">{label}:</span>
+                        <span className="text-gray-800 text-sm">
+                            {Array.isArray(value) ? value.join(', ') : String(value)}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
 
 export default function PatientDetailPage() {
     const { id } = useParams();
@@ -16,7 +51,7 @@ export default function PatientDetailPage() {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // [NEW] States for Modal and Checklist
+    // States for Modal and Checklist
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const [checklist, setChecklist] = useState<{ label: string, checked: boolean }[]>([]);
 
@@ -86,7 +121,6 @@ export default function PatientDetailPage() {
         const newChecklist = [...checklist];
         newChecklist[index].checked = !newChecklist[index].checked;
         setChecklist(newChecklist);
-        // Persist
         await PatientService.update(patient.id, { nextSessionChecklist: newChecklist });
     };
 
@@ -99,7 +133,6 @@ export default function PatientDetailPage() {
             } else {
                 await EvaluationService.delete(item.id);
             }
-            // Reload
             if (patient?.id) loadData(patient.id);
             setSelectedItem(null);
         } catch (error) {
@@ -325,6 +358,33 @@ export default function PatientDetailPage() {
                                         <p className="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm whitespace-pre-wrap">{selectedItem.raw.notes || 'Sin notas.'}</p>
                                     </div>
 
+                                    {/* Re-assessment Data [NEW] */}
+                                    {selectedItem.raw.reassessment && (
+                                        <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                                            <h3 className="font-bold text-blue-800 text-sm uppercase mb-3">Re-evaluación Física</h3>
+                                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                                {selectedItem.raw.reassessment.oxford !== undefined && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-blue-400 text-xs">Oxford</span>
+                                                        <span className="font-bold text-blue-900 text-lg">{selectedItem.raw.reassessment.oxford}/5</span>
+                                                    </div>
+                                                )}
+                                                {selectedItem.raw.reassessment.tonicity && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-blue-400 text-xs">Tonicidad</span>
+                                                        <span className="font-bold text-blue-900">{selectedItem.raw.reassessment.tonicity}</span>
+                                                    </div>
+                                                )}
+                                                {selectedItem.raw.reassessment.breating && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-blue-400 text-xs">Patrón Respiratorio</span>
+                                                        <span className="font-bold text-blue-900">{selectedItem.raw.reassessment.breating}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-2">
                                         <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Intervenciones Realizadas</h3>
                                         <div className="flex flex-wrap gap-2">
@@ -379,23 +439,13 @@ export default function PatientDetailPage() {
                                         <p className="text-gray-700 text-sm leading-relaxed">{selectedItem.summary}</p>
                                     </div>
 
-                                    {/* Detailed Physical Exam Data (if available) */}
+                                    {/* Detailed Physical Exam Data - FULL RENDERER */}
                                     {selectedItem.raw.details && (
                                         <div className="bg-gray-50 p-4 rounded-xl space-y-4">
-                                            <h3 className="font-bold text-gray-700 text-sm uppercase">Detalles Clínicos</h3>
-
-                                            {selectedItem.raw.details.pelvic && (
-                                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                                                    <span className="text-gray-500">Fuerza (Oxford):</span>
-                                                    <span className="font-medium">{selectedItem.raw.details.pelvic.oxford || '-'} / 5</span>
-
-                                                    <span className="text-gray-500">Hiato:</span>
-                                                    <span className="font-medium">{selectedItem.raw.details.pelvic.hiatus || '-'}</span>
-
-                                                    <span className="text-gray-500">Dolor Pélvico:</span>
-                                                    <span className="font-medium">{selectedItem.raw.details.pelvic.painMap || 'Sin dolor'}</span>
-                                                </div>
-                                            )}
+                                            <h3 className="font-bold text-gray-700 text-sm uppercase">Detalles Clínicos Completos</h3>
+                                            <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                                                <DataRenderer data={selectedItem.raw.details} />
+                                            </div>
                                         </div>
                                     )}
 
