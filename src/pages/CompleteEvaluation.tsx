@@ -13,6 +13,8 @@ import { cn } from '../lib/utils';
 import { PelvicFloorForm } from '../components/evaluation/PelvicFloorForm';
 import { MSKForm } from '../components/evaluation/MSKForm';
 import { SymptomSelector } from '../components/evaluation/SymptomSelector'; // [NEW]
+import { getLabel } from '../data/catalog';
+
 
 export default function CompleteEvaluation() {
     const { patientId } = useParams();
@@ -239,9 +241,6 @@ export default function CompleteEvaluation() {
 
                             <h3 className="font-bold text-brand-800 pt-4">Plan Sugerido (Editable)</h3>
 
-                            import {getLabel} from '../data/catalog'; // [NEW]
-
-                            // ... (in component)
 
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div className="p-4 bg-gray-50 rounded-lg border">
