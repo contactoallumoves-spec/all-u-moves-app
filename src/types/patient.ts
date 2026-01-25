@@ -19,4 +19,13 @@ export interface Patient {
         label: string;
         checked: boolean;
     }[];
+    activeTasks?: Task[];
+}
+
+export interface Task {
+    id: string;
+    description: string; // e.g., "Respiración Diafragmática"
+    frequency: string;   // e.g., "3 series de 10 reps"
+    duration?: string;   // e.g., "Mañana y Noche"
+    completed?: boolean;
 }

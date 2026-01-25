@@ -4,6 +4,7 @@ import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
 import { SessionService } from '../services/sessionService';
 import { Patient } from '../types/patient';
+import { pdfService } from '../services/pdfService';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { ArrowLeft, Clock, Calendar, FileText, Activity, PlayCircle, Plus, Trash2 } from 'lucide-react';
@@ -222,13 +223,17 @@ export default function PatientDetailPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => pdfService.generateFullHistoryReport(patient!, history)}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Ficha PDF
+                    </Button>
                     <Button variant="outline" onClick={() => navigate(`/eval/new/${id}`)}>
                         <Plus className="w-4 h-4 mr-2" />
                         Nueva Evaluación
                     </Button>
                     <Button className="bg-brand-800 text-white shadow-lg shadow-brand-200/50" onClick={() => navigate(`/users/${id}/sessions/new`)}>
                         <PlayCircle className="w-4 h-4 mr-2" />
-                        Nueva Sesión (Evolución)
+                        Nueva Sesión
                     </Button>
                 </div>
             </div>
@@ -335,30 +340,47 @@ export default function PatientDetailPage() {
                             <div>
                                 <h4 className="font-bold text-xs text-brand-400 mb-2 uppercase">Tareas Activas</h4>
                                 <div className="space-y-2">
-                                    {['Respiración Diafragmática', 'Knack Pre-esfuerzo', 'Caminata 15min'].map(task => (
-                                        <div key={task} className="flex items-center gap-2 p-2 bg-brand-50 rounded-lg text-sm text-brand-700">
-                                            <FileText className="w-3 h-3 text-brand-400" /> {task}
-                                        </div>
-                                    ))}
+                                    {patient.activeTasks && patient.activeTasks.length > 0 ? (
+                                        patient.activeTasks.map((task, i) => (
+                                            <div key={i} className="flex flex-col p-2 bg-brand-50 rounded-lg text-sm text-brand-700 border border-brand-100">
+                                                <div className="flex items-center gap-2 font-medium">
+                                                    <FileText className="w-3 h-3 text-brand-400" /> {task.description}
+                                                </div>
+                                                <span className="text-xs text-brand-400 ml-5">{task.frequency}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-gray-400 italic">No hay tareas activas asignadas.</p>
+                                    )}
                                 </div>
                             </div>
 
                             <div>
                                 <h4 className="font-bold text-xs text-brand-400 mb-2 uppercase">Próximo Objetivo</h4>
+                                {/* TODO: Make this dynamic from latest session or patient goal field */}
                                 <p className="text-sm text-brand-900 italic">"Lograr estornudar sin escapes para la próxima semana"</p>
                             </div>
 
-                            <Button variant="outline" className="w-full text-xs" size="sm">
-                                Ver Plan Completo / Editar
-                            </Button>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Button variant="outline" className="text-xs" size="sm" onClick={() => pdfService.generateHomePlanPDF(patient, patient.activeTasks || [])}>
+                                    <FileText className="w-3 h-3 mr-1" /> PDF Plan
+                                </Button>
+                                <Button variant="outline" className="text-xs" size="sm" onClick={() => navigate(`/users/${id}/sessions/new`)}>
+                                    Editar Plan
+                                </Button>
+                            </div>
 
                             <Button
                                 className="w-full text-xs bg-green-500 hover:bg-green-600 text-white border-none"
                                 size="sm"
                                 onClick={() => {
+                                    if (!patient.activeTasks || patient.activeTasks.length === 0) {
+                                        alert("No hay tareas activas para enviar.");
+                                        return;
+                                    }
+                                    const tasksList = patient.activeTasks.map(t => `- ${t.description} (${t.frequency})`).join('\n');
                                     const text = `Hola ${patient.firstName}, aquí tienes tu plan actualizado:\n\n` +
-                                        `Tareas:\n- Respiración Diafragmática\n- Knack Pre-esfuerzo\n- Caminata 15min\n\n` +
-                                        `Objetivo: Lograr estornudar sin escapes para la próxima semana.\n\n` +
+                                        `Tareas:\n${tasksList}\n\n` +
                                         `¡Tú puedes! 💪`;
                                     window.open(`https://wa.me/${patient.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent(text)}`, '_blank');
                                 }}

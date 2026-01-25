@@ -6,7 +6,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, Save, Plus, Trash2, CheckSquare } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { Patient } from '../types/patient';
+import { Patient, Task } from '../types/patient';
 
 import { ITEMS_CATALOG } from '../data/catalog';
 
@@ -47,17 +47,17 @@ export default function EvolutionPage() {
     const [customActivities, setCustomActivities] = useState<{ category: string; name: string; params: string }[]>([]);
 
     // Tasks updates
-    const [tasks, setTasks] = useState([
-        { id: '1', label: 'Respiración Diafragmática', active: true },
-        { id: '2', label: 'Knack Pre-esfuerzo', active: true },
-        { id: '3', label: 'Caminata 15min', active: true },
-    ]);
+    const [tasks, setTasks] = useState<Task[]>([]);
 
     useEffect(() => {
         const load = async () => {
             if (patientId) {
                 const p = await PatientService.getById(patientId);
                 setPatient(p);
+                // Load active tasks from patient if not editing an old session
+                if (!editId && p?.activeTasks) {
+                    setTasks(p.activeTasks);
+                }
             }
             if (editId) {
                 const s = await SessionService.getById(editId);
@@ -95,14 +95,36 @@ export default function EvolutionPage() {
         setInterventionDetails(prev => ({ ...prev, [id]: value }));
     };
 
-    const toggleTask = (id: string) => {
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, active: !t.active } : t));
+    // Task Handlers
+    const handleAddTask = () => {
+        setTasks([...tasks, {
+            id: Date.now().toString(),
+            description: '',
+            frequency: '',
+            completed: false
+        }]);
+    };
+
+    const handleDeleteTask = (taskId: string) => {
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+    };
+
+    const handleUpdateTask = (taskId: string, field: keyof Task, value: any) => {
+        setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, [field]: value } : t
+        ));
     };
 
     const handleSave = async () => {
         if (!patientId) return;
 
         try {
+            // 1. Update Patient's Active Plan
+            await PatientService.update(patientId, {
+                activeTasks: tasks
+            });
+
+            // 2. Save Session
             const dataToSave = {
                 notes,
                 interventions,
@@ -367,30 +389,37 @@ export default function EvolutionPage() {
             <Card>
                 <CardContent className="p-4 space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm uppercase text-brand-500">Ajuste de Plan (Tareas)</h3>
-                        <Button variant="ghost" size="sm" className="text-brand-600 text-xs">
+                        <h3 className="font-bold text-sm uppercase text-brand-500">Ajuste de Plan (Hogar)</h3>
+                        <Button variant="ghost" size="sm" className="text-brand-600 text-xs" onClick={handleAddTask}>
                             <Plus className="w-3 h-3 mr-1" /> Añadir Tarea
                         </Button>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-3">
+                        {tasks.length === 0 && <p className="text-sm text-gray-400 italic">No hay tareas asignadas.</p>}
+
                         {tasks.map(task => (
-                            <div key={task.id} className={cn(
-                                "flex items-center justify-between p-3 rounded-lg border transition-all",
-                                task.active ? "bg-white border-brand-100" : "bg-gray-50 border-gray-100 opacity-60"
-                            )}>
-                                <div className="flex items-center gap-3">
+                            <div key={task.id} className="flex flex-col gap-2 p-3 rounded-lg border bg-white border-brand-100 shadow-sm animate-in fade-in">
+                                <div className="flex gap-2">
                                     <input
-                                        type="checkbox"
-                                        checked={task.active}
-                                        onChange={() => toggleTask(task.id)}
-                                        className="rounded text-brand-600 focus:ring-brand-500"
+                                        className="flex-1 p-2 text-sm font-medium border-b border-gray-100 focus:border-brand-500 outline-none"
+                                        placeholder="Descripción de la tarea (ej. Ejercicio de Kegel)"
+                                        value={task.description}
+                                        onChange={(e) => handleUpdateTask(task.id, 'description', e.target.value)}
                                     />
-                                    <span className={cn("text-sm", task.active ? "text-brand-900" : "text-gray-400 line-through")}>{task.label}</span>
+                                    <Button variant="ghost" size="sm" className="text-red-300 hover:text-red-500" onClick={() => handleDeleteTask(task.id)}>
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
                                 </div>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-300 hover:text-red-500">
-                                    <Trash2 className="w-3 h-3" />
-                                </Button>
+                                <div className="flex gap-2 items-center">
+                                    <span className="text-xs text-brand-400">Frecuencia:</span>
+                                    <input
+                                        className="flex-1 p-1 text-xs bg-gray-50 rounded border border-transparent focus:bg-white focus:border-brand-200 outline-none transition-all"
+                                        placeholder="Ej. 3 veces al día, 10 reps"
+                                        value={task.frequency}
+                                        onChange={(e) => handleUpdateTask(task.id, 'frequency', e.target.value)}
+                                    />
+                                </div>
                             </div>
                         ))}
                     </div>

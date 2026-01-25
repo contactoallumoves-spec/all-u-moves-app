@@ -5,9 +5,14 @@ import { REPORT_ASSETS } from '../assets/reportAssets';
 import { ITEMS_CATALOG } from '../data/catalog';
 
 export const pdfService = {
-    generatePatientReport(patient: Patient, evaluation: any) {
+    generateHomePlanPDF(patient: Patient, tasks: any[]) {
         const doc = new jsPDF();
-        this._applyDesign(doc, patient, evaluation, "Resumen de tu Sesión", true);
+        this._applyDesign(doc, patient, { plan: { tasks } }, "Mi Plan de Casa", true);
+    },
+
+    generateFullHistoryReport(patient: Patient, historyItems: any[]) {
+        const doc = new jsPDF();
+        this._applyFullHistoryDesign(doc, patient, historyItems);
     },
 
     generateClinicalRecord(patient: Patient, evaluation: any) {
@@ -200,6 +205,92 @@ export const pdfService = {
         this._drawCircularImage(doc, REPORT_ASSETS.photo, w - margin - photoSize, footerY - 5, photoSize, colors.bg);
 
         doc.save(`${isSimpleReport ? 'Reporte' : 'Ficha'}_${patient.firstName}.pdf`);
+    },
+
+    _applyFullHistoryDesign(doc: jsPDF, patient: Patient, items: any[]) {
+        const colors = {
+            bg: [255, 255, 255],
+            text: [60, 60, 70],
+            primary: [88, 28, 135],
+            secondary: [120, 120, 140],
+            line: [230, 230, 240]
+        };
+        const w = 210;
+        const h = 297;
+        const margin = 20;
+
+        // Header
+        this._drawHeader(doc, patient, "Historial Clínico Completo", colors);
+
+        let y = 50;
+
+        // Content - Timeline
+        doc.setFontSize(10);
+
+        items.forEach((item) => {
+            // Check page break
+            if (y > h - 40) {
+                doc.addPage();
+                this._drawHeader(doc, patient, "Historial Clínico (Cont.)", colors);
+                y = 50;
+            }
+
+            const dateStr = item.date?.toDate ? new Date(item.date.toDate()).toLocaleDateString('es-CL') : 'Fecha desc.';
+
+            // Box
+            doc.setFillColor(250, 250, 252);
+            doc.setDrawColor(colors.line[0], colors.line[1], colors.line[2]);
+            doc.roundedRect(margin, y, w - (margin * 2), 25, 3, 3, "FD");
+
+            // Type Pill
+            const isEval = item.type === 'evaluation';
+            doc.setFillColor(isEval ? colors.primary[0] : 100, isEval ? colors.primary[1] : 100, isEval ? colors.primary[2] : 100);
+            doc.roundedRect(margin + 5, y + 5, 25, 6, 2, 2, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(7);
+            doc.setFont("helvetica", "bold");
+            doc.text(isEval ? "EVALUACIÓN" : "SESIÓN", margin + 7, y + 9);
+
+            // Date
+            doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.text(dateStr, margin + 35, y + 9);
+
+            // Title/Details
+            doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            const title = item.type === 'session' ? `Sesión de Control` : `Evaluación ${item.raw.type || ''}`;
+            doc.text(title, margin + 5, y + 18);
+
+            // Extra Info
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            const info = item.type === 'session'
+                ? `EVA: ${item.raw.symptomsScore}/10  |  Notas: ${item.raw.notes ? item.raw.notes.substring(0, 50) + '...' : '-'}`
+                : `Diagnostico: ${item.raw.diagnosis || '-'}`;
+            doc.text(info, margin + 5, y + 23);
+
+            y += 30;
+        });
+
+        doc.save(`Historial_Completo_${patient.firstName}.pdf`);
+    },
+
+    _drawHeader(doc: jsPDF, patient: Patient, title: string, colors: any) {
+        const margin = 20;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+        doc.text(title, margin, margin + 10);
+
+        doc.setFontSize(12);
+        doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+        doc.text(`${patient.firstName} ${patient.lastName} - RUT: ${patient.rut || '-'}`, margin, margin + 18);
+
+        doc.setDrawColor(colors.line[0], colors.line[1], colors.line[2]);
+        doc.line(margin, margin + 25, 190, margin + 25);
     },
 
     // Robust Round Image using "Donut Mask" technique
