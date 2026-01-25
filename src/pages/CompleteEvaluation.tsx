@@ -3,14 +3,16 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
+import { logicService } from '../services/logicService'; // [NEW]
 import { Patient } from '../types/patient';
 import { Button } from '../components/ui/Button';
-import { ArrowLeft, Save, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 // Import sub-forms
 import { PelvicFloorForm } from '../components/evaluation/PelvicFloorForm';
 import { MSKForm } from '../components/evaluation/MSKForm';
+import { SymptomSelector } from '../components/evaluation/SymptomSelector'; // [NEW]
 
 export default function CompleteEvaluation() {
     const { patientId } = useParams();
@@ -26,7 +28,8 @@ export default function CompleteEvaluation() {
         anamnesis: { motive: '', history: '' },
         pelvic: { skin: '', hiatus: '', oxford: 0, endurance: false, coordination: false, painMap: '' },
         msk: { irdSupra: '', irdInfra: '', doming: false, posture: '', motorControl: '' },
-        plan: { diagnosis: '', goals: '', frequency: '' }
+        plan: { diagnosis: '', goals: '', frequency: '', tasks: [] as string[], education: [] as string[] },
+        symptoms: [] as string[] // [NEW] Hybrid Input
     });
 
     useEffect(() => {
@@ -38,34 +41,69 @@ export default function CompleteEvaluation() {
         }
     }, [patientId]);
 
+    // [NEW] Logic Brain
+    const generateSuggestions = () => {
+        const result = logicService.analyze(evalData.symptoms);
+
+        // Also infer from metrics (Oxford < 3 etc)
+        const inferredSymptoms = logicService.evaluateMetrics({ pelvic: evalData.pelvic, msk: evalData.msk });
+        // (Optional: Merge inferred symptoms back into selection or just use for plan)
+
+        // Update Plan with Suggestions
+        // Append to existing to avoid overwriting manual unless empty? 
+        // For now, let's just ADD new ones.
+        setEvalData(prev => ({
+            ...prev,
+            plan: {
+                ...prev.plan,
+                tasks: Array.from(new Set([...prev.plan.tasks, ...result.suggestions.tasks])),
+                education: Array.from(new Set([...prev.plan.education, ...result.suggestions.education]))
+            }
+        }));
+
+        alert(`¡Cerebro activado! 🧠\nSe detectaron ${result.activeClusters.length} clusters activos.\nPlan sugerido actualizado.`);
+    };
+
     const handleSave = async () => {
         if (!patientId) return;
         setSaving(true);
         try {
+            // Logic Analysis for final save
+            const logicResult = logicService.analyze(evalData.symptoms);
+
             // Build summary string based on findings
             const findings = [];
             if (evalData.pelvic.oxford < 3) findings.push("Debilidad SP");
             if (evalData.pelvic.hiatus === 'abierto') findings.push("Hiato Abierto");
             if (evalData.msk.doming) findings.push("Doming Abdominal");
+            logicResult.activeClusters.forEach(c => findings.push(c.label));
 
             const summaryText = findings.length > 0
-                ? `Evaluación Kine: ${findings.join(', ')}`
-                : "Evaluación Kine Completa (Sin hallazgos críticos)";
+                ? `Evaluación: ${findings.join(', ')}`
+                : "Evaluación Completa (Sin hallazgos críticos)";
 
             await EvaluationService.create({
                 patientId,
                 type: 'complete',
                 date: new Date(),
                 patientData: { stage: patient?.stage || 'General', redFlags: [] },
-                clusters: { active: [], scores: {} }, // Could infer clusters from data later
+                clusters: {
+                    active: logicResult.activeClusters.map(c => c.id), // Save generated clusters
+                    scores: {}
+                },
                 summary: summaryText,
-                plan: { education: [], tasks: [] }, // Advanced: Auto-populate based on plan tab
+                plan: {
+                    education: evalData.plan.education,
+                    tasks: evalData.plan.tasks,
+                    diagnosis: evalData.plan.diagnosis, // Save text diagnosis too
+                    goals: evalData.plan.goals
+                },
                 status: 'completed',
-                // save raw detailed data in a flexible 'details' field if we update the interface, 
-                // for now we might lose some granularity if Evaluation interface isn't updated. 
-                // *Important*: We should update Evaluation interface to support 'details' blob.
-                // extending the service on the fly here with 'any' cast or we update the type definition.
-                details: evalData
+                details: {
+                    ...evalData,
+                    // Ensure we save the symptoms explicitely in details too
+                    symptoms: evalData.symptoms
+                } as any
             } as any);
 
             navigate('/users');
@@ -80,10 +118,10 @@ export default function CompleteEvaluation() {
     if (loading) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-brand-600" /></div>;
 
     const tabs = [
-        { id: 'anamnesis', label: 'Anamnesis' },
-        { id: 'pelvic', label: 'Suelo Pélvico' },
-        { id: 'msk', label: 'Musculoesquelético' },
-        { id: 'plan', label: 'Diagnóstico & Plan' },
+        { id: 'anamnesis', label: '1. Anamnesis & Síntomas' },
+        { id: 'pelvic', label: '2. Suelo Pélvico' },
+        { id: 'msk', label: '3. Físico / MSK' },
+        { id: 'plan', label: '4. Plan & Sugerencias' },
     ];
 
     return (
@@ -127,19 +165,28 @@ export default function CompleteEvaluation() {
             <div className="min-h-[400px]">
                 {activeTab === 'anamnesis' && (
                     <div className="space-y-6 animate-in slide-in-from-left-4 duration-300">
+                        {/* Hybrid Input Section */}
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4">
-                            <h3 className="font-bold text-brand-800">Motivo de Consulta</h3>
+                            <SymptomSelector
+                                selectedSymptoms={evalData.symptoms}
+                                onChange={(s) => setEvalData({ ...evalData, symptoms: s })}
+                            />
+                        </div>
+
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4">
+                            <h3 className="font-bold text-brand-800">Notas Manuales</h3>
+                            <h4 className="text-sm font-bold text-brand-700">Motivo de Consulta</h4>
                             <textarea
-                                className="w-full p-3 border rounded-xl min-h-[100px] focus:ring-2 focus:ring-brand-500/20 outline-none"
-                                placeholder="¿Por qué viene hoy? (Sus palabras)"
+                                className="w-full p-3 border rounded-xl min-h-[80px] focus:ring-2 focus:ring-brand-500/20 outline-none"
+                                placeholder="Escribe aquí..."
                                 value={evalData.anamnesis.motive}
                                 onChange={e => setEvalData({ ...evalData, anamnesis: { ...evalData.anamnesis, motive: e.target.value } })}
                             />
 
-                            <h3 className="font-bold text-brand-800 pt-4">Historia Actual</h3>
+                            <h4 className="text-sm font-bold text-brand-700 pt-2">Historia Actual</h4>
                             <textarea
-                                className="w-full p-3 border rounded-xl min-h-[150px] focus:ring-2 focus:ring-brand-500/20 outline-none"
-                                placeholder="Evolución del síntoma, tratamientos previos, etc."
+                                className="w-full p-3 border rounded-xl min-h-[120px] focus:ring-2 focus:ring-brand-500/20 outline-none"
+                                placeholder="Detalles extra..."
                                 value={evalData.anamnesis.history}
                                 onChange={e => setEvalData({ ...evalData, anamnesis: { ...evalData.anamnesis, history: e.target.value } })}
                             />
@@ -167,6 +214,20 @@ export default function CompleteEvaluation() {
 
                 {activeTab === 'plan' && (
                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                        {/* Logic Engine Trigger */}
+                        <div className="bg-purple-50 border border-purple-100 rounded-xl p-6 text-center">
+                            <div className="flex flex-col items-center gap-2">
+                                <Sparkles className="w-8 h-8 text-purple-600" />
+                                <h3 className="font-bold text-purple-900">Asistente Inteligente</h3>
+                                <p className="text-sm text-purple-700 max-w-md">
+                                    Analiza los síntomas marcados y tus hallazgos para sugerir un plan basado en los protocolos.
+                                </p>
+                                <Button onClick={generateSuggestions} className="mt-2 bg-purple-600 hover:bg-purple-700 text-white">
+                                    Generar Sugerencias Automáticas
+                                </Button>
+                            </div>
+                        </div>
+
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4">
                             <h3 className="font-bold text-brand-800">Diagnóstico Kinesiológico</h3>
                             <textarea
@@ -176,7 +237,30 @@ export default function CompleteEvaluation() {
                                 onChange={e => setEvalData({ ...evalData, plan: { ...evalData.plan, diagnosis: e.target.value } })}
                             />
 
-                            <h3 className="font-bold text-brand-800 pt-4">Objetivos y Plan</h3>
+                            <h3 className="font-bold text-brand-800 pt-4">Plan Sugerido (Editable)</h3>
+
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="p-4 bg-gray-50 rounded-lg border">
+                                    <h4 className="font-bold text-sm text-gray-700 mb-2">Tareas / Ejercicios</h4>
+                                    {evalData.plan.tasks.length === 0 && <p className="text-xs text-gray-400 italic">Sin tareas. Usa el Asistente para sugerir.</p>}
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        {evalData.plan.tasks.map((t, i) => (
+                                            <li key={i} className="text-sm text-gray-700">{t}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div className="p-4 bg-gray-50 rounded-lg border">
+                                    <h4 className="font-bold text-sm text-gray-700 mb-2">Educación</h4>
+                                    {evalData.plan.education.length === 0 && <p className="text-xs text-gray-400 italic">Sin educación. Usa el Asistente para sugerir.</p>}
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        {evalData.plan.education.map((t, i) => (
+                                            <li key={i} className="text-sm text-gray-700">{t}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <h3 className="font-bold text-brand-800 pt-4">Detalles Administrativos</h3>
                             <div className="grid md:grid-cols-2 gap-4">
                                 <label className="block">
                                     <span className="text-sm font-medium text-brand-700">Objetivos (SMART)</span>
