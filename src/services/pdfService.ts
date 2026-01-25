@@ -292,24 +292,24 @@ export const pdfService = {
             if (item.type === 'session') {
                 // SESION CONTENT
 
-                // EVA / Notes
+                // EVA / Adherence
                 if (item.raw.symptomsScore !== undefined) {
                     doc.setFont("helvetica", "bold");
-                    doc.text(`EVA:`, margin, y);
+                    doc.text(`Evaluación del Dolor (EVA):`, margin, y);
                     doc.setFont("helvetica", "normal");
-                    doc.text(`${item.raw.symptomsScore}/10`, margin + 15, y);
+                    doc.text(`${item.raw.symptomsScore}/10`, margin + 55, y);
                 }
                 if (item.raw.adherence) {
                     doc.setFont("helvetica", "bold");
-                    doc.text(`Adherencia:`, margin + 60, y);
+                    doc.text(`Nivel de Adherencia:`, margin + 80, y);
                     doc.setFont("helvetica", "normal");
-                    doc.text(`${item.raw.adherence}`, margin + 85, y);
+                    doc.text(`${item.raw.adherence}`, margin + 118, y);
                 }
-                y += 6;
+                y += 8;
 
                 if (item.raw.notes) {
                     doc.setFont("helvetica", "bold");
-                    doc.text("Notas:", margin, y);
+                    doc.text("Notas Clínicas:", margin, y);
                     y += 5;
                     doc.setFont("helvetica", "normal");
                     const splitNotes = doc.splitTextToSize(item.raw.notes, w - (margin * 2));
@@ -320,7 +320,7 @@ export const pdfService = {
                 // Interventions
                 if (item.raw.interventions && item.raw.interventions.length > 0) {
                     doc.setFont("helvetica", "bold");
-                    doc.text("Intervenciones / Presets:", margin, y);
+                    doc.text("Intervenciones / Procedimientos Realizados:", margin, y);
                     y += 5;
                     doc.setFont("helvetica", "normal");
 
@@ -341,12 +341,14 @@ export const pdfService = {
                 // Custom Activities
                 if (item.raw.customActivities && item.raw.customActivities.length > 0) {
                     doc.setFont("helvetica", "bold");
-                    doc.text("Actividades Específicas:", margin, y);
+                    doc.text("Actividades Específicas / Educación:", margin, y);
                     y += 5;
                     doc.setFont("helvetica", "normal");
 
                     item.raw.customActivities.forEach((act: any) => {
-                        const line = `• [${act.category}] ${act.name} ${act.params ? `(${act.params})` : ''}`;
+                        // Translate category
+                        const catLabel = (ITEMS_CATALOG as any)[act.category] || act.category;
+                        const line = `• [${catLabel}] ${act.name} ${act.params ? `(${act.params})` : ''}`;
                         if (y > h - 20) { doc.addPage(); y = 20; }
                         doc.text(line, margin + 5, y);
                         y += 5;
@@ -355,18 +357,25 @@ export const pdfService = {
 
                 // Reassessment
                 if (item.raw.reassessment) {
-                    y += 2;
+                    y += 4;
                     doc.setFont("helvetica", "bold");
-                    doc.text("Re-evaluación:", margin, y);
-                    y += 5;
+                    doc.text("Re-evaluación Física:", margin, y);
+                    y += 6;
                     doc.setFont("helvetica", "normal");
-                    let reText = "";
-                    if (item.raw.reassessment.oxford) reText += `Oxford: ${item.raw.reassessment.oxford}/5  `;
-                    if (item.raw.reassessment.tonicity) reText += `Tonicidad: ${item.raw.reassessment.tonicity}  `;
-                    if (item.raw.reassessment.breating) reText += `Resp: ${item.raw.reassessment.breating}`;
 
-                    doc.text(reText, margin + 5, y);
-                    y += 5;
+                    const re = item.raw.reassessment;
+                    if (re.oxford) {
+                        doc.text(`• Fuerza Muscular (Oxford): ${re.oxford}/5`, margin + 5, y);
+                        y += 5;
+                    }
+                    if (re.tonicity) {
+                        doc.text(`• Tonicidad Basal: ${re.tonicity}`, margin + 5, y);
+                        y += 5;
+                    }
+                    if (re.breating) {
+                        doc.text(`• Patrón Respiratorio: ${re.breating}`, margin + 5, y);
+                        y += 5;
+                    }
                 }
 
 
