@@ -16,6 +16,10 @@ export default function PatientDetailPage() {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // [NEW] States for Modal and Checklist
+    const [selectedItem, setSelectedItem] = useState<any | null>(null);
+    const [checklist, setChecklist] = useState<{ label: string, checked: boolean }[]>([]);
+
     useEffect(() => {
         if (id) {
             loadData(id);
@@ -27,6 +31,16 @@ export default function PatientDetailPage() {
         try {
             const p = await PatientService.getById(patientId);
             setPatient(p);
+
+            // Initialize checklist if exists, else defaults
+            if (p?.nextSessionChecklist) {
+                setChecklist(p.nextSessionChecklist);
+            } else {
+                setChecklist([
+                    { label: 'Re-evaluar fuerza suelo pélvico (Oxford)', checked: false },
+                    { label: 'Preguntar adherencia ejercicios respiratorios', checked: false }
+                ]);
+            }
 
             // Fetch Evaluations and Sessions
             const [evals, sessions] = await Promise.all([
@@ -42,6 +56,7 @@ export default function PatientDetailPage() {
                 title: e.type === 'fast' ? 'Evaluación Rápida' : 'Evaluación Completa',
                 summary: e.summary || 'Sin resumen',
                 findings: e.details?.symptoms || [],
+                raw: e, // Store full object for detail view
                 timestamp: e.date instanceof Date ? e.date.getTime() : 0
             }));
 
@@ -52,6 +67,7 @@ export default function PatientDetailPage() {
                 title: 'Evolución / Sesión',
                 summary: s.notes || 'Sin notas',
                 findings: s.interventions || [],
+                raw: s, // Store full object for detail view
                 timestamp: s.date instanceof Date ? s.date.getTime() : 0
             }));
 
@@ -62,6 +78,33 @@ export default function PatientDetailPage() {
             console.error("Error loading patient", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleChecklistChange = async (index: number) => {
+        if (!patient?.id) return;
+        const newChecklist = [...checklist];
+        newChecklist[index].checked = !newChecklist[index].checked;
+        setChecklist(newChecklist);
+        // Persist
+        await PatientService.update(patient.id, { nextSessionChecklist: newChecklist });
+    };
+
+    const handleDelete = async (item: any) => {
+        if (!confirm("¿Estás segura de eliminar este registro? Esta acción no se puede deshacer.")) return;
+
+        try {
+            if (item.type === 'session') {
+                await SessionService.delete(item.id);
+            } else {
+                await EvaluationService.delete(item.id);
+            }
+            // Reload
+            if (patient?.id) loadData(patient.id);
+            setSelectedItem(null);
+        } catch (error) {
+            console.error("Error deleting", error);
+            alert("Error al eliminar");
         }
     };
 
@@ -113,13 +156,30 @@ export default function PatientDetailPage() {
                         </CardHeader>
                         <CardContent>
                             <ul className="space-y-2">
-                                <li className="flex items-center gap-2 text-sm text-brand-800">
-                                    <input type="checkbox" className="rounded text-brand-600 focus:ring-brand-500" />
-                                    Re-evaluar fuerza suelo pélvico (Oxford)
-                                </li>
-                                <li className="flex items-center gap-2 text-sm text-brand-800">
-                                    <input type="checkbox" className="rounded text-brand-600 focus:ring-brand-500" />
-                                    Preguntar adherencia ejercicios respiratorios
+                                {checklist.map((item, idx) => (
+                                    <li key={idx} className="flex items-center gap-2 text-sm text-brand-800">
+                                        <input
+                                            type="checkbox"
+                                            checked={item.checked}
+                                            onChange={() => handleChecklistChange(idx)}
+                                            className="rounded text-brand-600 focus:ring-brand-500 cursor-pointer"
+                                        />
+                                        <span className={item.checked ? "line-through opacity-50" : ""}>{item.label}</span>
+                                    </li>
+                                ))}
+                                <li className="pt-2">
+                                    <Button variant="ghost" size="sm" className="text-xs text-orange-600 h-6" onClick={() => {
+                                        const label = prompt("Nueva tarea:");
+                                        if (label) {
+                                            const newItem = { label, checked: false };
+                                            const newChecklist = [...checklist, newItem];
+                                            setChecklist(newChecklist);
+                                            // Safe update (if patient loaded)
+                                            if (patient?.id) PatientService.update(patient.id, { nextSessionChecklist: newChecklist });
+                                        }
+                                    }}>
+                                        + Agregar Item
+                                    </Button>
                                 </li>
                             </ul>
                         </CardContent>
@@ -135,14 +195,14 @@ export default function PatientDetailPage() {
                             {history.length === 0 && <p className="text-sm text-brand-400 italic">No hay registros aún.</p>}
 
                             {history.map((item, idx) => (
-                                <div key={idx} className="relative group">
+                                <div key={idx} className="relative group cursor-pointer" onClick={() => setSelectedItem(item)}>
                                     {/* Dot */}
                                     <div className={cn(
-                                        "absolute -left-[41px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm",
+                                        "absolute -left-[41px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110",
                                         item.type.includes('eval') ? "bg-purple-500" : "bg-brand-500"
                                     )} />
 
-                                    <div className="bg-white p-4 rounded-xl border border-brand-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="bg-white p-4 rounded-xl border border-brand-100 shadow-sm hover:shadow-md transition-all group-hover:border-brand-300">
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <h3 className="font-bold text-brand-900">{item.title}</h3>
@@ -152,10 +212,10 @@ export default function PatientDetailPage() {
                                                 </p>
                                             </div>
                                             <span className="text-xs font-mono text-brand-300 bg-brand-50 px-2 py-1 rounded">
-                                                {item.type}
+                                                {item.type === 'session' ? 'SESIÓN' : 'EVAL'}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-600 mb-3">{item.summary}</p>
+                                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.summary}</p>
 
                                         {/* Tags/Chips */}
                                         <div className="flex flex-wrap gap-2">
@@ -228,8 +288,62 @@ export default function PatientDetailPage() {
                         </CardContent>
                     </Card>
                 </div>
-
             </div>
+
+            {/* Detail Modal */}
+            {selectedItem && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
+                            <div>
+                                <h2 className="text-2xl font-serif font-bold text-brand-900">{selectedItem.title}</h2>
+                                <p className="text-brand-500 text-sm">
+                                    {selectedItem.date?.toDate ? new Date(selectedItem.date.toDate()).toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Fecha desconocida'}
+                                </p>
+                            </div>
+                            <button onClick={() => setSelectedItem(null)} className="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Content based on type */}
+                            <div className="bg-brand-50/50 p-4 rounded-xl border border-brand-100">
+                                <h3 className="font-bold text-brand-800 text-sm uppercase mb-2">Resumen / Notas</h3>
+                                <p className="text-brand-900">{selectedItem.summary}</p>
+                            </div>
+
+                            {selectedItem.findings && selectedItem.findings.length > 0 && (
+                                <div>
+                                    <h3 className="font-bold text-brand-800 text-sm uppercase mb-2">Hallazgos / Intervenciones</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedItem.findings.map((f: string, i: number) => (
+                                            <span key={i} className="bg-white border border-brand-200 text-brand-700 px-3 py-1 rounded-lg text-sm shadow-sm">
+                                                {f}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Raw Data Dump (Debug/View all) - Optional, kept clean for now */}
+                        </div>
+
+                        <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
+                            <Button variant="ghost" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(selectedItem)}>
+                                Eliminar Registro
+                            </Button>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={() => setSelectedItem(null)}>
+                                    Cerrar
+                                </Button>
+                                {/* Edit Placeholder - To be implemented next step if needed */}
+                                <Button disabled className="bg-brand-100 text-brand-400 cursor-not-allowed">
+                                    Editar (Pronto)
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
