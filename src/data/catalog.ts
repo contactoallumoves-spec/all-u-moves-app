@@ -40,7 +40,33 @@ export const ITEMS_CATALOG: Record<string, string> = {
     'ex_core_stab': 'Estabilización Lumbopélvica',
     'edu_hygiene': 'Educación Higiene Pélvica',
 
-    // --- FIELD TRANSLATIONS ---
+    // --- CLUSTERS / DIAGNOSIS ---
+    'ui_effort': 'Incont. Urinaria de Esfuerzo',
+    'ui_urgency': 'Incont. Urinaria de Urgencia',
+    'ui_mixed': 'Incont. Urinaria Mixta',
+    'prolapse_sensation': 'Sensación de Peso/Bulto',
+    'return_run': 'Retorno al Trote/Impacto',
+    'dyspareunia': 'Dispareunia (Dolor Sexual)',
+    'cpp': 'Dolor Pélvico Crónico',
+    'constipation': 'Constipación',
+
+    // --- FUNCTIONAL EVALUATION ---
+    'functional': 'Evaluación Funcional',
+    'impactTests': 'Tests de Impacto',
+    'toleranceTests': 'Tests de Tolerancia',
+    'aslrRight': 'ASLR Derecho',
+    'aslrLeft': 'ASLR Izquierdo',
+    'q1_freq': 'Frecuencia (Q1)',
+    'q2_vol': 'Volumen (Q2)',
+    'beighton': 'Beighton (Hiperlaxitud)',
+    'education': 'Educación',
+    'tasks': 'Tareas / Ejercicios',
+    'frequency': 'Frecuencia de Sesiones',
+    'goals': 'Objetivos Terapéuticos',
+    'diagnosis': 'Diagnóstico Kinésico',
+    'plan': 'Plan de Tratamiento (Resumen)',
+
+    // --- OTHER FIELD TRANSLATIONS ---
     'anamnesis': 'Anamnesis / Historia',
     'motive': 'Motivo de Consulta',
     'history': 'Historia Clínica',
@@ -71,10 +97,14 @@ export const ITEMS_CATALOG: Record<string, string> = {
     'hiatus': 'Hiato Urogenital',
     'prolapse': 'Prolapso',
     'painMap': 'Mapa de Dolor',
-    'plan': 'Plan de Tratamiento',
-    'diagnosis': 'Diagnóstico Kinésico',
-    'goals': 'Objetivos Terapéuticos',
-    'frequency': 'Frecuencia de Sesiones'
+
+    // Fallbacks generic
+    'active': 'Activo',
+    'passive': 'Pasivo',
+    'resisted': 'Resistido',
+    'normal': 'Normal',
+    'abnormal': 'Anormal',
+    'pain': 'Dolor'
 };
 
 export function getLabel(id: string): string {

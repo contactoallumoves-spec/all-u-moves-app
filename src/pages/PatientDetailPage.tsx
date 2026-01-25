@@ -457,7 +457,7 @@ export default function PatientDetailPage() {
                                             <div className="flex flex-wrap gap-2">
                                                 {selectedItem.raw.clusters.active.map((c: string, i: number) => (
                                                     <span key={i} className="bg-brand-100 text-brand-800 px-3 py-1 rounded-full text-xs font-bold">
-                                                        {c}
+                                                        {getLabel(c)}
                                                     </span>
                                                 ))}
                                             </div>
