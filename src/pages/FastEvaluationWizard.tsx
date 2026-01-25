@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Save } from 'lucide-react';
@@ -10,11 +10,28 @@ import { EvaluationService } from '../services/evaluationService';
 export default function FastEvaluationWizard() {
     const navigate = useNavigate();
     const { patientId } = useParams();
+    const [searchParams] = useSearchParams();
+    const editId = searchParams.get('editId');
+
     const [step, setStep] = useState(1);
     const [saving, setSaving] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [selectedStage, setSelectedStage] = useState<string>('');
 
     const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (editId) {
+            setLoading(true);
+            EvaluationService.getById(editId).then(ev => {
+                if (ev) {
+                    setSelectedStage(ev.patientData?.stage || '');
+                    setSelectedClusters(ev.clusters?.active || []);
+                }
+                setLoading(false);
+            });
+        }
+    }, [editId]);
 
     // Derived state: Suggestions based on selected clusters
     const activeSuggestions = {
@@ -40,17 +57,25 @@ export default function FastEvaluationWizard() {
         }
         setSaving(true);
         try {
-            await EvaluationService.create({
-                patientId,
+            const dataToSave = {
                 type: 'fast',
-                date: new Date(),
                 patientData: { stage: selectedStage || 'Nuligesta', redFlags: [] },
                 clusters: { active: selectedClusters },
                 summary: `Evaluación Rápida (${selectedStage || 'General'}) con ${selectedClusters.length} clusters activos.`,
                 plan: activeSuggestions,
                 status: 'completed'
-            });
-            navigate('/users'); // Go back to patient list (or patient detail eventually)
+            };
+
+            if (editId) {
+                await EvaluationService.update(editId, dataToSave as any);
+            } else {
+                await EvaluationService.create({
+                    patientId,
+                    date: new Date(),
+                    ...dataToSave
+                } as any);
+            }
+            navigate('/users');
         } catch (error) {
             console.error(error);
             alert("Error al guardar evaluación");
@@ -58,6 +83,8 @@ export default function FastEvaluationWizard() {
             setSaving(false);
         }
     };
+
+    if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-brand-600" /></div>;
 
     return (
         <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
 
 export interface Session {
     id?: string;
@@ -76,6 +76,35 @@ export const SessionService = {
             await deleteDoc(doc(db, COLLECTION_NAME, id));
         } catch (error) {
             console.error("Error deleting session: ", error);
+            throw error;
+        }
+    },
+
+    async update(id: string, data: Partial<Session>) {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            await updateDoc(docRef, data);
+        } catch (error) {
+            console.error("Error updating session: ", error);
+            throw error;
+        }
+    },
+
+    async getById(id: string) {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                return {
+                    id: docSnap.id,
+                    ...data,
+                    date: data.date?.toDate()
+                } as Session;
+            }
+            return null;
+        } catch (error) {
+            console.error("Error getting session:", error);
             throw error;
         }
     }

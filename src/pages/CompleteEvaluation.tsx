@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
 import { logicService } from '../services/logicService'; // [NEW]
@@ -27,39 +27,45 @@ export default function CompleteEvaluation() {
     const { patientId } = useParams();
     const navigate = useNavigate();
 
+    const [searchParams] = useSearchParams();
+    const editId = searchParams.get('editId');
+
     const [patient, setPatient] = useState<Patient | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'safety' | 'anamnesis' | 'pelvic' | 'msk' | 'functional' | 'questionnaires' | 'plan'>('anamnesis');
 
-
-
     // Consolidated Form State
     const [evalData, setEvalData] = useState({
         anamnesis: { motive: '', history: '', gestations: 0, vaginalBirths: 0, cSections: 0, abortions: 0, comorbidities: [] as string[], surgeryDetails: '' },
         pelvic: { skin: '', hiatus: '', valsalva: '', oxford: 0, endurance: false, coordination: false, painMap: '', painPoints: [] as string[] },
-
         msk: { irdSupra: '', irdInfra: '', doming: false, posture: '', motorControl: '', breathing: '', beighton: 0 },
         functional: {
             aslrLeft: 0, aslrRight: 0, aslrNotes: '', squatQuality: '', bridgeQuality: '', impactTests: [] as string[],
             modality: '', toleranceTests: [] as string[] // [NEW]
         },
-
         questionnaire: { q1_freq: 0, q2_vol: 0, q3_impact: 0, score: 0 }, // [NEW]
-
         plan: { diagnosis: '', goals: '', frequency: '', tasks: [] as string[], education: [] as string[] },
         symptoms: [] as string[], // [NEW] Hybrid Input
         redFlags: [] as string[] // [NEW]
     });
 
     useEffect(() => {
-        if (patientId) {
-            PatientService.getById(patientId).then(p => {
+        const load = async () => {
+            if (patientId) {
+                const p = await PatientService.getById(patientId);
                 setPatient(p);
-                setLoading(false);
-            });
-        }
-    }, [patientId]);
+            }
+            if (editId) {
+                const ev = await EvaluationService.getById(editId);
+                if (ev && ev.details) {
+                    setEvalData(ev.details);
+                }
+            }
+            setLoading(false);
+        };
+        load();
+    }, [patientId, editId]);
 
     // Store the brain result to display suggestions (CIF etc)
     const [activeLogicResult, setActiveLogicResult] = useState<any>(null); // [NEW]
@@ -105,10 +111,7 @@ export default function CompleteEvaluation() {
                 ? `Evaluación: ${findings.join(', ')}`
                 : "Evaluación Completa (Sin hallazgos críticos)";
 
-            await EvaluationService.create({
-                patientId,
-                type: 'complete',
-                date: new Date(),
+            const dataToSave = {
                 patientData: { stage: patient?.stage || 'General', redFlags: [] },
                 clusters: {
                     active: logicResult.activeClusters.map(c => c.id), // Save generated clusters
@@ -127,7 +130,18 @@ export default function CompleteEvaluation() {
                     // Ensure we save the symptoms explicitely in details too
                     symptoms: evalData.symptoms
                 } as any
-            } as any);
+            };
+
+            if (editId) {
+                await EvaluationService.update(editId, dataToSave as any);
+            } else {
+                await EvaluationService.create({
+                    patientId,
+                    type: 'complete',
+                    date: new Date(),
+                    ...dataToSave
+                } as any);
+            }
 
             navigate('/users');
         } catch (error) {

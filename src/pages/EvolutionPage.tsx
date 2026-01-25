@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { SessionService } from '../services/sessionService'; // [NEW]
 import { Card, CardContent } from '../components/ui/Card';
@@ -25,6 +25,9 @@ const INTERVENTIONS_PRESETS = [
 export default function EvolutionPage() {
     const { patientId } = useParams(); // Note: route uses :patientId usually, or :id. Let's align.
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const editId = searchParams.get('editId');
+
     const [patient, setPatient] = useState<Patient | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -47,13 +50,32 @@ export default function EvolutionPage() {
     ]);
 
     useEffect(() => {
-        if (patientId) {
-            PatientService.getById(patientId).then(p => {
+        const load = async () => {
+            if (patientId) {
+                const p = await PatientService.getById(patientId);
                 setPatient(p);
-                setLoading(false);
-            });
-        }
-    }, [patientId]);
+            }
+            if (editId) {
+                const s = await SessionService.getById(editId);
+                if (s) {
+                    setNotes(s.notes || '');
+                    setInterventions(s.interventions || []);
+                    setSymptomsScore(s.symptomsScore || 5);
+                    setAdherence(s.adherence || '');
+                    if (s.reassessment) {
+                        setOxford(s.reassessment.oxford);
+                        setTonicity(s.reassessment.tonicity || '');
+                        setBreathing(s.reassessment.breating || '');
+                    }
+                    if (s.tasks) {
+                        setTasks(s.tasks);
+                    }
+                }
+            }
+            setLoading(false);
+        };
+        load();
+    }, [patientId, editId]);
 
     const toggleIntervention = (id: string) => {
         setInterventions(prev =>
@@ -69,9 +91,7 @@ export default function EvolutionPage() {
         if (!patientId) return;
 
         try {
-            await SessionService.create({
-                patientId,
-                date: new Date(),
+            const dataToSave = {
                 notes,
                 interventions,
                 symptomsScore,
@@ -84,7 +104,17 @@ export default function EvolutionPage() {
                 },
                 tasks,
                 status: 'completed'
-            });
+            };
+
+            if (editId) {
+                await SessionService.update(editId, dataToSave as any);
+            } else {
+                await SessionService.create({
+                    patientId,
+                    date: new Date(),
+                    ...dataToSave
+                } as any);
+            }
             navigate(`/users/${patientId}`);
         } catch (error) {
             console.error(error);

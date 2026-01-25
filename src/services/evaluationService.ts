@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
 
 export interface Evaluation {
     id?: string;
@@ -80,6 +80,35 @@ export const EvaluationService = {
             await deleteDoc(doc(db, COLLECTION_NAME, id));
         } catch (error) {
             console.error("Error deleting evaluation: ", error);
+            throw error;
+        }
+    },
+
+    async update(id: string, data: Partial<Evaluation>) {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            await updateDoc(docRef, data);
+        } catch (error) {
+            console.error("Error updating evaluation: ", error);
+            throw error;
+        }
+    },
+
+    async getById(id: string) {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                return {
+                    id: docSnap.id,
+                    ...data,
+                    date: data.date?.toDate() // Convert Timestamp
+                } as Evaluation;
+            }
+            return null;
+        } catch (error) {
+            console.error("Error getting evaluation:", error);
             throw error;
         }
     }
