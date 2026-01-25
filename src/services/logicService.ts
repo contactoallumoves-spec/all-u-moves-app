@@ -66,6 +66,10 @@ export const logicService = {
             if (data.pelvic.hiatus === 'abierto') {
                 inferredSymptoms.push('hiato_abierto');
             }
+            // Sexual Health [NEW]
+            if (data.pelvic.dyspareunia) {
+                inferredSymptoms.push('dispareunia');
+            }
         }
 
         // MSK Logic
@@ -87,8 +91,27 @@ export const logicService = {
             if (conditions.includes('constipation')) inferredSymptoms.push('estrenimiento');
             if (conditions.includes('chronic_cough')) inferredSymptoms.push('tos_cronica');
             if (conditions.includes('smoking')) inferredSymptoms.push('tos_cronica'); // Risk factor
+            if (conditions.includes('smoking')) inferredSymptoms.push('tos_cronica'); // Risk factor
+        }
+
+        // Questionnaire Logic [NEW]
+        if (data.questionnaire) {
+            const { score, q1_freq, q2_vol } = data.questionnaire;
+            // High Score -> General Incontinence trigger
+            if (score > 0) inferredSymptoms.push('incontinencia_general');
+            // High Frequency -> Urgency hint? (Needs refinement, but good trigger)
+            if (q1_freq >= 3) inferredSymptoms.push('frecuencia_alta');
+            // High Volume -> Effort/Sev hint
+            if (q2_vol >= 4) inferredSymptoms.push('escape_severo');
         }
 
         return inferredSymptoms;
+    },
+
+    /**
+     * Extracts Red Flags from evaluation data to be highlighted
+     */
+    extractRedFlags(data: any): string[] {
+        return data.redFlags || [];
     }
 };

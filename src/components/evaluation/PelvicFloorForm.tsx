@@ -41,6 +41,53 @@ export function PelvicFloorForm({ data, onChange }: { data: any, onChange: (data
                 </CardContent>
             </Card>
 
+            {/* Sexual Function [NEW] */}
+            <Card>
+                <CardContent className="p-4 space-y-4">
+                    <h4 className="font-bold text-sm uppercase text-brand-500">Salud Sexual</h4>
+                    <div className="flex flex-wrap gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded-lg">
+                            <input
+                                type="checkbox"
+                                className="accent-brand-600 w-4 h-4"
+                                checked={data.sexualActivity || false}
+                                onChange={e => onChange({ ...data, sexualActivity: e.target.checked })}
+                            />
+                            <span className="text-sm text-brand-700">Activa sexualmente (con penetración)</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded-lg">
+                            <input
+                                type="checkbox"
+                                className="accent-red-500 w-4 h-4"
+                                checked={data.dyspareunia || false}
+                                onChange={e => onChange({ ...data, dyspareunia: e.target.checked })}
+                            />
+                            <span className="text-sm text-brand-700 font-medium">Dispareunia (Dolor)</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded-lg">
+                            <input
+                                type="checkbox"
+                                className="accent-brand-600 w-4 h-4"
+                                checked={data.lubrication || false}
+                                onChange={e => onChange({ ...data, lubrication: e.target.checked })}
+                            />
+                            <span className="text-sm text-brand-700">Dificultad de Lubricación</span>
+                        </label>
+                    </div>
+                    {data.dyspareunia && (
+                        <div className="animate-in fade-in slide-in-from-top-2">
+                            <span className="text-xs text-brand-500 font-bold block mb-1">Descripción del Dolor Sexual:</span>
+                            <input
+                                className="w-full p-2 border rounded-md text-sm"
+                                placeholder="Ej: Al inicio, profundo, post-coital..."
+                                value={data.dyspareuniaDetails || ''}
+                                onChange={e => onChange({ ...data, dyspareuniaDetails: e.target.value })}
+                            />
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
             {/* Functional */}
             <Card>
                 <CardContent className="p-4 space-y-4">

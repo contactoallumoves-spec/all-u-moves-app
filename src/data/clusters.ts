@@ -7,7 +7,7 @@ export const CLUSTERS: Cluster[] = [
         category: 'pelvic',
         description: 'Pérdida involuntaria al toser, estornudar, reír o hacer ejercicio.',
         triggers: {
-            symptoms: ['escape_tos', 'escape_salto', 'escape_peso']
+            symptoms: ['escape_tos', 'escape_salto', 'escape_peso', 'incontinencia_general', 'escape_severo']
         },
         suggestions: {
             tests: ['test_tos_stress', 'eval_fuerza_piso'],
@@ -118,6 +118,19 @@ export const CLUSTERS: Cluster[] = [
             tests: ['test_control_tos'],
             education: ['edu_blow_before_cough', 'edu_presion_intra_abd'],
             tasks: ['task_knack_practice'],
+        }
+    {
+        id: 'sexual_pain',
+        label: 'Dolor Sexual / Dispareunia',
+        category: 'pelvic',
+        description: 'Dolor asociado a la actividad sexual (superficial o profundo).',
+        triggers: {
+            symptoms: ['dispareunia', 'dolor_sexual']
+        },
+        suggestions: {
+            tests: ['eval_sensibilizacion', 'mapa_dolor_pelvico'],
+            education: ['edu_respuesta_sexual', 'edu_lubricantes'],
+            tasks: ['task_dilatadores_prog', 'task_relax_pelvic'],
         }
     }
 ];
