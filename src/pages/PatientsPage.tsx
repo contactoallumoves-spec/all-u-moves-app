@@ -341,6 +341,24 @@ export default function PatientsPage() {
                                                 })}
                                             </div>
                                         )}
+                                        <div className="flex gap-2 mt-4 pt-3 border-t border-brand-50">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs h-8"
+                                                onClick={() => import('../services/pdfService').then(m => m.pdfService.generatePatientReport(selectedPatient, evalItem))}
+                                            >
+                                                📄 Reporte Usuaria
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs h-8 bg-brand-50 hover:bg-brand-100"
+                                                onClick={() => import('../services/pdfService').then(m => m.pdfService.generateClinicalRecord(selectedPatient, evalItem))}
+                                            >
+                                                📋 Ficha Clínica
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -350,7 +368,8 @@ export default function PatientsPage() {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }
