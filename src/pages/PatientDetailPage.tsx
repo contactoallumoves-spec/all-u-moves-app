@@ -11,7 +11,7 @@ import { ArrowLeft, Clock, Calendar, FileText, Activity, PlayCircle, Plus, Trash
 import { cn } from '../lib/utils';
 import { getLabel } from '../data/catalog';
 
-// Helper to recursively render any object data
+import { ProgressChart } from '../components/patient/ProgressChart'; // [NEW]
 const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
     if (data === null || data === undefined) return null;
     if (typeof data !== 'object') return <span className="text-gray-800 ml-2 font-medium">{String(data)}</span>;
@@ -402,10 +402,7 @@ export default function PatientDetailPage() {
                             <CardTitle className="text-sm uppercase tracking-wider text-brand-500">Progreso</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="h-40 bg-gray-50 rounded-lg flex items-center justify-center border border-dashed border-gray-200 text-xs text-gray-400">
-                                Gráfico de Síntomas
-                                {/* Placeholder for Charts */}
-                            </div>
+                            <ProgressChart history={history} />
                             <div className="mt-4 flex justify-between text-xs text-center">
                                 <div>
                                     <div className="font-bold text-brand-900 text-lg">3/5</div>
