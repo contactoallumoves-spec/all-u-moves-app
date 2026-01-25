@@ -6,11 +6,19 @@ import { PatientService } from '../services/patientService';
 import { Patient } from '../types/patient';
 import { useNavigate } from 'react-router-dom';
 
+import { EvaluationService, Evaluation } from '../services/evaluationService';
+
 export default function PatientsPage() {
     const navigate = useNavigate();
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+
+    // History Modal State
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+    const [patientEvaluations, setPatientEvaluations] = useState<Evaluation[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState<Partial<Patient>>({
@@ -27,6 +35,20 @@ export default function PatientsPage() {
         const data = await PatientService.getAll();
         setPatients(data);
         setLoading(false);
+    };
+
+    const handleViewHistory = async (patient: Patient) => {
+        setSelectedPatient(patient);
+        setShowHistoryModal(true);
+        setLoadingHistory(true);
+        try {
+            const evals = await EvaluationService.getByPatientId(patient.id!);
+            setPatientEvaluations(evals);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingHistory(false);
+        }
     };
 
     const handleSave = async () => {
@@ -101,10 +123,10 @@ export default function PatientsPage() {
                             {patients.map(patient => (
                                 <div key={patient.id} className="p-4 flex items-center justify-between hover:bg-brand-50/50 transition-colors group">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg">
+                                        <div className="cursor-pointer w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg" onClick={() => handleViewHistory(patient)}>
                                             {patient.firstName.charAt(0)}{patient.lastName.charAt(0)}
                                         </div>
-                                        <div>
+                                        <div className="cursor-pointer" onClick={() => handleViewHistory(patient)}>
                                             <p className="font-semibold text-brand-900 text-lg">{patient.firstName} {patient.lastName}</p>
                                             <div className="flex items-center gap-3 text-xs text-brand-500">
                                                 <span className="bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium">{patient.stage}</span>
@@ -118,6 +140,9 @@ export default function PatientsPage() {
                                                 <Phone size={18} />
                                             </a>
                                         )}
+                                        <Button variant="ghost" size="sm" onClick={() => handleViewHistory(patient)} className="hidden md:flex text-brand-600 hover:text-brand-800 hover:bg-brand-50">
+                                            Ver Historial
+                                        </Button>
                                         <Button variant="outline" size="sm" onClick={() => navigate(`/eval/new/${patient.id}`)} className="hidden md:flex">
                                             Nueva Evaluación
                                         </Button>
@@ -254,6 +279,70 @@ export default function PatientsPage() {
                                 {saving ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <PlusCircle className="mr-2 h-4 w-4" />}
                                 Crear Ficha
                             </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* History Modal */}
+            {showHistoryModal && selectedPatient && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 className="text-2xl font-serif font-bold text-brand-900">Historial Clínico</h2>
+                                <p className="text-brand-500">{selectedPatient.firstName} {selectedPatient.lastName}</p>
+                            </div>
+                            <button onClick={() => setShowHistoryModal(false)} className="text-brand-400 hover:text-brand-600">✕</button>
+                        </div>
+
+                        {loadingHistory ? (
+                            <div className="py-12 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto text-brand-300" /></div>
+                        ) : patientEvaluations.length === 0 ? (
+                            <div className="text-center py-12 bg-brand-50 rounded-xl border border-dashed border-brand-200">
+                                <FileText className="h-10 w-10 text-brand-300 mx-auto mb-2" />
+                                <p className="text-brand-500">No hay evaluaciones registradas</p>
+                                <Button size="sm" variant="outline" className="mt-4" onClick={() => { setShowHistoryModal(false); navigate(`/eval/new/${selectedPatient.id}`); }}>
+                                    Iniciar Evaluación
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {patientEvaluations.map((evalItem) => (
+                                    <div key={evalItem.id} className="border border-brand-100 rounded-xl p-4 hover:bg-brand-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-brand-800 uppercase text-xs tracking-wide">
+                                                        {evalItem.type === 'fast' ? 'Evaluación Rápida' : 'Evaluación Completa'}
+                                                    </span>
+                                                    <span className="text-xs text-brand-400">
+                                                        {evalItem.date ? new Date(evalItem.date).toLocaleDateString() : 'Fecha desconocida'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-brand-900 font-medium mt-1">{evalItem.summary}</p>
+                                            </div>
+                                            <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
+                                                {evalItem.status === 'completed' ? 'Finalizada' : 'Borrador'}
+                                            </span>
+                                        </div>
+
+                                        {/* Quick stats or clusters */}
+                                        {evalItem.clusters && evalItem.clusters.active && (
+                                            <div className="flex flex-wrap gap-1 mt-3">
+                                                {evalItem.clusters.active.map(c => (
+                                                    <span key={c} className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md border border-brand-200">
+                                                        {c}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+                            <Button onClick={() => setShowHistoryModal(false)}>Cerrar</Button>
                         </div>
                     </div>
                 </div>

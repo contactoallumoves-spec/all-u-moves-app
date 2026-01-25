@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, orderBy, getDocs } from 'firebase/firestore';
 
 export interface Evaluation {
     id?: string;
@@ -35,6 +35,25 @@ export const EvaluationService = {
         } catch (error) {
             console.error("Error creating evaluation: ", error);
             throw error;
+        }
+    },
+
+    async getByPatientId(patientId: string) {
+        try {
+            const q = query(
+                collection(db, COLLECTION_NAME),
+                where("patientId", "==", patientId),
+                orderBy("date", "desc")
+            );
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: doc.data().date?.toDate() // Convert Firestore Timestamp to Date
+            })) as Evaluation[];
+        } catch (error) {
+            console.error("Error fetching evaluations: ", error);
+            return [];
         }
     }
 };

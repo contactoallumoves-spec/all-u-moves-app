@@ -12,6 +12,7 @@ export default function FastEvaluationWizard() {
     const { patientId } = useParams();
     const [step, setStep] = useState(1);
     const [saving, setSaving] = useState(false);
+    const [selectedStage, setSelectedStage] = useState<string>('');
 
     const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
 
@@ -43,9 +44,9 @@ export default function FastEvaluationWizard() {
                 patientId,
                 type: 'fast',
                 date: new Date(),
-                patientData: { stage: 'Nuligesta', redFlags: [] }, // TODO: Connect to real form state
+                patientData: { stage: selectedStage || 'Nuligesta', redFlags: [] },
                 clusters: { active: selectedClusters },
-                summary: `Evaluación Rápida con ${selectedClusters.length} clusters activos.`,
+                summary: `Evaluación Rápida (${selectedStage || 'General'}) con ${selectedClusters.length} clusters activos.`,
                 plan: activeSuggestions,
                 status: 'completed'
             });
@@ -81,7 +82,15 @@ export default function FastEvaluationWizard() {
                             <p className="text-brand-500">Selecciona la etapa vital para activar los clusters correspondientes.</p>
                             <div className="grid grid-cols-2 gap-4">
                                 {['Nuligesta', 'Embarazo', 'Postparto', 'Menopausia', 'Deportista'].map(tag => (
-                                    <button key={tag} className="p-4 rounded-xl border border-brand-200 hover:border-brand-600 hover:bg-brand-50 text-left transition-all">
+                                    <button
+                                        key={tag}
+                                        onClick={() => setSelectedStage(tag)}
+                                        className={cn(
+                                            "p-4 rounded-xl text-left transition-all border-2",
+                                            // We need a selectedStage state variable
+                                            "border-brand-200 hover:border-brand-600 hover:bg-brand-50"
+                                        )}
+                                    >
                                         <span className="font-medium text-brand-900">{tag}</span>
                                     </button>
                                 ))}
