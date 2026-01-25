@@ -11,6 +11,65 @@ export const ITEMS_CATALOG: Record<string, string> = {
     'task_relax_breathing': 'Respiración Diafragmática de Relajación',
     'task_hypopressive_intro': 'Iniciación a Hipopresivos',
     'task_keel_elevation': 'Elevación Pélvica (Keel)',
+    // --- SYMPTOMS & CONDITIONS ---
+    'symptoms': 'Síntomas',
+    'comorbidities': 'Comorbilidades',
+    'redFlags': 'Banderas Rojas',
+    'surgeries': 'Cirugías',
+    'medications': 'Medicamentos',
+    'lifestyle': 'Estilo de Vida',
+    'cSections': 'Cesáreas',
+    'c_sections': 'Cesáreas',
+    'abortions': 'Abortos',
+    'gestations': 'Gestaciones',
+    'vaginalBirths': 'Partos Vaginales',
+    'vaginal_births': 'Partos Vaginales',
+    'episiotomy': 'Episiotomía',
+    'tears': 'Desgarros',
+    'forceps': 'Fórceps',
+
+    // Symptom Values
+    'escape_salto': 'Escape al saltar',
+    'escape_tose': 'Escape al toser/estornudar',
+    'escape_correr': 'Escape al correr',
+    'escape_peso': 'Escape al levantar peso',
+    'escape_urgen': 'Urgencia incontrolable',
+    'escape_severo': 'Escape severo (gran cantidad)',
+    'bulto_palpable': 'Sensación de bulto palpable',
+    'bulto_peso': 'Sensación de peso vaginal',
+    'dolor_relaciones': 'Dolor en relaciones sexuales',
+    'dolor_pelvico': 'Dolor pélvico crónico',
+    'constipacion': 'Constipación / Estreñimiento',
+    'incont_gases': 'Incontinencia de gases',
+    'incont_heces': 'Incontinencia fecal',
+
+    // Postpartum / Specifics
+    'postparto_4mo': 'Postparto (4 meses)',
+    'postparto_6mo': 'Postparto (6 meses)',
+    'postparto_1yr': 'Postparto (1 año)',
+    'lactancia': 'Lactancia activa',
+
+    // Physical Exam
+    'hiatus': 'Hiato Urogenital',
+    'abierto': 'Abierto',
+    'cerrado': 'Cerrado/Normal',
+    'prolapse': 'Prolapso',
+    'avulsion': 'Avulsión',
+    'atrophy': 'Atrofia',
+    'contracture': 'Contractura',
+    'scar_pain': 'Dolor en cicatriz',
+    'reflexes': 'Reflejos',
+    'sensibility': 'Sensibilidad',
+    'tonicity': 'Tonicidad',
+    'compliance': 'Compliance',
+    'oxford_scale': 'Escala Oxford',
+
+    // Scores
+    'score': 'Puntaje',
+    'q3_impact': 'Impacto en Calidad de Vida (0-10)',
+    'sandvik': 'Índice de Sandvik',
+    'iciq': 'ICIQ-SF',
+
 
     // --- EDUCATION ---
     'edu_knack': '¿Qué es el Knack? Protección al toser',
