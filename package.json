@@ -2,7 +2,7 @@
   "name": "all-u-moves-app",
   "private": true,
   "version": "0.1.0",
-  "buildTimestamp": "2024-01-25-force-refresh",
+  "buildTimestamp": "2024-01-25-force-refresh-v2",
   "type": "module",
   "scripts": {
     "dev": "vite",
