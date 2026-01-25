@@ -24,6 +24,7 @@
     "@headlessui/react": "^1.7.17",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.1",
+    "html2canvas": "^1.4.1",
     "recharts": "^2.10.3"
   },
   "devDependencies": {
