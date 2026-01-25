@@ -13,8 +13,11 @@ import { cn } from '../lib/utils';
 import { PelvicFloorForm } from '../components/evaluation/PelvicFloorForm';
 import { MSKForm } from '../components/evaluation/MSKForm';
 import { FunctionalForm } from '../components/evaluation/FunctionalForm'; // [NEW]
-import { HistoryForm } from '../components/evaluation/HistoryForm'; // [NEW]
-import { SymptomSelector } from '../components/evaluation/SymptomSelector'; // [NEW]
+import { HistoryForm } from '../components/evaluation/HistoryForm';
+import { QuestionnaireForm } from '../components/evaluation/QuestionnaireForm'; // [NEW]
+import { RedFlagsForm } from '../components/evaluation/RedFlagsForm'; // [NEW]
+import { SymptomSelector } from '../components/evaluation/SymptomSelector';
+
 
 
 import { getLabel } from '../data/catalog';
@@ -27,7 +30,8 @@ export default function CompleteEvaluation() {
     const [patient, setPatient] = useState<Patient | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'anamnesis' | 'pelvic' | 'msk' | 'functional' | 'plan'>('anamnesis');
+    const [activeTab, setActiveTab] = useState<'safety' | 'anamnesis' | 'pelvic' | 'msk' | 'functional' | 'questionnaires' | 'plan'>('anamnesis');
+
 
 
     // Consolidated Form State
@@ -37,9 +41,11 @@ export default function CompleteEvaluation() {
 
         msk: { irdSupra: '', irdInfra: '', doming: false, posture: '', motorControl: '', breathing: '', beighton: 0 },
         functional: { aslrLeft: 0, aslrRight: 0, aslrNotes: '', squatQuality: '', bridgeQuality: '', impactTests: [] as string[] }, // [NEW]
+        questionnaire: { q1_freq: 0, q2_vol: 0, q3_impact: 0, score: 0 }, // [NEW]
 
         plan: { diagnosis: '', goals: '', frequency: '', tasks: [] as string[], education: [] as string[] },
-        symptoms: [] as string[] // [NEW] Hybrid Input
+        symptoms: [] as string[], // [NEW] Hybrid Input
+        redFlags: [] as string[] // [NEW]
     });
 
     useEffect(() => {
@@ -128,9 +134,12 @@ export default function CompleteEvaluation() {
     if (loading) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-brand-600" /></div>;
 
     const tabs = [
-        { id: 'anamnesis', label: '1. Anamnesis & Síntomas' },
+        { id: 'safety', label: '0. Seguridad (Flags)' }, // [NEW]
+        { id: 'anamnesis', label: '1. Anamnesis' },
+        { id: 'questionnaires', label: '1.5. Cuestionarios' }, // [NEW]
         { id: 'pelvic', label: '2. Suelo Pélvico' },
         { id: 'msk', label: '3. Físico / MSK' },
+
         { id: 'functional', label: '4. Funcional / Impacto' }, // [NEW]
         { id: 'plan', label: '5. Plan & Sugerencias' },
 
@@ -175,7 +184,27 @@ export default function CompleteEvaluation() {
 
             {/* Form Content */}
             <div className="min-h-[400px]">
+
+                {activeTab === 'safety' && (
+                    <div className="animate-in slide-in-from-left-4 duration-300">
+                        <RedFlagsForm
+                            data={evalData.redFlags}
+                            onChange={(d) => setEvalData({ ...evalData, redFlags: d })}
+                        />
+                    </div>
+                )}
+
+                {activeTab === 'questionnaires' && (
+                    <div className="animate-in slide-in-from-right-4 duration-300">
+                        <QuestionnaireForm
+                            data={evalData.questionnaire}
+                            onChange={(d) => setEvalData({ ...evalData, questionnaire: d })}
+                        />
+                    </div>
+                )}
+
                 {activeTab === 'anamnesis' && (
+
                     <div className="animate-in slide-in-from-left-4 duration-300">
                         {/* Hybrid Input Section */}
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4 mb-6">
