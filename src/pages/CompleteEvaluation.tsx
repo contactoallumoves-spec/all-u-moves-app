@@ -283,11 +283,11 @@ export default function CompleteEvaluation() {
                             />
 
                             {/* CIF Suggestions [NEW] */}
-                            {currentSuggestions?.suggestions?.cif && currentSuggestions.suggestions.cif.length > 0 && (
+                            {activeLogicResult?.suggestions?.cif && activeLogicResult.suggestions.cif.length > 0 && (
                                 <div className="mt-2 text-xs bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100">
                                     <span className="font-bold block mb-1">Sugerencias CIF (Clasificación):</span>
                                     <div className="flex flex-wrap gap-2">
-                                        {currentSuggestions.suggestions.cif.map(c => (
+                                        {activeLogicResult.suggestions.cif.map((c: any) => (
                                             <span key={c.code} className="bg-white border border-blue-200 px-2 py-1 rounded shadow-sm">
                                                 <strong>{c.code}</strong>: {c.description}
                                             </span>
