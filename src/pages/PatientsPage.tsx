@@ -41,9 +41,9 @@ export default function PatientsPage() {
             await loadPatients();
             setShowModal(false);
             setFormData({ firstName: '', lastName: '', rut: '', stage: 'Nuligesta', birthDate: '', phone: '', email: '', occupation: '' });
-        } catch (error) {
-            console.error(error);
-            setError('Error al guardar en base de datos. Verifica tu conexión.');
+        } catch (error: any) {
+            console.error("Firebase Error:", error);
+            setError(`Error: ${error.message || 'Desconocido'}`);
         } finally {
             setSaving(false);
         }
