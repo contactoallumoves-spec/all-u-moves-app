@@ -15,6 +15,7 @@ import { MSKForm } from '../components/evaluation/MSKForm';
 import { FunctionalForm } from '../components/evaluation/FunctionalForm'; // [NEW]
 import { HistoryForm } from '../components/evaluation/HistoryForm';
 import { QuestionnaireForm } from '../components/evaluation/QuestionnaireForm'; // [NEW]
+import { FunctionalScalesForm } from '../components/evaluation/FunctionalScalesForm'; // [NEW]
 import { RedFlagsForm } from '../components/evaluation/RedFlagsForm'; // [NEW]
 import { SymptomSelector } from '../components/evaluation/SymptomSelector';
 
@@ -35,7 +36,7 @@ export default function CompleteEvaluation() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     // Added 'diagnosis' to valid tabs
-    const [activeTab, setActiveTab] = useState<'safety' | 'anamnesis' | 'pelvic' | 'msk' | 'functional' | 'questionnaires' | 'diagnosis' | 'plan'>('anamnesis');
+    const [activeTab, setActiveTab] = useState<'safety' | 'anamnesis' | 'pelvic' | 'msk' | 'functional_scales' | 'functional' | 'questionnaires' | 'diagnosis' | 'plan'>('anamnesis');
 
     // Location State
     const [location, setLocation] = useState('Consulta Kinesiológica');
@@ -58,7 +59,10 @@ export default function CompleteEvaluation() {
         smartGoals: [] as string[], // Auto-generated
 
         symptoms: [] as string[], // [NEW] Hybrid Input
-        redFlags: [] as string[] // [NEW]
+        redFlags: [] as string[], // [NEW]
+
+        // [NEW] Functional Scales State
+        functionalScales: { psfs: [], sane: 0 } as any
     });
 
     useEffect(() => {
@@ -76,6 +80,7 @@ export default function CompleteEvaluation() {
                         diagnosisCodes: ev.details.diagnosisCodes || [],
                         cifCodes: ev.details.cifCodes || [],
                         smartGoals: ev.details.smartGoals || [],
+                        functionalScales: ev.details.functional || { psfs: [], sane: 0 }, // [NEW] Load
                         pelvic: { ...ev.details.pelvic, dyspareunia: ev.details.pelvic?.dyspareunia || false }
                     });
 
@@ -186,7 +191,8 @@ export default function CompleteEvaluation() {
                 details: {
                     ...evalData,
                     // Ensure we save the symptoms explicitely in details too
-                    symptoms: evalData.symptoms
+                    symptoms: evalData.symptoms,
+                    functional: evalData.functionalScales // [NEW] Map to types/clinical.ts structure
                 } as any
             };
 
@@ -218,6 +224,7 @@ export default function CompleteEvaluation() {
         { id: 'questionnaires', label: '1.5. Cuestionarios' },
         { id: 'pelvic', label: '2. Suelo Pélvico' },
         { id: 'msk', label: '3. Físico / MSK' },
+        { id: 'functional_scales', label: '3.5. Escalas (PSFS/SANE)' }, // [NEW]
         { id: 'functional', label: '4. Funcional / Impacto' },
         { id: 'diagnosis', label: '5. Diagnóstico' }, // [NEW] Added back
         { id: 'plan', label: '6. Plan & Sugerencias' },

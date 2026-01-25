@@ -17,6 +17,11 @@ export interface Session {
         pain?: number;
         breating?: string;
         tonicity?: string;
+        psfs?: { activity: string; score: number }[]; // Re-evaluation
+    };
+    proms?: { // Patient Reported Outcome Measures
+        groc?: number; // -7 to +7
+        sane?: number; // 0-100
     };
     customActivities?: { category: string; name: string; params: string }[]; // [NEW] Flexible activities
     status: 'completed';

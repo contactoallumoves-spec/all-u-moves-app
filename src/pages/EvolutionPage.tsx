@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { SessionService } from '../services/sessionService'; // [NEW]
+import { EvaluationService } from '../services/evaluationService'; // [NEW]
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, Save, Plus, Trash2, CheckSquare } from 'lucide-react';
@@ -45,6 +46,11 @@ export default function EvolutionPage() {
     const [tonicity, setTonicity] = useState<string>('');
     const [breathing, setBreathing] = useState<string>('');
 
+    // [NEW] PROMs State
+    const [groc, setGroc] = useState<number>(0); // -7 to +7
+    const [sane, setSane] = useState<number | ''>(''); // 0-100
+    const [psfs, setPsfs] = useState<{ activity: string; score: number }[]>([]);
+
     // Custom Activities [NEW]
     const [customActivities, setCustomActivities] = useState<{ category: string; name: string; params: string }[]>([]);
 
@@ -59,6 +65,29 @@ export default function EvolutionPage() {
                 // Load active tasks from patient if not editing an old session
                 if (!editId && p?.activeTasks) {
                     setTasks(p.activeTasks);
+                }
+
+                // [NEW] Load PSFS activities from last Complete Evaluation
+                if (!editId) {
+                    try {
+                        const evals = await EvaluationService.getByPatientId(patientId);
+                        const lastComplete = evals.find(e => e.type === 'complete');
+                        if (lastComplete && lastComplete.details?.functional?.psfs) {
+                            // Initialize with previous activities but score 0 (or empty?)
+                            setPsfs(lastComplete.details.functional.psfs.map((item: any) => ({
+                                activity: item.activity,
+                                score: item.score // Start with last score as reference? Or 0? Let's use last score as reference
+                            })));
+                        } else if (lastComplete && lastComplete.details?.functionalScales?.psfs) {
+                            // Fallback for new structure
+                            setPsfs(lastComplete.details.functionalScales.psfs.map((item: any) => ({
+                                activity: item.activity,
+                                score: item.score
+                            })));
+                        }
+                    } catch (err) {
+                        console.error("Error loading previous evaluation metrics", err);
+                    }
                 }
             }
             if (editId) {
@@ -89,6 +118,11 @@ export default function EvolutionPage() {
                         setOxford(s.reassessment.oxford);
                         setTonicity(s.reassessment.tonicity || '');
                         setBreathing(s.reassessment.breating || '');
+                        if (s.reassessment.psfs) setPsfs(s.reassessment.psfs);
+                    }
+                    if (s.proms) {
+                        setGroc(s.proms.groc || 0);
+                        setSane(s.proms.sane ?? '');
                     }
                     if (s.tasks) {
                         // Map legacy tasks to new format if needed
@@ -159,7 +193,12 @@ export default function EvolutionPage() {
                     oxford,
                     tonicity,
                     breating: breathing,
-                    pain: symptomsScore
+                    pain: symptomsScore,
+                    psfs // [NEW]
+                },
+                proms: { // [NEW]
+                    groc,
+                    sane: sane === '' ? undefined : Number(sane)
                 },
                 tasks,
                 status: 'completed'
@@ -262,6 +301,80 @@ export default function EvolutionPage() {
                             ))}
                         </div>
                     </div>
+                </CardContent>
+            </Card>
+
+            {/* [NEW] PROMs Card */}
+            <Card>
+                <CardContent className="p-4 space-y-4">
+                    <h3 className="font-bold text-sm uppercase text-brand-500">Resultados Reportados (PROMs)</h3>
+
+                    {/* GROC */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-brand-700 block">Cambio Global (GROC):</label>
+                        <div className="flex items-center gap-4">
+                            <input
+                                type="range" min="-7" max="7" step="1"
+                                className="w-full accent-brand-600"
+                                value={groc} onChange={e => setGroc(Number(e.target.value))}
+                            />
+                            <div className="w-16 text-center">
+                                <span className={cn(
+                                    "text-lg font-bold block",
+                                    groc > 0 ? "text-green-600" : groc < 0 ? "text-red-600" : "text-gray-500"
+                                )}>
+                                    {groc > 0 ? `+${groc}` : groc}
+                                </span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-center text-gray-500 italic">
+                            {groc === -7 ? "Muchísimo peor" :
+                                groc === -3 ? "Algo peor" :
+                                    groc === 0 ? "Sin cambios" :
+                                        groc === 3 ? "Algo mejor" :
+                                            groc === 7 ? "Muchísimo mejor" : ""}
+                        </p>
+                    </div>
+
+                    {/* SANE */}
+                    <div className="flex items-center gap-4 pt-2 border-t border-dashed">
+                        <label className="text-sm font-medium text-brand-700 w-1/3">SANE (% Normalidad):</label>
+                        <input
+                            type="number" min="0" max="100"
+                            className="w-24 p-2 text-center border rounded-lg font-bold text-brand-800"
+                            placeholder="%"
+                            value={sane}
+                            onChange={e => setSane(Number(e.target.value))}
+                        />
+                        <span className="text-xs text-gray-400">(0% Peor - 100% Mejor)</span>
+                    </div>
+
+                    {/* PSFS Re-eval */}
+                    {psfs.length > 0 && (
+                        <div className="pt-2 border-t border-dashed">
+                            <h4 className="font-bold text-sm text-brand-600 mb-2">Re-evaluación PSFS</h4>
+                            <div className="space-y-2">
+                                {psfs.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-brand-50 p-2 rounded-lg">
+                                        <span className="text-sm text-brand-900 flex-1">{item.activity}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-gray-400">Nota:</span>
+                                            <input
+                                                type="number" min="0" max="10"
+                                                className="w-16 p-1 text-center border rounded font-bold"
+                                                value={item.score}
+                                                onChange={(e) => {
+                                                    const newPsfs = [...psfs];
+                                                    newPsfs[idx].score = Number(e.target.value);
+                                                    setPsfs(newPsfs);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 

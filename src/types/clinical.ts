@@ -31,5 +31,9 @@ export interface EvaluationData {
     plan: {
         tasks: string[];
         education: string[];
-    }
+    };
+    functional?: {
+        psfs?: { activity: string; score: number }[]; // 0-10
+        sane?: number; // 0-100
+    };
 }
