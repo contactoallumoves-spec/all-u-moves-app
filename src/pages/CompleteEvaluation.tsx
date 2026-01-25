@@ -239,13 +239,17 @@ export default function CompleteEvaluation() {
 
                             <h3 className="font-bold text-brand-800 pt-4">Plan Sugerido (Editable)</h3>
 
+                            import {getLabel} from '../data/catalog'; // [NEW]
+
+                            // ... (in component)
+
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div className="p-4 bg-gray-50 rounded-lg border">
                                     <h4 className="font-bold text-sm text-gray-700 mb-2">Tareas / Ejercicios</h4>
                                     {evalData.plan.tasks.length === 0 && <p className="text-xs text-gray-400 italic">Sin tareas. Usa el Asistente para sugerir.</p>}
                                     <ul className="list-disc pl-4 space-y-1">
                                         {evalData.plan.tasks.map((t, i) => (
-                                            <li key={i} className="text-sm text-gray-700">{t}</li>
+                                            <li key={i} className="text-sm text-gray-700">{getLabel(t)}</li>
                                         ))}
                                     </ul>
                                 </div>
@@ -254,7 +258,7 @@ export default function CompleteEvaluation() {
                                     {evalData.plan.education.length === 0 && <p className="text-xs text-gray-400 italic">Sin educación. Usa el Asistente para sugerir.</p>}
                                     <ul className="list-disc pl-4 space-y-1">
                                         {evalData.plan.education.map((t, i) => (
-                                            <li key={i} className="text-sm text-gray-700">{t}</li>
+                                            <li key={i} className="text-sm text-gray-700">{getLabel(t)}</li>
                                         ))}
                                     </ul>
                                 </div>

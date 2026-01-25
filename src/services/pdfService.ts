@@ -2,6 +2,7 @@
 import jsPDF from 'jspdf';
 import { Patient } from '../types/patient';
 import { REPORT_ASSETS } from '../assets/reportAssets';
+import { ITEMS_CATALOG } from '../data/catalog';
 
 export const pdfService = {
     generatePatientReport(patient: Patient, evaluation: any) {
@@ -96,18 +97,25 @@ export const pdfService = {
             doc.setFontSize(11);
             doc.setFont("helvetica", "normal");
 
-            const tasks = evaluation.plan?.tasks || [];
+            const allItems = evaluation.plan?.tasks || []; // Assuming allItems is evaluation.plan.tasks
 
-            if (tasks.length === 0) {
+            if (allItems.length === 0) {
                 doc.setTextColor(150, 150, 160);
                 doc.text("• Disfruta tu descanso, no hay tareas hoy. :)", margin + 12, y);
             } else {
-                tasks.slice(0, 5).forEach((t: string) => {
+                // Import catalog helper if not available in scope, or just duplicate logic if easier. 
+                // Since this is a service, let's assume we can import.
+                // NOTE: We need to update imports at top of file too.
+                allItems.slice(0, 5).forEach((item: string) => { // Added slice(0,5) to match original behavior
                     doc.setTextColor(colors.highlight[0], colors.highlight[1], colors.highlight[2]);
                     doc.text("•", margin + 8, y);
                     doc.setTextColor(80, 80, 90);
-                    doc.text(t, margin + 15, y);
-                    y += 10;
+
+                    // Translate ID to Label
+                    const label = (ITEMS_CATALOG as any)[item] || item;
+
+                    doc.text(label, margin + 15, y); // Adjusted x-coordinate to match original
+                    y += 10; // Adjusted increment to match original
                 });
             }
 
