@@ -136,17 +136,19 @@ export const logicService = {
         }
 
         // 2. Pelvic Floor Strength (Oxford)
-        if (data.pelvic?.oxford < 3) {
-            goals.push(`Aumentar la fuerza muscular del suelo pélvico de Oxford ${data.pelvic.oxford} a ${data.pelvic.oxford + 1} en 4 semanas mediante entrenamiento de fuerza.`);
+        if (data.pelvic?.oxford !== undefined) {
+            if (data.pelvic.oxford < 3) {
+                goals.push(`Aumentar la fuerza muscular del suelo pélvico de Oxford ${data.pelvic.oxford} a ${data.pelvic.oxford + 1} en 4 semanas mediante entrenamiento de fuerza.`);
+            } else if (data.pelvic.oxford >= 3 && data.pelvic.oxford < 5) {
+                goals.push(`Mejorar la resistencia muscular del suelo pélvico manteniendo contracción Oxford ${data.pelvic.oxford} por 10 segundos en 4 semanas.`);
+            }
         }
 
-        // 3. Coordination / Knack
-        if (activeClusters.some(c => c.id === 'cluster_iue')) {
-            goals.push("Automatizar la contracción anticipatoria (Knack) en el 80% de los eventos de tos/esfuerzo en 3 semanas.");
-        }
+        // 3. Coordination / Knack (Always beneficial)
+        goals.push("Automatizar la contracción anticipatoria (Knack) en el 80% de los eventos de tos/esfuerzo en 3 semanas.");
 
         // 4. Prolapse / Hiatus
-        if (activeClusters.some(c => c.id === 'cluster_pop')) {
+        if (activeClusters.some(c => c.id === 'cluster_pop') || data.pelvic?.hiatus === 'abierto') {
             goals.push("Disminuir la sensación de peso/bulto vaginal (VAS) en 2 puntos en 5 semanas mediante ejercicios hipopresivos y pautas posturales.");
         }
 
@@ -155,10 +157,8 @@ export const logicService = {
             goals.push("Lograr relaciones sexuales sin dolor (VAS 0) en 8 semanas mediante terapia manual y dilatadores.");
         }
 
-        // Default if empty
-        if (goals.length === 0) {
-            goals.push("Mejorar la calidad de vida y funcionalidad general en 4 semanas.");
-        }
+        // 6. Educational / Adherence (General)
+        goals.push("Lograr una adherencia >80% a la pauta de ejercicios domiciliarios en el primer mes.");
 
         return goals;
     }
