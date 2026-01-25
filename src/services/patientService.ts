@@ -16,29 +16,30 @@ export const PatientService = {
             console.error("Error adding patient: ", error);
             throw error;
         }
-    async getById(id: string): Promise < Patient | null > {
-            try {
-                const querySnapshot = await getDocs(query(collection(db, COLLECTION_NAME), where('__name__', '==', id)));
-                if(querySnapshot.empty) return null;
-                const doc = querySnapshot.docs[0];
-                return { id: doc.id, ...doc.data() } as Patient;
-            } catch(error) {
-                console.error("Error getting patient by id: ", error);
-                return null;
-            }
-        },
-
-            async getAll() {
-            try {
-                const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
-                const querySnapshot = await getDocs(q);
-                return querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })) as Patient[];
-            } catch (error) {
-                console.error("Error getting patients: ", error);
-                return [];
-            }
+    },
+    async getById(id: string): Promise<Patient | null> {
+        try {
+            const querySnapshot = await getDocs(query(collection(db, COLLECTION_NAME), where('__name__', '==', id)));
+            if (querySnapshot.empty) return null;
+            const doc = querySnapshot.docs[0];
+            return { id: doc.id, ...doc.data() } as Patient;
+        } catch (error) {
+            console.error("Error getting patient by id: ", error);
+            return null;
         }
-    };
+    },
+
+    async getAll() {
+        try {
+            const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Patient[];
+        } catch (error) {
+            console.error("Error getting patients: ", error);
+            return [];
+        }
+    }
+};
