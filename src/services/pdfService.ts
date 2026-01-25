@@ -293,7 +293,6 @@ export const pdfService = {
                 // SESION CONTENT
 
                 // EVA / Notes
-                const evaY = y;
                 if (item.raw.symptomsScore !== undefined) {
                     doc.setFont("helvetica", "bold");
                     doc.text(`EVA:`, margin, y);
