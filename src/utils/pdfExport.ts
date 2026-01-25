@@ -50,9 +50,13 @@ export const generateProgressReport = async (
                 const hasData = item.raw?.symptomsScore !== undefined || item.raw?.pelvic?.oxford !== undefined || item.raw?.proms?.sane !== undefined;
                 return hasData;
             })
-            .sort((a, b) => b.date.toMillis() - a.date.toMillis())
+            .sort((a, b) => {
+                const getDateMillis = (d: any) => d.toMillis ? d.toMillis() : (d instanceof Date ? d.getTime() : new Date(d).getTime());
+                return getDateMillis(b.date) - getDateMillis(a.date);
+            })
             .map(item => {
-                const date = item.date.toDate().toLocaleDateString('es-CL');
+                const dateObj = item.date.toDate ? item.date.toDate() : (item.date instanceof Date ? item.date : new Date(item.date));
+                const date = dateObj.toLocaleDateString('es-CL');
                 const eva = item.raw?.symptomsScore ?? '-';
                 const oxford = item.raw?.reassessment?.oxford ?? item.raw?.pelvic?.oxford ?? '-';
                 const sane = item.raw?.proms?.sane ? `${item.raw.proms.sane}%` : '-';
