@@ -106,17 +106,17 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                     <XAxis
                         dataKey="dateLabel"
-                        tick={{ fontSize: 10, fill: '#9ca3af' }}
+                        tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 500 }}
                         axisLine={false}
                         tickLine={false}
-                        dy={5}
+                        dy={10}
                     />
                     <YAxis
                         domain={[0, 10]}
-                        tick={{ fontSize: 10, fill: '#9ca3af' }}
+                        tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 500 }}
                         axisLine={false}
                         tickLine={false}
-                        width={25}
+                        width={30}
                     />
                     <Tooltip
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
