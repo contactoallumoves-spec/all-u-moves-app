@@ -6,15 +6,23 @@ import { REPORT_ASSETS } from '../assets/reportAssets';
 export const pdfService = {
     generatePatientReport(patient: Patient, evaluation: any) {
         const doc = new jsPDF();
+        this._applyDesign(doc, patient, evaluation, "Resumen para la usuaria", true);
+    },
 
+    generateClinicalRecord(patient: Patient, evaluation: any) {
+        const doc = new jsPDF();
+        this._applyDesign(doc, patient, evaluation, "Ficha Clínica Kinesiológica", false);
+    },
+
+    _applyDesign(doc: jsPDF, patient: Patient, evaluation: any, title: string, isSimpleReport: boolean) {
         // --- Config ---
         const pageWidth = 210;
         const pageHeight = 297;
         const margin = 20;
         const contentWidth = pageWidth - (margin * 2);
 
-        // --- Branding Background ---
-        doc.setFillColor(253, 251, 247); // #FDFBF7 (Beige from reference)
+        // --- Background ---
+        doc.setFillColor(253, 251, 247); // #FDFBF7 (Beige)
         doc.rect(0, 0, pageWidth, pageHeight, "F");
 
         // --- Header ---
@@ -22,131 +30,143 @@ export const pdfService = {
         doc.setFontSize(22);
         doc.setTextColor(30, 41, 59); // Dark Slate
         doc.setFont("helvetica", "bold");
-        doc.text("Resumen para la usuaria", margin, margin + 10);
+        doc.text(title, margin, margin + 10);
 
         // Subtitle line
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(100, 116, 139); // Slate 500
-        const dateStr = new Date().toLocaleDateString();
+        const dateStr = new Date(evaluation.date?.seconds * 1000 || Date.now()).toLocaleDateString();
         doc.text(`Nombre: ${patient.firstName} ${patient.lastName} · Fecha: ${dateStr}`, margin, margin + 18);
 
         // Line Separator
         doc.setDrawColor(226, 232, 240); // Slate 200
         doc.line(margin, margin + 25, pageWidth - margin, margin + 25);
 
-        // --- Logo (Top Right) ---
-        const logoSize = 25;
-        const logoX = pageWidth - margin - logoSize;
-        const logoY = margin;
-
-        try {
-            // Force cast to any to use internal/advanced API methods if types are missing
-            const d = doc as any;
-            d.saveGraphicsState();
-
-            // Create circular clipping path
-            // circle(x, y, r, style) - style null adds path to current path
-            d.circle(logoX + (logoSize / 2), logoY + (logoSize / 2), (logoSize / 2), null);
-            d.clip();
-
-            doc.addImage(REPORT_ASSETS.logo, 'PNG', logoX, logoY, logoSize, logoSize);
-
-            d.restoreGraphicsState();
-        } catch (e) {
-            console.error("Logo error", e);
-            // Fallback: just add image square
-            doc.addImage(REPORT_ASSETS.logo, 'PNG', logoX, logoY, logoSize, logoSize);
-        }
+        // --- Round Logo (Top Right) ---
+        this._drawCircularImage(doc, REPORT_ASSETS.logo, pageWidth - margin - 25, margin - 5, 12.5);
 
         let currentY = 60;
 
-        // --- Section: Próxima Sesión ---
-        // Simple text for now, maybe dynamic later
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(30, 41, 59);
-        doc.text("Próxima sesión", margin, currentY);
-        doc.setDrawColor(234, 88, 12); // Orange/Red accent
-        doc.setLineWidth(0.5);
-        doc.line(margin, currentY + 2, margin + 35, currentY + 2); // Underline
+        if (isSimpleReport) {
+            // ==================== SIMPLE REPORT ====================
 
-        currentY += 15;
+            // --- Section: Próxima Sesión ---
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 41, 59);
+            doc.text("Próxima sesión", margin, currentY);
+            doc.setDrawColor(234, 88, 12); // Orange/Red accent
+            doc.setLineWidth(0.5);
+            doc.line(margin, currentY + 2, margin + 35, currentY + 2);
+            currentY += 15;
 
-        // --- Box: Tasks / Plan ---
-        // Draw White Box
-        const boxTop = currentY;
-        doc.setFillColor(255, 255, 255);
-        doc.setDrawColor(226, 232, 240);
-        doc.roundedRect(margin, currentY, contentWidth, 80, 5, 5, "FD"); // Fixed height for now, could be dynamic
+            // --- Box: Tasks ---
+            const boxTop = currentY;
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(226, 232, 240);
+            doc.roundedRect(margin, currentY, contentWidth, 80, 5, 5, "FD");
+            currentY += 15;
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(51, 65, 85);
 
-        currentY += 15;
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(51, 65, 85);
+            const tasks = evaluation.plan?.tasks || [];
+            const education = evaluation.plan?.education || [];
+            const allItems = [...tasks, ...education];
 
-        const tasks = evaluation.plan?.tasks || [];
-        const education = evaluation.plan?.education || [];
-        const allItems = [...tasks, ...education];
+            if (allItems.length === 0) {
+                doc.text("No hay tareas específicas asignadas para esta sesión.", margin + 10, currentY);
+            } else {
+                allItems.forEach((item: string, index: number) => {
+                    if (index > 4) return;
+                    doc.setDrawColor(71, 85, 105);
+                    doc.rect(margin + 10, currentY - 4, 4, 4);
+                    doc.text(item, margin + 20, currentY);
+                    currentY += 12;
+                });
+            }
 
-        if (allItems.length === 0) {
-            doc.text("No hay tareas específicas asignadas para esta sesión.", margin + 10, currentY);
+            currentY = boxTop + 95;
+
+            // --- Section: Señales para avisar ---
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 41, 59);
+            doc.text("Señales para avisar", margin, currentY);
+            doc.setDrawColor(234, 88, 12);
+            doc.line(margin, currentY + 2, margin + 40, currentY + 2);
+            currentY += 10;
+
+            // Warning Box
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(226, 232, 240);
+            doc.roundedRect(margin, currentY, contentWidth, 40, 5, 5, "FD");
+
+            const iconY = currentY + 12;
+            doc.setFillColor(239, 68, 68);
+            doc.circle(margin + 12, iconY, 4, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.text("!", margin + 11, iconY + 1.5);
+
+            doc.setTextColor(71, 85, 105);
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            const warningText = "Avisar/consultar si aparece: fiebre + dolor pélvico o urinario, hematuria visible, retención urinaria, sangrado anormal importante.";
+            const splitWarning = doc.splitTextToSize(warningText, contentWidth - 30);
+            doc.text(splitWarning, margin + 25, iconY);
+
         } else {
-            allItems.forEach((item: string, index: number) => {
-                if (index > 4) return; // Limit items to fit box
-                // Checkbox square
-                doc.setDrawColor(71, 85, 105);
-                doc.rect(margin + 10, currentY - 4, 4, 4);
-                // Text
-                doc.text(item, margin + 20, currentY);
-                currentY += 12;
-            });
+            // ==================== CLINICAL RECORD ====================
+
+            // --- Summary ---
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 41, 59);
+            doc.text("Resumen General", margin, currentY);
+            currentY += 7;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(51, 65, 85);
+            const summary = doc.splitTextToSize(evaluation.summary || "Sin resumen", contentWidth);
+            doc.text(summary, margin, currentY);
+            currentY += summary.length * 5 + 10;
+
+            // --- Details (Anamnesis) ---
+            if (evaluation.details?.anamnesis) {
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(30, 41, 59);
+                doc.text("Anamnesis & Motivo", margin, currentY);
+                currentY += 7;
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                const hText = doc.splitTextToSize(`Motivo: ${evaluation.details.anamnesis.motive}\nHistoria: ${evaluation.details.anamnesis.history}`, contentWidth);
+                doc.text(hText, margin, currentY);
+                currentY += hText.length * 5 + 10;
+            }
+
+            // --- Pelvic ---
+            if (evaluation.details?.pelvic) {
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.text("Evaluación Suelo Pélvico", margin, currentY);
+                currentY += 7;
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                const p = evaluation.details.pelvic;
+                const pText = `Piel: ${p.skin} | Hiato: ${p.hiatus}\nFuerza (Oxford): ${p.oxford}/5\nMapa Dolor: ${p.painMap}`;
+                doc.text(pText, margin, currentY);
+            }
         }
 
-        currentY = boxTop + 95;
-
-        // --- Section: Señales para avisar ---
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(30, 41, 59);
-        doc.text("Señales para avisar", margin, currentY);
-        doc.setDrawColor(234, 88, 12);
-        doc.line(margin, currentY + 2, margin + 40, currentY + 2);
-
-        currentY += 10;
-
-        // Warning Box
-        doc.setFillColor(255, 255, 255);
-        doc.setDrawColor(226, 232, 240); // Border Slate 200
-        doc.roundedRect(margin, currentY, contentWidth, 40, 5, 5, "FD");
-
-        // Icon (Red Circle with !)
-        const iconY = currentY + 12;
-        doc.setFillColor(239, 68, 68); // Red 500
-        doc.circle(margin + 12, iconY, 4, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(10);
-        doc.text("!", margin + 11, iconY + 1.5);
-
-        // Warning Text
-        doc.setTextColor(71, 85, 105);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        const warningText = "Avisar/consultar si aparece: fiebre + dolor pélvico o urinario, hematuria visible, retención urinaria, sangrado anormal importante.";
-        const splitWarning = doc.splitTextToSize(warningText, contentWidth - 30);
-        doc.text(splitWarning, margin + 25, iconY);
-
-
-        // --- Footer --
+        // --- Footer (Common) ---
         const footerY = 240;
-
-        // Line
-        doc.setDrawColor(234, 231, 225); // Darker beige
+        doc.setDrawColor(234, 231, 225);
         doc.line(margin, footerY, pageWidth - margin, footerY);
-
         const infoY = footerY + 10;
 
-        // Professional Info
         doc.setFontSize(11);
         doc.setTextColor(30, 41, 59);
         doc.setFont("helvetica", "bold");
@@ -163,57 +183,31 @@ export const pdfService = {
         doc.text("Klga.fernandarojascruz@gmail.com · @Kinefer", margin, infoY + 18);
         doc.text("Firma: _________________________", margin, infoY + 28);
 
-        // Photo (Right circle)
-        const photoSize = 25;
-        const photoX = pageWidth - margin - photoSize;
-        const photoY = footerY + 5;
+        // --- Round Photo (Bottom Right) ---
+        this._drawCircularImage(doc, REPORT_ASSETS.photo, pageWidth - margin - 25, footerY + 5, 12.5);
 
-        try {
-            const d = doc as any;
-            d.saveGraphicsState();
-            d.circle(photoX + (photoSize / 2), photoY + (photoSize / 2), (photoSize / 2), null);
-            d.clip();
-            doc.addImage(REPORT_ASSETS.photo, 'JPEG', photoX, photoY, photoSize, photoSize);
-            d.restoreGraphicsState();
-        } catch (e) {
-            console.error("Photo error", e);
-            doc.addImage(REPORT_ASSETS.photo, 'JPEG', photoX, photoY, photoSize, photoSize);
-        }
-
-        doc.save(`Resumen_${patient.firstName}.pdf`);
+        const filename = isSimpleReport
+            ? `Reporte_${patient.firstName}.pdf`
+            : `Ficha_${patient.rut}.pdf`;
+        doc.save(filename);
     },
 
-    generateClinicalRecord(patient: Patient, evaluation: any) {
-        // Keep the technical record clean/standard
-        const doc = new jsPDF();
-
-        doc.setFontSize(18);
-        doc.text("Ficha Clínica Kinesiológica", 20, 20);
-
-        doc.setFontSize(10);
-        doc.text(`ID: ${patient.rut}`, 20, 30);
-        doc.text(`Nombre: ${patient.firstName} ${patient.lastName}`, 20, 35);
-        doc.text(`Fecha Eval: ${new Date(evaluation.date?.seconds * 1000 || Date.now()).toLocaleDateString()}`, 20, 40);
-
-        let y = 55;
-
-        // Using plain text and tables for clinical record (Technical legal document)
-        if (evaluation.summary) {
-            doc.setFontSize(12);
-            doc.setFont("helvetica", "bold");
-            doc.text("Resumen", 20, y);
-            y += 7;
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            const summary = doc.splitTextToSize(evaluation.summary, 170);
-            doc.text(summary, 20, y);
-            y += summary.length * 5 + 10;
+    _drawCircularImage(doc: any, imgData: string, x: number, y: number, r: number) {
+        try {
+            if (!imgData) return;
+            const diam = r * 2;
+            doc.saveGraphicsState();
+            // Use roundedRect with radius == width/2 to force a circle intersection
+            // roundedRect(x, y, w, h, rx, ry, style)
+            // style null = path only
+            doc.roundedRect(x, y, diam, diam, r, r, null);
+            doc.clip();
+            doc.addImage(imgData, 'PNG', x, y, diam, diam);
+            doc.restoreGraphicsState();
+        } catch (e) {
+            console.error("Circle Draw Error", e);
+            // Safe fallback
+            doc.addImage(imgData, 'PNG', x, y, r * 2, r * 2);
         }
-
-        // Keep the existing logic for details...
-        // [Truncated for brevity, reuse logical parts from previous if needed or just keep simple]
-        // For now, minimal update to Clinical Record, focusing on the User Report improvement.
-
-        doc.save(`Ficha_${patient.rut}.pdf`);
     }
 };
