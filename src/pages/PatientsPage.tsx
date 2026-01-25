@@ -7,6 +7,7 @@ import { Patient } from '../types/patient';
 import { useNavigate } from 'react-router-dom';
 
 import { EvaluationService, Evaluation } from '../services/evaluationService';
+import { CLUSTERS } from '../data/clusters';
 
 export default function PatientsPage() {
     const navigate = useNavigate();
@@ -330,11 +331,14 @@ export default function PatientsPage() {
                                         {/* Quick stats or clusters */}
                                         {evalItem.clusters && evalItem.clusters.active && (
                                             <div className="flex flex-wrap gap-1 mt-3">
-                                                {evalItem.clusters.active.map(c => (
-                                                    <span key={c} className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md border border-brand-200">
-                                                        {c}
-                                                    </span>
-                                                ))}
+                                                {evalItem.clusters.active.map(cId => {
+                                                    const clusterLabel = CLUSTERS.find(c => c.id === cId)?.label || cId;
+                                                    return (
+                                                        <span key={cId} className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md border border-brand-200">
+                                                            {clusterLabel}
+                                                        </span>
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </div>
