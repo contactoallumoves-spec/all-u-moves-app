@@ -32,6 +32,11 @@ export default function EvolutionPage() {
     const [symptomsScore, setSymptomsScore] = useState(5); // 0-10
     const [adherence, setAdherence] = useState(''); // 'high', 'medium', 'low'
 
+    // Re-assessment State
+    const [oxford, setOxford] = useState<number | undefined>(undefined);
+    const [tonicity, setTonicity] = useState<string>('');
+    const [breathing, setBreathing] = useState<string>('');
+
     // Tasks updates
     const [tasks, setTasks] = useState([
         { id: '1', label: 'Respiración Diafragmática', active: true },
@@ -69,6 +74,12 @@ export default function EvolutionPage() {
                 interventions,
                 symptomsScore,
                 adherence,
+                reassessment: {
+                    oxford,
+                    tonicity,
+                    breating: breathing,
+                    pain: symptomsScore
+                },
                 tasks,
                 status: 'completed'
             });
@@ -133,6 +144,66 @@ export default function EvolutionPage() {
                                     {lvl}
                                 </button>
                             ))}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Objective / Physical Re-assessment [NEW] */}
+            <Card>
+                <CardContent className="p-4 space-y-4">
+                    <h3 className="font-bold text-sm uppercase text-brand-500">Objetivo (Re-evaluación Física)</h3>
+
+                    {/* Oxford */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-brand-700 block">Fuerza Suelo Pélvico (Oxford):</label>
+                        <div className="flex gap-2 bg-gray-50 p-2 rounded-lg justify-between">
+                            {[0, 1, 2, 3, 4, 5].map(val => (
+                                <button
+                                    key={val}
+                                    onClick={() => setOxford(val)}
+                                    className={cn(
+                                        "w-10 h-10 rounded-full font-bold text-sm transition-all",
+                                        oxford === val
+                                            ? "bg-brand-600 text-white shadow-md scale-110"
+                                            : "bg-white text-gray-400 hover:bg-brand-50"
+                                    )}
+                                >
+                                    {val}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Tonicity & Breathing */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-sm font-medium text-brand-700 block mb-2">Tonicidad:</label>
+                            <select
+                                className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"
+                                value={tonicity}
+                                onChange={(e) => setTonicity(e.target.value)}
+                            >
+                                <option value="">Seleccionar...</option>
+                                <option value="Normotono">Normotono</option>
+                                <option value="Hipertono">Hipertono</option>
+                                <option value="Hipotono">Hipotono</option>
+                                <option value="Doloroso">Doloroso</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-brand-700 block mb-2">Patrón Respiratorio:</label>
+                            <select
+                                className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"
+                                value={breathing}
+                                onChange={(e) => setBreathing(e.target.value)}
+                            >
+                                <option value="">Seleccionar...</option>
+                                <option value="Diafragmático">Diafragmático</option>
+                                <option value="Costal Alto">Costal Alto</option>
+                                <option value="Mixto">Mixto</option>
+                                <option value="Invertido">Invertido</option>
+                            </select>
                         </div>
                     </div>
                 </CardContent>

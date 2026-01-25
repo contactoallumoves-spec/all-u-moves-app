@@ -10,6 +10,12 @@ export interface Session {
     symptomsScore: number; // 0-10
     adherence: string; // low/medium/high
     tasks: { id: string; label: string; active: boolean }[];
+    reassessment?: {
+        oxford?: number;
+        pain?: number;
+        breating?: string;
+        tonicity?: string;
+    };
     status: 'completed';
 }
 
