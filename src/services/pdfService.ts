@@ -255,7 +255,6 @@ export const pdfService = {
             const dateStr = d.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
 
             // --- Item Container ---
-            // Draw background for the whole item block? No, just clean sections.
 
             // 1. Header Line (Date + Type)
             doc.setFillColor(item.type.includes('eval') ? colors.primary[0] : 240, item.type.includes('eval') ? colors.primary[1] : 240, item.type.includes('eval') ? colors.primary[2] : 245);
@@ -273,13 +272,16 @@ export const pdfService = {
             const title = item.type === 'session' ? `SESIÓN DE CONTROL - ${dateStr}` : `EVALUACIÓN (${item.type === 'eval_fast' ? 'RÁPIDA' : 'COMPLETA'}) - ${dateStr}`;
             doc.text(title, margin + 5, y + 5.5);
 
-            // Location if available
+            // Location if available (Right Aligned)
             if (item.raw?.location) {
                 doc.setFont("helvetica", "normal");
                 doc.setFontSize(8);
                 const locText = `• ${item.raw.location}`;
-                const titleWidth = doc.getTextWidth(title);
-                doc.text(locText, margin + 5 + titleWidth + 5, y + 5.5);
+
+                const textWidth = doc.getTextWidth(locText);
+                const xRight = (w - margin) - 5 - textWidth; // Right align with padding
+
+                doc.text(locText, xRight, y + 5.5);
             }
 
             y += 15;
@@ -290,7 +292,7 @@ export const pdfService = {
             doc.setFontSize(10);
 
             if (item.type === 'session') {
-                // SESION CONTENT
+                // SESSION CONTENT
 
                 // EVA / Adherence
                 if (item.raw.symptomsScore !== undefined) {
@@ -346,7 +348,6 @@ export const pdfService = {
                     doc.setFont("helvetica", "normal");
 
                     item.raw.customActivities.forEach((act: any) => {
-                        // Translate category
                         const catLabel = (ITEMS_CATALOG as any)[act.category] || act.category;
                         const line = `• [${catLabel}] ${act.name} ${act.params ? `(${act.params})` : ''}`;
                         if (y > h - 20) { doc.addPage(); y = 20; }
@@ -364,8 +365,9 @@ export const pdfService = {
                     doc.setFont("helvetica", "normal");
 
                     const re = item.raw.reassessment;
-                    if (re.oxford) {
-                        doc.text(`• Fuerza Muscular (Oxford): ${re.oxford}/5`, margin + 5, y);
+                    if (re.oxford !== undefined) {
+                        const val = re.oxford === 0 ? "0" : re.oxford;
+                        doc.text(`• Fuerza Muscular (Oxford): ${val}/5`, margin + 5, y);
                         y += 5;
                     }
                     if (re.tonicity) {
@@ -377,7 +379,6 @@ export const pdfService = {
                         y += 5;
                     }
                 }
-
 
             } else {
                 // EVALUATION CONTENT
@@ -396,7 +397,6 @@ export const pdfService = {
                     doc.text("Hallazgos Principales:", margin, y);
                     y += 5;
                     doc.setFont("helvetica", "normal");
-                    // Translate Findings!
                     const findingsText = item.findings.map((f: string) => (ITEMS_CATALOG as any)[f] || f).join(", ");
                     const splitFind = doc.splitTextToSize(findingsText, w - (margin * 2));
                     doc.text(splitFind, margin, y);
@@ -409,7 +409,6 @@ export const pdfService = {
                     doc.text("Hipótesis / Clusters:", margin, y);
                     y += 5;
                     doc.setFont("helvetica", "normal");
-                    // Translate Clusters!
                     const clusterText = item.raw.clusters.active.map((c: string) => (ITEMS_CATALOG as any)[c] || c).join(", ");
                     doc.text(clusterText, margin, y);
                     y += 6;
@@ -423,7 +422,28 @@ export const pdfService = {
             y += 10;
         });
 
+        // Add Footer on the final page
+        this._drawFooter(doc, w, h, margin, colors);
+
         doc.save(`Historial_Completo_${patient.firstName}.pdf`);
+    },
+
+    _drawFooter(doc: jsPDF, w: number, h: number, margin: number, colors: any) {
+        const footerY = h - 30;
+        doc.setDrawColor(230, 230, 230);
+        doc.line(margin, footerY, w - margin, footerY);
+
+        const startY = footerY + 8;
+        doc.setFontSize(10);
+        doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+        doc.setFont("helvetica", "bold");
+        doc.text("Profesional", margin, startY);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text("Fernanda Rojas Cruz — Kinesióloga especialista en piso pélvico y salud integral femenina", margin, startY + 5);
+        doc.text("RUT 19.670.038-2 · Registro 727918", margin, startY + 10);
+        doc.text("Klga.fernandarojascruz@gmail.com", margin, startY + 15);
     },
 
     _drawHeader(doc: jsPDF, patient: Patient, title: string, colors: any) {

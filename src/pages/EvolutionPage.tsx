@@ -72,8 +72,13 @@ export default function EvolutionPage() {
                     // [NEW] Load custom activities
                     setCustomActivities(s.customActivities || []);
                     if (s.location) {
-                        if (['Consulta Kinesiológica', 'Domicilio', 'Online'].includes(s.location)) {
+                        if (['Consulta Kinesiológica', 'Online'].includes(s.location)) {
                             setLocation(s.location);
+                        } else if (s.location.startsWith('Domicilio')) {
+                            setLocation('Domicilio');
+                            // Parse "Domicilio: Address" or just "Domicilio"
+                            const detail = s.location.includes(':') ? s.location.split(':')[1]?.trim() : '';
+                            setManualLocation(detail || '');
                         } else {
                             setLocation('manual');
                             setManualLocation(s.location);
@@ -149,7 +154,7 @@ export default function EvolutionPage() {
                 customActivities, // [NEW] Save custom rows
                 symptomsScore,
                 adherence,
-                location: location === 'manual' ? manualLocation : location,
+                location: location === 'manual' ? manualLocation : (location === 'Domicilio' && manualLocation ? `Domicilio: ${manualLocation}` : location),
                 reassessment: {
                     oxford,
                     tonicity,
@@ -194,17 +199,20 @@ export default function EvolutionPage() {
                         <select
                             className="text-xs p-1 bg-white border border-brand-200 rounded-lg outline-none text-brand-700"
                             value={location}
-                            onChange={(e) => setLocation(e.target.value)}
+                            onChange={(e) => {
+                                setLocation(e.target.value);
+                                setManualLocation('');
+                            }}
                         >
                             <option value="Consulta Kinesiológica">Consulta Kinesiológica</option>
                             <option value="Domicilio">Domicilio</option>
                             <option value="Online">Online</option>
                             <option value="manual">Otro (Escribir)...</option>
                         </select>
-                        {location === 'manual' && (
+                        {(location === 'manual' || location === 'Domicilio') && (
                             <input
-                                className="text-xs p-1 border-b border-brand-300 outline-none"
-                                placeholder="Escribir lugar..."
+                                className="text-xs p-1 border-b border-brand-300 outline-none w-48"
+                                placeholder={location === 'Domicilio' ? "Dirección del domicilio..." : "Escribir lugar..."}
                                 value={manualLocation}
                                 onChange={(e) => setManualLocation(e.target.value)}
                             />

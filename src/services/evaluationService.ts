@@ -21,6 +21,7 @@ export interface Evaluation {
     };
     status: 'draft' | 'completed';
     details?: any; // To store full form data
+    location?: string; // [NEW] e.g. "Consulta Kinesiológica", "Domicilio: Address", "Online"
 }
 
 const COLLECTION_NAME = 'evaluations';

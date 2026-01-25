@@ -37,6 +37,10 @@ export default function CompleteEvaluation() {
     // Added 'diagnosis' to valid tabs
     const [activeTab, setActiveTab] = useState<'safety' | 'anamnesis' | 'pelvic' | 'msk' | 'functional' | 'questionnaires' | 'diagnosis' | 'plan'>('anamnesis');
 
+    // Location State
+    const [location, setLocation] = useState('Consulta Kinesiológica');
+    const [manualLocation, setManualLocation] = useState('');
+
     // Consolidated Form State
     const [evalData, setEvalData] = useState({
         anamnesis: { motive: '', history: '', gestations: 0, vaginalBirths: 0, cSections: 0, abortions: 0, comorbidities: [] as string[], surgeryDetails: '' },
@@ -74,6 +78,19 @@ export default function CompleteEvaluation() {
                         smartGoals: ev.details.smartGoals || [],
                         pelvic: { ...ev.details.pelvic, dyspareunia: ev.details.pelvic?.dyspareunia || false }
                     });
+
+                    if (ev.location) {
+                        if (['Consulta Kinesiológica', 'Online'].includes(ev.location)) {
+                            setLocation(ev.location);
+                        } else if (ev.location.startsWith('Domicilio')) {
+                            setLocation('Domicilio');
+                            const detail = ev.location.includes(':') ? ev.location.split(':')[1]?.trim() : '';
+                            setManualLocation(detail || '');
+                        } else {
+                            setLocation('manual');
+                            setManualLocation(ev.location);
+                        }
+                    }
                 }
             }
             setLoading(false);
@@ -157,6 +174,7 @@ export default function CompleteEvaluation() {
                     active: logicResult.activeClusters.map(c => c.id), // Save generated clusters
                     scores: {}
                 },
+                location: location === 'manual' ? manualLocation : (location === 'Domicilio' && manualLocation ? `Domicilio: ${manualLocation}` : location),
                 summary: summaryText,
                 plan: {
                     education: evalData.plan.education,
@@ -216,6 +234,31 @@ export default function CompleteEvaluation() {
                     <div>
                         <h1 className="text-2xl font-serif font-bold text-brand-900">Evaluación Kinesiológica</h1>
                         <p className="text-brand-500">Paciente: {patient?.firstName} {patient?.lastName}</p>
+
+                        {/* Location Selector */}
+                        <div className="flex gap-2 mt-2 items-center">
+                            <select
+                                className="text-sm p-1 bg-white border border-brand-200 rounded-lg outline-none text-brand-700"
+                                value={location}
+                                onChange={(e) => {
+                                    setLocation(e.target.value);
+                                    setManualLocation('');
+                                }}
+                            >
+                                <option value="Consulta Kinesiológica">Consulta Kinesiológica</option>
+                                <option value="Domicilio">Domicilio</option>
+                                <option value="Online">Online</option>
+                                <option value="manual">Otro (Escribir)...</option>
+                            </select>
+                            {(location === 'manual' || location === 'Domicilio') && (
+                                <input
+                                    className="text-sm p-1 border-b border-brand-300 outline-none w-48"
+                                    placeholder={location === 'Domicilio' ? "Dirección del domicilio..." : "Escribir lugar..."}
+                                    value={manualLocation}
+                                    onChange={(e) => setManualLocation(e.target.value)}
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
                 <Button onClick={handleSave} disabled={saving} className="bg-brand-800 text-white shadow-lg shadow-brand-200/50">
