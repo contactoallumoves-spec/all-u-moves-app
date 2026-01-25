@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Users, Calendar, Activity, ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Users, Calendar, Activity, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
