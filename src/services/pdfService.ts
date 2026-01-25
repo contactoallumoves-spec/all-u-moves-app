@@ -246,7 +246,13 @@ export const pdfService = {
                 y = 50;
             }
 
-            const dateStr = item.date?.toDate ? new Date(item.date.toDate()).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha desconocida';
+            // Robust Date Parsing
+            let d = new Date();
+            if (item.date?.toDate) d = item.date.toDate();
+            else if (item.date instanceof Date) d = item.date;
+            else if (item.date) d = new Date(item.date);
+
+            const dateStr = d.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
 
             // --- Item Container ---
             // Draw background for the whole item block? No, just clean sections.
@@ -267,6 +273,15 @@ export const pdfService = {
             const title = item.type === 'session' ? `SESIÓN DE CONTROL - ${dateStr}` : `EVALUACIÓN (${item.type === 'eval_fast' ? 'RÁPIDA' : 'COMPLETA'}) - ${dateStr}`;
             doc.text(title, margin + 5, y + 5.5);
 
+            // Location if available
+            if (item.raw?.location) {
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8);
+                const locText = `• ${item.raw.location}`;
+                const titleWidth = doc.getTextWidth(title);
+                doc.text(locText, margin + 5 + titleWidth + 5, y + 5.5);
+            }
+
             y += 15;
 
             // 2. Content
@@ -278,6 +293,7 @@ export const pdfService = {
                 // SESION CONTENT
 
                 // EVA / Notes
+                const evaY = y;
                 if (item.raw.symptomsScore !== undefined) {
                     doc.setFont("helvetica", "bold");
                     doc.text(`EVA:`, margin, y);
@@ -372,8 +388,8 @@ export const pdfService = {
                     doc.text("Hallazgos Principales:", margin, y);
                     y += 5;
                     doc.setFont("helvetica", "normal");
-                    // Join with commas or bullet points
-                    const findingsText = item.findings.join(", ");
+                    // Translate Findings!
+                    const findingsText = item.findings.map((f: string) => (ITEMS_CATALOG as any)[f] || f).join(", ");
                     const splitFind = doc.splitTextToSize(findingsText, w - (margin * 2));
                     doc.text(splitFind, margin, y);
                     y += (splitFind.length * 5) + 5;
@@ -385,7 +401,8 @@ export const pdfService = {
                     doc.text("Hipótesis / Clusters:", margin, y);
                     y += 5;
                     doc.setFont("helvetica", "normal");
-                    const clusterText = item.raw.clusters.active.join(", ");
+                    // Translate Clusters!
+                    const clusterText = item.raw.clusters.active.map((c: string) => (ITEMS_CATALOG as any)[c] || c).join(", ");
                     doc.text(clusterText, margin, y);
                     y += 6;
                 }
@@ -413,8 +430,13 @@ export const pdfService = {
         doc.text(`${patient.firstName} ${patient.lastName}`, margin, margin + 18);
         doc.setFontSize(10);
         doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
-        doc.text(`RUT: ${patient.rut || '-'}`, margin, margin + 23);
-        doc.text("Lugar de Atención: Consulta Kinesiológica", margin, margin + 28);
+
+        const rutPart = `RUT: ${patient.rut || '-'}`;
+        // Try to get location from one of the evaluations if available, or just generic
+        const location = "Consulta Kinesiológica"; // Hardcoded for now per previous code, can be dynamic later
+
+        doc.text(rutPart, margin, margin + 23);
+        doc.text(`Lugar de Atención: ${location}`, margin, margin + 28);
 
         doc.setDrawColor(colors.line[0], colors.line[1], colors.line[2]);
         doc.line(margin, margin + 33, 190, margin + 33);
