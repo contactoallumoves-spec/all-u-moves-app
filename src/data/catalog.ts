@@ -38,8 +38,6 @@ export const ITEMS_CATALOG: Record<string, string> = {
     'ex_str': 'Entrenamiento Fuerza',
     'ex_mob': 'Movilidad Pélvica/Cadera',
     'ex_core_stab': 'Estabilización Lumbopélvica',
-    'edu_hygiene': 'Educación Higiene Pélvica'
-    'ex_core_stab': 'Estabilización Lumbopélvica',
     'edu_hygiene': 'Educación Higiene Pélvica',
 
     // --- FIELD TRANSLATIONS ---
