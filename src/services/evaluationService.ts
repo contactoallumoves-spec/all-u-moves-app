@@ -42,8 +42,8 @@ export const EvaluationService = {
         try {
             const q = query(
                 collection(db, COLLECTION_NAME),
-                where("patientId", "==", patientId),
-                orderBy("date", "desc")
+                where("patientId", "==", patientId)
+                // orderBy("date", "desc") // Commenting out to avoid index requirements for now
             );
             const querySnapshot = await getDocs(q);
             return querySnapshot.docs.map(doc => ({

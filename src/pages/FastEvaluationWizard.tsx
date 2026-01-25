@@ -84,11 +84,17 @@ export default function FastEvaluationWizard() {
                                 {['Nuligesta', 'Embarazo', 'Postparto', 'Menopausia', 'Deportista'].map(tag => (
                                     <button
                                         key={tag}
-                                        onClick={() => setSelectedStage(tag)}
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            console.log("Setting stage to:", tag);
+                                            setSelectedStage(tag);
+                                        }}
                                         className={cn(
                                             "p-4 rounded-xl text-left transition-all border-2",
-                                            // We need a selectedStage state variable
-                                            "border-brand-200 hover:border-brand-600 hover:bg-brand-50"
+                                            selectedStage === tag
+                                                ? "border-brand-600 bg-brand-50 shadow-md ring-2 ring-brand-500/20"
+                                                : "border-brand-200 hover:border-brand-400 bg-white"
                                         )}
                                     >
                                         <span className="font-medium text-brand-900">{tag}</span>
