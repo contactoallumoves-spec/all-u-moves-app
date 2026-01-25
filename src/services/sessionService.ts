@@ -17,6 +17,7 @@ export interface Session {
         breating?: string;
         tonicity?: string;
     };
+    customActivities?: { category: string; name: string; params: string }[]; // [NEW] Flexible activities
     status: 'completed';
 }
 

@@ -29,7 +29,7 @@ export function Sidebar() {
             </div>
 
             <div className="px-6 mb-6">
-                <Button className="w-full justify-start gap-2 shadow-brand-200/50" size="lg" onClick={() => navigate('/eval/new')}>
+                <Button className="w-full justify-start gap-2 shadow-brand-200/50" size="lg" onClick={() => navigate('/users')}>
                     <PlusCircle size={20} />
                     Nueva Evaluación
                 </Button>

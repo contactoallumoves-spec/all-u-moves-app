@@ -43,6 +43,9 @@ export default function EvolutionPage() {
     const [tonicity, setTonicity] = useState<string>('');
     const [breathing, setBreathing] = useState<string>('');
 
+    // Custom Activities [NEW]
+    const [customActivities, setCustomActivities] = useState<{ category: string; name: string; params: string }[]>([]);
+
     // Tasks updates
     const [tasks, setTasks] = useState([
         { id: '1', label: 'Respiración Diafragmática', active: true },
@@ -64,6 +67,9 @@ export default function EvolutionPage() {
                     setInterventionDetails(s.interventionDetails || {});
                     setSymptomsScore(s.symptomsScore || 5);
                     setAdherence(s.adherence || '');
+                    // [NEW] Load custom activities
+                    setCustomActivities(s.customActivities || []);
+
                     if (s.reassessment) {
                         setOxford(s.reassessment.oxford);
                         setTonicity(s.reassessment.tonicity || '');
@@ -101,6 +107,7 @@ export default function EvolutionPage() {
                 notes,
                 interventions,
                 interventionDetails, // Save details
+                customActivities, // [NEW] Save custom rows
                 symptomsScore,
                 adherence,
                 reassessment: {
@@ -288,42 +295,109 @@ export default function EvolutionPage() {
                         })}
                     </div>
                 </CardContent>
-            </Card>
+            </CardContent>
+        </Card>
 
-            {/* Plan / Tasks Update */}
-            <Card>
-                <CardContent className="p-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm uppercase text-brand-500">Ajuste de Plan (Tareas)</h3>
-                        <Button variant="ghost" size="sm" className="text-brand-600 text-xs">
-                            <Plus className="w-3 h-3 mr-1" /> Añadir Tarea
+            {/* [NEW] Custom Activities / Flexible Exercises */ }
+    <Card>
+        <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm uppercase text-brand-500">Actividades Específicas (Libre)</h3>
+                <Button variant="ghost" size="sm" className="text-brand-600 text-xs" onClick={() => {
+                    setCustomActivities([...customActivities, { category: 'Ejercicio', name: '', params: '' }]);
+                }}>
+                    <Plus className="w-3 h-3 mr-1" /> Añadir Fila
+                </Button>
+            </div>
+
+            <div className="space-y-2">
+                {customActivities.length === 0 && <p className="text-sm text-gray-400 italic">No hay actividades libres registradas.</p>}
+
+                {customActivities.map((activity, idx) => (
+                    <div key={idx} className="flex gap-2 items-start animate-in fade-in">
+                        <select
+                            className="p-2 text-xs border rounded-lg w-24 bg-white"
+                            value={activity.category}
+                            onChange={e => {
+                                const newActs = [...customActivities];
+                                newActs[idx].category = e.target.value;
+                                setCustomActivities(newActs);
+                            }}
+                        >
+                            <option value="Ejercicio">Ejercicio</option>
+                            <option value="Terapia Manual">T. Manual</option>
+                            <option value="Educación">Educación</option>
+                            <option value="Agentes">Agentes</option>
+                        </select>
+                        <input
+                            className="flex-1 p-2 text-xs border rounded-lg"
+                            placeholder="Nombre (ej. Sentadilla)"
+                            value={activity.name}
+                            onChange={e => {
+                                const newActs = [...customActivities];
+                                newActs[idx].name = e.target.value;
+                                setCustomActivities(newActs);
+                            }}
+                        />
+                        <input
+                            className="w-1/3 p-2 text-xs border rounded-lg"
+                            placeholder="Dosis (ej. 3x10)"
+                            value={activity.params}
+                            onChange={e => {
+                                const newActs = [...customActivities];
+                                newActs[idx].params = e.target.value;
+                                setCustomActivities(newActs);
+                            }}
+                        />
+                        <button
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                            onClick={() => {
+                                const newActs = customActivities.filter((_, i) => i !== idx);
+                                setCustomActivities(newActs);
+                            }}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </CardContent>
+    </Card>
+
+    {/* Plan / Tasks Update */ }
+    <Card>
+        <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm uppercase text-brand-500">Ajuste de Plan (Tareas)</h3>
+                <Button variant="ghost" size="sm" className="text-brand-600 text-xs">
+                    <Plus className="w-3 h-3 mr-1" /> Añadir Tarea
+                </Button>
+            </div>
+
+            <div className="space-y-2">
+                {tasks.map(task => (
+                    <div key={task.id} className={cn(
+                        "flex items-center justify-between p-3 rounded-lg border transition-all",
+                        task.active ? "bg-white border-brand-100" : "bg-gray-50 border-gray-100 opacity-60"
+                    )}>
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                checked={task.active}
+                                onChange={() => toggleTask(task.id)}
+                                className="rounded text-brand-600 focus:ring-brand-500"
+                            />
+                            <span className={cn("text-sm", task.active ? "text-brand-900" : "text-gray-400 line-through")}>{task.label}</span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-300 hover:text-red-500">
+                            <Trash2 className="w-3 h-3" />
                         </Button>
                     </div>
+                ))}
+            </div>
+        </CardContent>
+    </Card>
 
-                    <div className="space-y-2">
-                        {tasks.map(task => (
-                            <div key={task.id} className={cn(
-                                "flex items-center justify-between p-3 rounded-lg border transition-all",
-                                task.active ? "bg-white border-brand-100" : "bg-gray-50 border-gray-100 opacity-60"
-                            )}>
-                                <div className="flex items-center gap-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={task.active}
-                                        onChange={() => toggleTask(task.id)}
-                                        className="rounded text-brand-600 focus:ring-brand-500"
-                                    />
-                                    <span className={cn("text-sm", task.active ? "text-brand-900" : "text-gray-400 line-through")}>{task.label}</span>
-                                </div>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-300 hover:text-red-500">
-                                    <Trash2 className="w-3 h-3" />
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-
-        </div>
+        </div >
     );
 }

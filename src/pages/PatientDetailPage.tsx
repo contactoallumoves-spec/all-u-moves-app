@@ -351,6 +351,20 @@ export default function PatientDetailPage() {
                             <Button variant="outline" className="w-full text-xs" size="sm">
                                 Ver Plan Completo / Editar
                             </Button>
+
+                            <Button
+                                className="w-full text-xs bg-green-500 hover:bg-green-600 text-white border-none"
+                                size="sm"
+                                onClick={() => {
+                                    const text = `Hola ${patient.firstName}, aquí tienes tu plan actualizado:\n\n` +
+                                        `Tareas:\n- Respiración Diafragmática\n- Knack Pre-esfuerzo\n- Caminata 15min\n\n` +
+                                        `Objetivo: Lograr estornudar sin escapes para la próxima semana.\n\n` +
+                                        `¡Tú puedes! 💪`;
+                                    window.open(`https://wa.me/${patient.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent(text)}`, '_blank');
+                                }}
+                            >
+                                Enviar por WhatsApp
+                            </Button>
                         </CardContent>
                     </Card>
 
@@ -446,13 +460,44 @@ export default function PatientDetailPage() {
 
                                     <div className="space-y-2">
                                         <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Intervenciones Realizadas</h3>
-                                        <div className="flex flex-wrap gap-2">
+
+                                        {/* Presets with Details */}
+                                        <div className="flex flex-col gap-2">
                                             {selectedItem.raw.interventions?.length > 0 ? selectedItem.raw.interventions.map((inte: string, i: number) => (
-                                                <span key={i} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-md text-sm border border-purple-100 shadow-sm">
-                                                    {getLabel(inte)}
-                                                </span>
-                                            )) : <span className="text-sm text-gray-400 italic">No se registraron intervenciones.</span>}
+                                                <div key={i} className="flex justify-between items-center bg-purple-50 text-purple-700 px-3 py-2 rounded-md text-sm border border-purple-100 shadow-sm">
+                                                    <span className="font-medium">{getLabel(inte)}</span>
+                                                    {selectedItem.raw.interventionDetails?.[inte] && (
+                                                        <span className="text-xs font-mono bg-white px-2 py-0.5 rounded border border-purple-100">
+                                                            {selectedItem.raw.interventionDetails[inte]}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )) : <span className="text-sm text-gray-400 italic mb-2">No se seleccionaron presets.</span>}
                                         </div>
+
+                                        {/* [NEW] Custom Activities Render */}
+                                        {selectedItem.raw.customActivities?.length > 0 && (
+                                            <div className="mt-4">
+                                                <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Actividades Específicas</h4>
+                                                <div className="grid gap-2">
+                                                    {selectedItem.raw.customActivities.map((act: any, idx: number) => (
+                                                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-lg text-sm">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="px-1.5 py-0.5 bg-white rounded text-[10px] border border-gray-200 uppercase font-bold text-gray-400">
+                                                                    {act.category}
+                                                                </span>
+                                                                <span className="font-medium text-gray-700">{act.name}</span>
+                                                            </div>
+                                                            {act.params && (
+                                                                <span className="font-mono text-xs text-brand-600 bg-brand-50 px-2 py-1 rounded">
+                                                                    {act.params}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
