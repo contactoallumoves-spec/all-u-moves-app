@@ -8,16 +8,18 @@ import { ArrowLeft, Save, Plus, Trash2, CheckSquare } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Patient } from '../types/patient';
 
+import { ITEMS_CATALOG } from '../data/catalog';
+
 // Quick presets for session recording
 const INTERVENTIONS_PRESETS = [
-    { id: 'edu_pain', label: 'Educación Neurofisiología Dolor' },
-    { id: 'manual_pf', label: 'Terapia Manual Suelo Pélvico' },
-    { id: 'biofeedback', label: 'Biofeedback' },
-    { id: 'electro', label: 'Electroestimulación (TENS/EMS)' },
-    { id: 'ex_core', label: 'Control Motor / Core' },
-    { id: 'ex_breat', label: 'Reeducación Respiratoria' },
-    { id: 'ex_str', label: 'Entrenamiento Fuerza' },
-    { id: 'ex_mob', label: 'Movilidad Pélvica/Cadera' },
+    { id: 'edu_pain', label: ITEMS_CATALOG['edu_pain'] },
+    { id: 'manual_pf', label: ITEMS_CATALOG['manual_pf'] },
+    { id: 'biofeedback', label: ITEMS_CATALOG['biofeedback'] },
+    { id: 'electro', label: ITEMS_CATALOG['electro'] },
+    { id: 'ex_core', label: ITEMS_CATALOG['ex_core'] },
+    { id: 'ex_breat', label: ITEMS_CATALOG['ex_breat'] },
+    { id: 'ex_str', label: ITEMS_CATALOG['ex_str'] },
+    { id: 'ex_mob', label: ITEMS_CATALOG['ex_mob'] },
 ];
 
 export default function EvolutionPage() {

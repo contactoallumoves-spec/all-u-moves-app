@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { ArrowLeft, Clock, Calendar, FileText, Activity, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { getLabel } from '../data/catalog';
 
 // Helper to recursively render any object data
 const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
@@ -390,7 +391,7 @@ export default function PatientDetailPage() {
                                         <div className="flex flex-wrap gap-2">
                                             {selectedItem.raw.interventions?.length > 0 ? selectedItem.raw.interventions.map((inte: string, i: number) => (
                                                 <span key={i} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-md text-sm border border-purple-100 shadow-sm">
-                                                    {inte}
+                                                    {getLabel(inte)}
                                                 </span>
                                             )) : <span className="text-sm text-gray-400 italic">No se registraron intervenciones.</span>}
                                         </div>

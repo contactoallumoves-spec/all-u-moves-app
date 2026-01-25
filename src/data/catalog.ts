@@ -26,7 +26,20 @@ export const ITEMS_CATALOG: Record<string, string> = {
 
     // Fallback constants just in case logic adds new ones
     'edu_lifestyle_general': 'Recomendaciones Generales de Estilo de Vida',
-    'task_rest': 'Descanso Activo'
+    'edu_lifestyle_general': 'Recomendaciones Generales de Estilo de Vida',
+    'task_rest': 'Descanso Activo',
+
+    // --- INTERVENTIONS (PRESETS) ---
+    'edu_pain': 'Educación Neurofisiología Dolor',
+    'manual_pf': 'Terapia Manual Suelo Pélvico',
+    'biofeedback': 'Biofeedback',
+    'electro': 'Electroestimulación (TENS/EMS)',
+    'ex_core': 'Control Motor / Core',
+    'ex_breat': 'Reeducación Respiratoria',
+    'ex_str': 'Entrenamiento Fuerza',
+    'ex_mob': 'Movilidad Pélvica/Cadera',
+    'ex_core_stab': 'Estabilización Lumbopélvica',
+    'edu_hygiene': 'Educación Higiene Pélvica'
 };
 
 export function getLabel(id: string): string {
