@@ -121,5 +121,45 @@ export const logicService = {
      */
     extractRedFlags(data: any): string[] {
         return data.redFlags || [];
+    },
+
+    /**
+     * Generates SMART Goals based on active clusters and symptoms
+     */
+    generateSmartGoals(activeClusters: Cluster[], data: any): string[] {
+        const goals: string[] = [];
+
+        // 1. Incontinence Relationship
+        if (data.questionnaire?.score > 0 || activeClusters.some(c => c.id === 'cluster_iue' || c.id === 'cluster_ium')) {
+            goals.push("Reducir la frecuencia de escapes de orina en un 50% en 4 semanas (SMART: Específico, Medible, Alcanzable).");
+            goals.push("Lograr mantener la continencia ante esfuerzos moderados (tos, estornudo) en 6 semanas.");
+        }
+
+        // 2. Pelvic Floor Strength (Oxford)
+        if (data.pelvic?.oxford < 3) {
+            goals.push(`Aumentar la fuerza muscular del suelo pélvico de Oxford ${data.pelvic.oxford} a ${data.pelvic.oxford + 1} en 4 semanas mediante entrenamiento de fuerza.`);
+        }
+
+        // 3. Coordination / Knack
+        if (activeClusters.some(c => c.id === 'cluster_iue')) {
+            goals.push("Automatizar la contracción anticipatoria (Knack) en el 80% de los eventos de tos/esfuerzo en 3 semanas.");
+        }
+
+        // 4. Prolapse / Hiatus
+        if (activeClusters.some(c => c.id === 'cluster_pop')) {
+            goals.push("Disminuir la sensación de peso/bulto vaginal (VAS) en 2 puntos en 5 semanas mediante ejercicios hipopresivos y pautas posturales.");
+        }
+
+        // 5. Sexual Health
+        if (data.pelvic?.dyspareunia) {
+            goals.push("Lograr relaciones sexuales sin dolor (VAS 0) en 8 semanas mediante terapia manual y dilatadores.");
+        }
+
+        // Default if empty
+        if (goals.length === 0) {
+            goals.push("Mejorar la calidad de vida y funcionalidad general en 4 semanas.");
+        }
+
+        return goals;
     }
 };

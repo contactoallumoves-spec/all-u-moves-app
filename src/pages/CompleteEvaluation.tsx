@@ -21,6 +21,7 @@ import { SymptomSelector } from '../components/evaluation/SymptomSelector';
 
 
 import { getLabel } from '../data/catalog';
+import { CIE10_CODES, CIF_CODES } from '../data/clinicalCodes'; // [NEW]
 
 
 export default function CompleteEvaluation() {
@@ -33,19 +34,25 @@ export default function CompleteEvaluation() {
     const [patient, setPatient] = useState<Patient | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'safety' | 'anamnesis' | 'pelvic' | 'msk' | 'functional' | 'questionnaires' | 'plan'>('anamnesis');
+    // Added 'diagnosis' to valid tabs
+    const [activeTab, setActiveTab] = useState<'safety' | 'anamnesis' | 'pelvic' | 'msk' | 'functional' | 'questionnaires' | 'diagnosis' | 'plan'>('anamnesis');
 
     // Consolidated Form State
     const [evalData, setEvalData] = useState({
         anamnesis: { motive: '', history: '', gestations: 0, vaginalBirths: 0, cSections: 0, abortions: 0, comorbidities: [] as string[], surgeryDetails: '' },
-        pelvic: { skin: '', hiatus: '', valsalva: '', oxford: 0, endurance: false, coordination: false, painMap: '', painPoints: [] as string[] },
+        pelvic: { skin: '', hiatus: '', valsalva: '', oxford: 0, endurance: false, coordination: false, painMap: '', painPoints: [] as string[], dyspareunia: false }, // Added dyspareunia default
         msk: { irdSupra: '', irdInfra: '', doming: false, posture: '', motorControl: '', breathing: '', beighton: 0 },
         functional: {
             aslrLeft: 0, aslrRight: 0, aslrNotes: '', squatQuality: '', bridgeQuality: '', impactTests: [] as string[],
-            modality: '', toleranceTests: [] as string[] // [NEW]
+            modality: '', toleranceTests: [] as string[]
         },
         questionnaire: { q1_freq: 0, q2_vol: 0, q3_impact: 0, score: 0 }, // [NEW]
         plan: { diagnosis: '', goals: '', frequency: '', tasks: [] as string[], education: [] as string[] },
+        // [NEW] Clinical Codes
+        diagnosisCodes: [] as string[], // CIE-10 IDs
+        cifCodes: [] as string[], // CIF IDs
+        smartGoals: [] as string[], // Auto-generated
+
         symptoms: [] as string[], // [NEW] Hybrid Input
         redFlags: [] as string[] // [NEW]
     });
@@ -59,7 +66,14 @@ export default function CompleteEvaluation() {
             if (editId) {
                 const ev = await EvaluationService.getById(editId);
                 if (ev && ev.details) {
-                    setEvalData(ev.details);
+                    setEvalData({
+                        ...ev.details,
+                        // Ensure defaults for new fields if old record
+                        diagnosisCodes: ev.details.diagnosisCodes || [],
+                        cifCodes: ev.details.cifCodes || [],
+                        smartGoals: ev.details.smartGoals || [],
+                        pelvic: { ...ev.details.pelvic, dyspareunia: ev.details.pelvic?.dyspareunia || false }
+                    });
                 }
             }
             setLoading(false);
@@ -68,7 +82,27 @@ export default function CompleteEvaluation() {
     }, [patientId, editId]);
 
     // Store the brain result to display suggestions (CIF etc)
-    const [activeLogicResult, setActiveLogicResult] = useState<any>(null); // [NEW]
+    const [activeLogicResult, setActiveLogicResult] = useState<any>(null);
+
+    // [NEW] Logic Brain & Shortcuts
+    const generateSmartGoals = () => {
+        // Infer status first
+        const inferredSymptoms = logicService.evaluateMetrics({ pelvic: evalData.pelvic, msk: evalData.msk, questionnaire: evalData.questionnaire });
+        const logicResult = logicService.analyze([...evalData.symptoms, ...inferredSymptoms]);
+
+        const goals = logicService.generateSmartGoals(logicResult.activeClusters, {
+            pelvic: evalData.pelvic,
+            questionnaire: evalData.questionnaire
+        });
+
+        setEvalData(prev => ({
+            ...prev,
+            smartGoals: goals,
+            plan: { ...prev.plan, goals: goals.join('\n\n') } // Auto-fill text area too
+        }));
+
+        alert("Objetivos SMART Generados");
+    };
 
     // [NEW] Logic Brain
     const generateSuggestions = () => {
@@ -106,6 +140,12 @@ export default function CompleteEvaluation() {
             if (evalData.pelvic.hiatus === 'abierto') findings.push("Hiato Abierto");
             if (evalData.msk.doming) findings.push("Doming Abdominal");
             logicResult.activeClusters.forEach(c => findings.push(c.label));
+
+            // Add Diagnoses to summary
+            evalData.diagnosisCodes.forEach(code => {
+                const label = CIE10_CODES.find(c => c.code === code)?.label;
+                if (label) findings.push(label);
+            });
 
             const summaryText = findings.length > 0
                 ? `Evaluación: ${findings.join(', ')}`
@@ -207,67 +247,6 @@ export default function CompleteEvaluation() {
             <div className="min-h-[400px]">
 
                 {activeTab === 'safety' && (
-                    <div className="animate-in slide-in-from-left-4 duration-300">
-                        <RedFlagsForm
-                            data={evalData.redFlags}
-                            onChange={(d) => setEvalData({ ...evalData, redFlags: d })}
-                        />
-                    </div>
-                )}
-
-                {activeTab === 'questionnaires' && (
-                    <div className="animate-in slide-in-from-right-4 duration-300">
-                        <QuestionnaireForm
-                            data={evalData.questionnaire}
-                            onChange={(d) => setEvalData({ ...evalData, questionnaire: d })}
-                        />
-                    </div>
-                )}
-
-                {activeTab === 'anamnesis' && (
-
-                    <div className="animate-in slide-in-from-left-4 duration-300">
-                        {/* Hybrid Input Section */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4 mb-6">
-                            <SymptomSelector
-                                selectedSymptoms={evalData.symptoms}
-                                onChange={(s) => setEvalData({ ...evalData, symptoms: s })}
-                            />
-                        </div>
-
-                        <HistoryForm
-                            data={evalData.anamnesis}
-                            onChange={(d) => setEvalData({ ...evalData, anamnesis: d })}
-                        />
-                    </div>
-
-                )}
-
-                {activeTab === 'pelvic' && (
-                    <div className="animate-in slide-in-from-right-4 duration-300">
-                        <PelvicFloorForm
-                            data={evalData.pelvic}
-                            onChange={(d) => setEvalData({ ...evalData, pelvic: d })}
-                        />
-                    </div>
-                )}
-
-                {activeTab === 'msk' && (
-                    <div className="animate-in slide-in-from-right-4 duration-300">
-                        <MSKForm
-                            data={evalData.msk}
-                            onChange={(d) => setEvalData({ ...evalData, msk: d })}
-                        />
-                    </div>
-                )}
-
-                {activeTab === 'functional' && (
-                    <div className="animate-in slide-in-from-right-4 duration-300">
-                        <FunctionalForm
-                            data={evalData.functional}
-                            onChange={(d) => setEvalData({ ...evalData, functional: d })}
-                        />
-                    </div>
                 )}
 
                 {activeTab === 'plan' && (

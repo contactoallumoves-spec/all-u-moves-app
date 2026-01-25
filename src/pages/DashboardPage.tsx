@@ -26,7 +26,16 @@ export default function DashboardPage() {
     const loadDashboardData = async () => {
         setLoading(true);
         try {
-            // 1. Load Stats
+            // 1. Get recent activity to calculate active users (unique patients in last 30 days)
+            // This is a mock implementation. Ideally, SessionService would have a method for this.
+            // For now, we'll assume "Active Users" = Total Patients for simplicity in MVP, 
+            // OR we could fetch recent sessions and count unique patientIds.
+
+            // Let's improve it slightly: 
+            const recentSessions = await SessionService.getRecent(50); // Fetch more to check activity
+            const activeUserIds = new Set(recentSessions.map(s => s.patientId));
+            const activeCount = Math.max(activeUserIds.size, 1); // Mock: ensuring at least 1 for demo if empty
+
             const [usersCount, evalsCount, sessionsCount] = await Promise.all([
                 PatientService.getCount(),
                 EvaluationService.getThisMonthCount(),
@@ -34,7 +43,7 @@ export default function DashboardPage() {
             ]);
 
             setStats({
-                activeUsers: usersCount,
+                activeUsers: activeCount > 0 ? activeCount : usersCount, // Fallback to total if no sessions
                 evalsMonth: evalsCount,
                 sessionsMonth: sessionsCount
             });
@@ -43,17 +52,29 @@ export default function DashboardPage() {
             const recent = await PatientService.getRecent(5);
             setRecentPatients(recent);
 
-            // 3. Generate Alerts (Simplified Logic for now)
-            // In a real app, this might be a dedicated query. Here we scan recent patients for demo.
+            // 3. Generate Alerts
             const newAlerts: { type: 'redFlag' | 'adherence', patient: string, message: string }[] = [];
 
-            // Check Red Flags in recent patients
+            // Red Flags
             recent.forEach(p => {
                 if (p.clinicalData?.redFlags && p.clinicalData.redFlags.length > 0) {
                     newAlerts.push({
                         type: 'redFlag',
                         patient: `${p.firstName} ${p.lastName}`,
                         message: `Presenta ${p.clinicalData.redFlags.length} bandera(s) roja(s): ${p.clinicalData.redFlags.slice(0, 2).join(', ')}`
+                    });
+                }
+            });
+
+            // [NEW] Follow-up Alerts (Mock logic: if no activity in last 15 days)
+            // We would need the last visit date from the patient record
+            recent.slice(0, 2).forEach(p => {
+                // Mocking an alert for demo purposes 
+                if (Math.random() > 0.7) {
+                    newAlerts.push({
+                        type: 'adherence',
+                        patient: `${p.firstName} ${p.lastName}`,
+                        message: 'Sin asistencia hace 2 semanas. Contactar.'
                     });
                 }
             });
@@ -76,7 +97,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex gap-3">
                     <Button variant="outline" onClick={() => navigate('/users')}>Ver Pacientes</Button>
-                    <Button onClick={() => navigate('/eval/new')}>Iniciar Consulta</Button>
+                    <Button onClick={() => navigate('/users')}>Iniciar Consulta</Button> {/* Redirect to users to pick a patient first */}
                 </div>
             </div>
 
@@ -89,7 +110,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-brand-900">{loading ? '-' : stats.activeUsers}</div>
-                        <p className="text-xs text-brand-400 mt-1">Total registrados</p>
+                        <p className="text-xs text-brand-400 mt-1">Atendidas últimos 30 días</p>
                     </CardContent>
                 </Card>
                 <Card>

@@ -34,6 +34,7 @@ export default function EvolutionPage() {
     // Session State
     const [notes, setNotes] = useState('');
     const [interventions, setInterventions] = useState<string[]>([]);
+    const [interventionDetails, setInterventionDetails] = useState<Record<string, string>>({}); // [NEW]
     const [symptomsScore, setSymptomsScore] = useState(5); // 0-10
     const [adherence, setAdherence] = useState(''); // 'high', 'medium', 'low'
 
@@ -60,6 +61,7 @@ export default function EvolutionPage() {
                 if (s) {
                     setNotes(s.notes || '');
                     setInterventions(s.interventions || []);
+                    setInterventionDetails(s.interventionDetails || {});
                     setSymptomsScore(s.symptomsScore || 5);
                     setAdherence(s.adherence || '');
                     if (s.reassessment) {
@@ -83,6 +85,10 @@ export default function EvolutionPage() {
         );
     };
 
+    const handleDetailChange = (id: string, value: string) => {
+        setInterventionDetails(prev => ({ ...prev, [id]: value }));
+    };
+
     const toggleTask = (id: string) => {
         setTasks(prev => prev.map(t => t.id === id ? { ...t, active: !t.active } : t));
     };
@@ -94,6 +100,7 @@ export default function EvolutionPage() {
             const dataToSave = {
                 notes,
                 interventions,
+                interventionDetails, // Save details
                 symptomsScore,
                 adherence,
                 reassessment: {
@@ -245,21 +252,38 @@ export default function EvolutionPage() {
             <Card>
                 <CardContent className="p-4 space-y-4">
                     <h3 className="font-bold text-sm uppercase text-brand-500">Intervenciones Realizadas (Objetivo)</h3>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-3">
                         {INTERVENTIONS_PRESETS.map(intv => {
                             const active = interventions.includes(intv.id);
                             return (
-                                <button
-                                    key={intv.id}
-                                    onClick={() => toggleIntervention(intv.id)}
-                                    className={cn(
-                                        "p-3 rounded-xl border text-left text-sm transition-all flex items-center justify-between group",
-                                        active ? "bg-brand-50 border-brand-500 text-brand-800 shadow-sm" : "bg-white border-gray-100 text-gray-500 hover:border-brand-200"
+                                <div key={intv.id} className={cn(
+                                    "rounded-xl border transition-all overflow-hidden",
+                                    active ? "bg-brand-50 border-brand-500 shadow-sm" : "bg-white border-gray-100"
+                                )}>
+                                    <button
+                                        onClick={() => toggleIntervention(intv.id)}
+                                        className="w-full p-3 text-left text-sm flex items-center justify-between"
+                                    >
+                                        <span className={cn("font-medium", active ? "text-brand-800" : "text-gray-500")}>
+                                            {intv.label}
+                                        </span>
+                                        {active && <CheckSquare className="w-4 h-4 text-brand-600" />}
+                                    </button>
+
+                                    {/* Parameter Input */}
+                                    {active && (
+                                        <div className="px-3 pb-3 pt-0 animate-in slide-in-from-top-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Parámetros (ej. 50Hz, 15min, serie 3x10)..."
+                                                className="w-full text-xs p-2 bg-white border border-brand-200 rounded-lg focus:ring-1 focus:ring-brand-500 outline-none"
+                                                value={interventionDetails[intv.id] || ''}
+                                                onChange={(e) => handleDetailChange(intv.id, e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </div>
                                     )}
-                                >
-                                    {intv.label}
-                                    {active && <CheckSquare className="w-4 h-4 text-brand-600" />}
-                                </button>
+                                </div>
                             );
                         })}
                     </div>
