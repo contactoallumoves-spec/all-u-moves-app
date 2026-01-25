@@ -348,6 +348,16 @@ export default function CompleteEvaluation() {
                     </div>
                 )}
 
+                {/* [NEW] Functional Scales Tab */}
+                {activeTab === 'functional_scales' && (
+                    <div className="animate-in slide-in-from-right-4 duration-300">
+                        <FunctionalScalesForm
+                            data={evalData.functionalScales}
+                            onChange={(d) => setEvalData({ ...evalData, functionalScales: d })}
+                        />
+                    </div>
+                )}
+
                 {activeTab === 'functional' && (
                     <div className="animate-in slide-in-from-right-4 duration-300">
                         <FunctionalForm
