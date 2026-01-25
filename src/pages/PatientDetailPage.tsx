@@ -13,24 +13,33 @@ import { getLabel } from '../data/catalog';
 // Helper to recursively render any object data
 const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
     if (data === null || data === undefined) return null;
-    if (typeof data !== 'object') return <span className="text-gray-800 ml-2">{String(data)}</span>;
+    if (typeof data !== 'object') return <span className="text-gray-800 ml-2 font-medium">{String(data)}</span>;
     if (Object.keys(data).length === 0) return null;
 
     return (
-        <div className={`space-y-2 ${level > 0 ? 'ml-4 border-l-2 border-brand-100 pl-4 mt-2' : 'mt-2'}`}>
+        <div className={`space-y-3 ${level > 0 ? 'ml-4 pl-4 border-l-2 border-brand-100 mt-2' : 'mt-2'}`}>
             {Object.entries(data).map(([key, value]) => {
                 if (value === null || value === undefined || value === '') return null;
 
-                // Translate key using catalog. Try exact match, then snake_case, then fallback.
+                // 1. Translate Key
+                // Try exact match first, then snake_case, then lower case fallback
                 let label = getLabel(key);
-                if (label === key) label = getLabel(key.toLowerCase()); // Try lowercase
-                if (label === key.toLowerCase()) label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()); // Fallback to Title Case
+                if (label === key) label = getLabel(key.toLowerCase());
+                if (label === key) label = getLabel(key.replace(/([A-Z])/g, '_$1').toLowerCase()); // Try camelToSnake for catalog lookup
 
-                // Nested Object Recursion
+                // If still no translation, prettify the key (CamelCase -> Title Case)
+                if (label === key || label.includes('_')) {
+                    label = key.replace(/([A-Z])/g, ' $1')
+                        .replace(/_/g, ' ')
+                        .replace(/^./, str => str.toUpperCase())
+                        .trim();
+                }
+
+                // 2. Handle Nested Objects (Recursive)
                 if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                     return (
-                        <div key={key} className="mt-3">
-                            <h4 className="text-xs font-bold text-brand-600 uppercase tracking-widest border-b border-brand-50 pb-1 mb-2">
+                        <div key={key} className="mt-4">
+                            <h4 className="text-xs font-bold text-brand-600 uppercase tracking-widest border-b border-brand-100 pb-1 mb-2">
                                 {label}
                             </h4>
                             <DataRenderer data={value} level={level + 1} />
@@ -38,30 +47,55 @@ const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
                     );
                 }
 
-                // Format Value
-                let displayValue: React.ReactNode = String(value);
+                // 3. Format Value
+                let renderedValue: React.ReactNode = String(value);
 
-                // Boolean Handling
-                if (typeof value === 'boolean') displayValue = value ? 'Sí' : 'No';
-                if (value === 'true') displayValue = 'Sí';
-                if (value === 'false') displayValue = 'No';
+                // Booleans
+                if (typeof value === 'boolean') renderedValue = value ? 'Sí' : 'No';
+                if (value === 'true') renderedValue = 'Sí';
+                if (value === 'false') renderedValue = 'No';
 
-                // Array Handling (List of translated items)
+                // Arrays OR Comma-Separated Strings (that look like lists)
+                let isList = Array.isArray(value);
+                let listItems: string[] = [];
+
                 if (Array.isArray(value)) {
-                    // Try to translate each item
-                    displayValue = value.map(v => getLabel(String(v))).join(', ');
-                } else if (typeof value === 'string' && (value.includes('_') || value.includes('edu_') || value.includes('task_')) && !value.includes(' ')) {
-                    // Attempt to translate comma-separated lists or single codes
-                    const items = value.split(',').map(s => s.trim());
-                    displayValue = items.map(item => getLabel(item)).join(', ');
+                    listItems = value.map(String);
+                } else if (typeof value === 'string' && (value.includes(',') || (value.includes('_') && !value.includes(' ')))) {
+                    // Heuristic: if it has commas, split it.
+                    // OR if it has underscores and is not just a single word key/sentence, likely a code list.
+                    if (value.includes(',')) {
+                        listItems = value.split(',').map(s => s.trim());
+                        isList = true;
+                    }
+                }
+
+                if (isList && listItems.length > 0) {
+                    renderedValue = (
+                        <div className="flex flex-wrap gap-2 mt-1">
+                            {listItems.map((item, idx) => (
+                                <span key={idx} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-100">
+                                    {getLabel(item)}
+                                </span>
+                            ))}
+                        </div>
+                    );
+                } else if (!isList && typeof value === 'string') {
+                    // Try to translate single string values too
+                    const potentialTranslation = getLabel(value);
+                    if (potentialTranslation !== value) {
+                        renderedValue = potentialTranslation;
+                    }
                 }
 
                 return (
-                    <div key={key} className="grid grid-cols-12 gap-4 text-sm py-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded px-1">
-                        <span className="col-span-4 font-semibold text-gray-600 text-xs self-center leading-tight">{label}</span>
-                        <span className="col-span-8 text-gray-800 font-medium break-words leading-snug">
-                            {displayValue}
+                    <div key={key} className="grid grid-cols-1 md:grid-cols-12 gap-1 md:gap-4 py-2 border-b border-gray-50 last:border-0">
+                        <span className="md:col-span-4 font-semibold text-gray-500 text-xs uppercase tracking-wide pt-1">
+                            {label}
                         </span>
+                        <div className="md:col-span-8 text-gray-800 text-sm font-medium leading-relaxed">
+                            {renderedValue}
+                        </div>
                     </div>
                 );
             })}

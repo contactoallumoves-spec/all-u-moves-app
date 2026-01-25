@@ -131,8 +131,7 @@ export const ITEMS_CATALOG: Record<string, string> = {
     'history': 'Historia Clínica',
     'gynaecological': 'Antecedentes Ginecológicos',
     'obstetric': 'Antecedentes Obstétricos',
-    'surgeries': 'Cirugías',
-    'lifestyle': 'Estilo de Vida',
+
     'exercise': 'Ejercicio Físico',
     'diet': 'Hábitos Alimenticios',
     'sleep': 'Higiene del Sueño',
@@ -148,7 +147,7 @@ export const ITEMS_CATALOG: Record<string, string> = {
     'doming': 'Abombamiento (Doming)',
     'pelvic': 'Suelo Pélvico',
     'skin': 'Piel / Mucosa',
-    'reflexes': 'Reflejos',
+
     'sensation': 'Sensibilidad',
     'oxford': 'Fuerza (Oxford)',
     'endurance': 'Resistencia',
