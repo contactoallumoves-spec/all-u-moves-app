@@ -7,7 +7,6 @@ import { Patient } from '../types/patient';
 import { pdfService } from '../services/pdfService';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 import {
     Calendar,
     Activity,
@@ -16,8 +15,10 @@ import {
     PlayCircle,
     Plus,
     Trash2,
-    Maximize2
+    Maximize2,
+    ArrowLeft
 } from 'lucide-react';
+import { cn } from '../lib/utils';
 import { getLabel } from '../data/catalog';
 
 import { ProgressChart } from '../components/patient/ProgressChart';
