@@ -36,6 +36,7 @@ export default function EvolutionPage() {
     const [interventions, setInterventions] = useState<string[]>([]);
     const [interventionDetails, setInterventionDetails] = useState<Record<string, string>>({}); // [NEW]
     const [symptomsScore, setSymptomsScore] = useState(5); // 0-10
+    const [adherence, setAdherence] = useState(''); // 'high', 'medium', 'low'
     const [location, setLocation] = useState('Consulta Kinesiológica');
     const [manualLocation, setManualLocation] = useState('');
 
