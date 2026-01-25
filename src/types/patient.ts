@@ -4,9 +4,11 @@ export interface Patient {
     id?: string;
     firstName: string;
     lastName: string;
+    rut: string; // Chilean ID
     birthDate: string; // YYYY-MM-DD
     email?: string;
     phone?: string;
+    occupation?: string;
     stage: LifeStage;
     createdAt?: any; // Firestore Timestamp
     notes?: string;
