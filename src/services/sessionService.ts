@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 export interface Session {
     id?: string;
@@ -45,6 +45,15 @@ export const SessionService = {
         } catch (error) {
             console.error("Error fetching sessions: ", error);
             return [];
+        }
+    },
+
+    async delete(id: string) {
+        try {
+            await deleteDoc(doc(db, COLLECTION_NAME, id));
+        } catch (error) {
+            console.error("Error deleting session: ", error);
+            throw error;
         }
     }
 };

@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 export interface Evaluation {
     id?: string;
@@ -55,6 +55,15 @@ export const EvaluationService = {
         } catch (error) {
             console.error("Error fetching evaluations: ", error);
             return [];
+        }
+    },
+
+    async delete(id: string) {
+        try {
+            await deleteDoc(doc(db, COLLECTION_NAME, id));
+        } catch (error) {
+            console.error("Error deleting evaluation: ", error);
+            throw error;
         }
     }
 };

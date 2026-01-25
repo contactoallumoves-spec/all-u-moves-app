@@ -12,4 +12,8 @@ export interface Patient {
     stage: LifeStage;
     createdAt?: any; // Firestore Timestamp
     notes?: string;
+    nextSessionChecklist?: {
+        label: string;
+        checked: boolean;
+    }[];
 }

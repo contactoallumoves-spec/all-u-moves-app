@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc } from 'firebase/firestore';
 import { Patient } from '../types/patient';
 
 const COLLECTION_NAME = 'patients';
@@ -40,6 +40,16 @@ export const PatientService = {
         } catch (error) {
             console.error("Error getting patients: ", error);
             return [];
+        }
+    },
+
+    async update(id: string, data: Partial<Patient>) {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            await updateDoc(docRef, data);
+        } catch (error) {
+            console.error("Error updating patient: ", error);
+            throw error;
         }
     }
 };
