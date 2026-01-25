@@ -38,7 +38,7 @@ export default function NewEvaluationPage() {
                 </Card>
 
                 {/* MODO COMPLETO */}
-                <Card className="relative overflow-hidden group hover:border-brand-300 transition-all cursor-pointer opacity-70 hover:opacity-100" onClick={() => alert('Próximamente: Modo Completo')}>
+                <Card className="relative overflow-hidden group hover:border-brand-300 transition-all cursor-pointer opacity-70 hover:opacity-100" onClick={() => navigate(`/eval/complete/${patientId}`)}>
                     <div className="absolute top-0 left-0 w-1 h-full bg-brand-800 group-hover:bg-brand-900 transition-colors" />
                     <CardContent className="p-8 space-y-4">
                         <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-800 mb-4 group-hover:scale-110 transition-transform">
