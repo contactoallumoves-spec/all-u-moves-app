@@ -539,14 +539,25 @@ export default function PatientDetailPage() {
                                     <div className="space-y-2">
                                         <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Revisión de Tareas</h3>
                                         <ul className="space-y-1">
-                                            {selectedItem.raw.tasks?.map((t: any, i: number) => (
-                                                <li key={i} className="flex items-center gap-2 text-sm">
-                                                    <span className={t.active ? "text-green-600" : "text-gray-400 line-through"}>
-                                                        {t.active ? "✓" : "✕"}
-                                                    </span>
-                                                    <span className={t.active ? "text-gray-700" : "text-gray-400"}>{t.label}</span>
-                                                </li>
-                                            ))}
+                                            {selectedItem.raw.tasks?.map((t: any, i: number) => {
+                                                const isActive = t.completed !== undefined ? t.completed : t.active;
+                                                // Note: Logic in EvolutionPage seems to treat 'completed' as the status of the task in the session context? 
+                                                // Actually in EvolutionPage 'completed' is boolean.
+                                                // Wait, if it's "Review tasks", usually we check if they were done.
+                                                // Let's assume 'completed' or 'active' true means checked/done.
+
+                                                return (
+                                                    <li key={i} className="flex items-center gap-2 text-sm">
+                                                        <span className={isActive ? "text-green-600" : "text-gray-400"}>
+                                                            {isActive ? "✓" : "•"}
+                                                        </span>
+                                                        <span className={isActive ? "text-gray-700" : "text-gray-500"}>
+                                                            {t.description || t.label || "Tarea sin nombre"}
+                                                            {t.frequency && <span className="text-xs text-gray-400 ml-1">({t.frequency})</span>}
+                                                        </span>
+                                                    </li>
+                                                );
+                                            })}
                                             {(!selectedItem.raw.tasks || selectedItem.raw.tasks.length === 0) && <li className="text-sm text-gray-400 italic">Sin lista de tareas.</li>}
                                         </ul>
                                     </div>
