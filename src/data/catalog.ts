@@ -94,17 +94,26 @@ export const ITEMS_CATALOG: Record<string, string> = {
     'oxford': 'Fuerza (Oxford)',
     'endurance': 'Resistencia',
     'reps': 'Repeticiones',
-    'hiatus': 'Hiato Urogenital',
-    'prolapse': 'Prolapso',
-    'painMap': 'Mapa de Dolor',
+    'coordination': 'Coordinación',
+    'skin': 'Piel / Mucosa',
+    'pelvic': 'Suelo Pélvico',
+    'painPoints': 'Puntos de Dolor',
+    'impactTests': 'Tests de Impacto',
+    'toleranceTests': 'Tests de Tolerancia',
+    'functional': 'Evaluación Funcional',
+    'aslrRight': 'ASLR Derecho',
+    'aslrLeft': 'ASLR Izquierdo',
+    'beighton': 'Beighton (Hiperlaxitud)',
+    'education': 'Educación',
+    'tasks': 'Tareas / Ejercicios',
+    'plan': 'Plan de Tratamiento',
+    'diagnosis': 'Diagnóstico Kinésico',
+    'goals': 'Objetivos Terapéuticos',
+    'frequency': 'Frecuencia de Sesiones',
 
-    // Fallbacks generic
-    'active': 'Activo',
-    'passive': 'Pasivo',
-    'resisted': 'Resistido',
-    'normal': 'Normal',
-    'abnormal': 'Anormal',
-    'pain': 'Dolor'
+    // Fallbacks
+    'true': 'Sí',
+    'false': 'No'
 };
 
 export function getLabel(id: string): string {

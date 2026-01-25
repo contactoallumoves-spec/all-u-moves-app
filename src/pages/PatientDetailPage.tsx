@@ -13,30 +13,54 @@ import { getLabel } from '../data/catalog';
 // Helper to recursively render any object data
 const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
     if (data === null || data === undefined) return null;
-    if (typeof data !== 'object') return <span className="text-gray-600 font-medium ml-2">{String(data)}</span>;
+    if (typeof data !== 'object') return <span className="text-gray-800 ml-2">{String(data)}</span>;
     if (Object.keys(data).length === 0) return null;
 
     return (
-        <div className={`space-y-2 ${level > 0 ? 'ml-3 border-l-2 border-brand-100 pl-3 mt-2' : ''}`}>
+        <div className={`space-y-2 ${level > 0 ? 'ml-4 border-l-2 border-brand-100 pl-4 mt-2' : 'mt-2'}`}>
             {Object.entries(data).map(([key, value]) => {
                 if (value === null || value === undefined || value === '') return null;
-                // Beautify key
-                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
 
+                // Translate key using catalog. Try exact match, then snake_case, then fallback.
+                let label = getLabel(key);
+                if (label === key) label = getLabel(key.toLowerCase()); // Try lowercase
+                if (label === key.toLowerCase()) label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()); // Fallback to Title Case
+
+                // Nested Object Recursion
                 if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                     return (
-                        <div key={key} className="mt-1">
-                            <span className="text-xs font-bold text-brand-500 uppercase tracking-wide block mb-1">{label}</span>
+                        <div key={key} className="mt-3">
+                            <h4 className="text-xs font-bold text-brand-600 uppercase tracking-widest border-b border-brand-50 pb-1 mb-2">
+                                {label}
+                            </h4>
                             <DataRenderer data={value} level={level + 1} />
                         </div>
                     );
                 }
 
+                // Format Value
+                let displayValue: React.ReactNode = String(value);
+
+                // Boolean Handling
+                if (typeof value === 'boolean') displayValue = value ? 'Sí' : 'No';
+                if (value === 'true') displayValue = 'Sí';
+                if (value === 'false') displayValue = 'No';
+
+                // Array Handling (List of translated items)
+                if (Array.isArray(value)) {
+                    // Try to translate each item
+                    displayValue = value.map(v => getLabel(String(v))).join(', ');
+                } else if (typeof value === 'string' && (value.includes('_') || value.includes('edu_') || value.includes('task_')) && !value.includes(' ')) {
+                    // Attempt to translate comma-separated lists or single codes
+                    const items = value.split(',').map(s => s.trim());
+                    displayValue = items.map(item => getLabel(item)).join(', ');
+                }
+
                 return (
-                    <div key={key} className="flex gap-1 text-sm items-start">
-                        <span className="font-semibold text-brand-800 min-w-[140px] text-xs uppercase opacity-80 pt-0.5">{label}:</span>
-                        <span className="text-gray-800 text-sm">
-                            {Array.isArray(value) ? value.join(', ') : String(value)}
+                    <div key={key} className="grid grid-cols-12 gap-4 text-sm py-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded px-1">
+                        <span className="col-span-4 font-semibold text-gray-600 text-xs self-center leading-tight">{label}</span>
+                        <span className="col-span-8 text-gray-800 font-medium break-words leading-snug">
+                            {displayValue}
                         </span>
                     </div>
                 );
