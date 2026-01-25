@@ -20,6 +20,12 @@ export const pdfService = {
         this._applyDesign(doc, patient, evaluation, "Ficha Clínica", false);
     },
 
+    generatePatientReport(patient: Patient, evaluation: any) {
+        const doc = new jsPDF();
+        // Use "simple report" mode for patient view
+        this._applyDesign(doc, patient, evaluation, "Reporte de Sesión", true);
+    },
+
     _applyDesign(doc: jsPDF, patient: Patient, evaluation: any, title: string, isSimpleReport: boolean) {
         // --- Palette ---
         const colors = {

@@ -76,7 +76,14 @@ export default function EvolutionPage() {
                         setBreathing(s.reassessment.breating || '');
                     }
                     if (s.tasks) {
-                        setTasks(s.tasks);
+                        // Map legacy tasks to new format if needed
+                        const formattedTasks = s.tasks.map((t: any) => ({
+                            id: t.id,
+                            description: t.description || t.label || '',
+                            frequency: t.frequency || '',
+                            completed: t.completed || t.active || false
+                        }));
+                        setTasks(formattedTasks);
                     }
                 }
             }
