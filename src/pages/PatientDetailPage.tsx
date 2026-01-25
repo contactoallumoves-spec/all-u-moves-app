@@ -305,7 +305,14 @@ export default function PatientDetailPage() {
                                                 <h3 className="font-bold text-brand-900">{item.title}</h3>
                                                 <p className="text-xs text-brand-400 flex items-center gap-1">
                                                     <Calendar className="w-3 h-3" />
-                                                    {item.date?.toDate ? new Date(item.date.toDate()).toLocaleDateString() : 'Fecha desconocida'}
+                                                    {(() => {
+                                                        let d = new Date();
+                                                        if (item.date?.toDate) d = item.date.toDate();
+                                                        else if (item.date instanceof Date) d = item.date;
+                                                        else if (item.date) d = new Date(item.date);
+                                                        return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
+                                                    })()}
+                                                    {item.raw?.location && <span className="text-brand-300 ml-2">• {item.raw.location}</span>}
                                                 </p>
                                             </div>
                                             <span className="text-xs font-mono text-brand-300 bg-brand-50 px-2 py-1 rounded">
@@ -318,7 +325,7 @@ export default function PatientDetailPage() {
                                         <div className="flex flex-wrap gap-2">
                                             {item.findings?.slice(0, 3).map((f: string, i: number) => (
                                                 <span key={i} className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md">
-                                                    {f}
+                                                    {getLabel(f)}
                                                 </span>
                                             ))}
                                             {item.findings?.length > 3 && <span className="text-xs text-brand-400">+{item.findings.length - 3} más</span>}
@@ -426,7 +433,14 @@ export default function PatientDetailPage() {
                             <div>
                                 <h2 className="text-2xl font-serif font-bold text-brand-900">{selectedItem.title}</h2>
                                 <p className="text-brand-500 text-sm">
-                                    {selectedItem.date?.toDate ? new Date(selectedItem.date.toDate()).toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Fecha desconocida'}
+                                    {(() => {
+                                        let d = new Date();
+                                        if (selectedItem.date?.toDate) d = selectedItem.date.toDate();
+                                        else if (selectedItem.date instanceof Date) d = selectedItem.date;
+                                        else if (selectedItem.date) d = new Date(selectedItem.date);
+                                        return d.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                                    })()}
+                                    {selectedItem.raw?.location && <span className="ml-2 font-medium">• {selectedItem.raw.location}</span>}
                                 </p>
                             </div>
                             <button onClick={() => setSelectedItem(null)} className="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
