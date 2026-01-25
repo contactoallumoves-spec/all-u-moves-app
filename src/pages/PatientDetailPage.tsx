@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
+import { SessionService } from '../services/sessionService'; // [NEW]
 import { Patient } from '../types/patient';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
@@ -27,17 +28,35 @@ export default function PatientDetailPage() {
             const p = await PatientService.getById(patientId);
             setPatient(p);
 
-            // TODO: Fetch real history from a service that aggregates Sessions + Evaluations
-            // For now, let's fetch Evaluations as a proxy for history
-            const evals = await EvaluationService.getByPatientId(patientId);
-            setHistory(evals.map(e => ({
+            // Fetch Evaluations and Sessions
+            const [evals, sessions] = await Promise.all([
+                EvaluationService.getByPatientId(patientId),
+                SessionService.getByPatientId(patientId)
+            ]);
+
+            // Normalize and Merge
+            const normalizedEvals = evals.map(e => ({
                 id: e.id,
                 type: e.type === 'fast' ? 'eval_fast' : 'eval_complete',
-                date: e.date, // Timestamp
+                date: e.date,
                 title: e.type === 'fast' ? 'Evaluación Rápida' : 'Evaluación Completa',
                 summary: e.summary || 'Sin resumen',
-                findings: e.details?.symptoms || []
-            })));
+                findings: e.details?.symptoms || [],
+                timestamp: e.date instanceof Date ? e.date.getTime() : 0
+            }));
+
+            const normalizedSessions = sessions.map(s => ({
+                id: s.id,
+                type: 'session',
+                date: s.date,
+                title: 'Evolución / Sesión',
+                summary: s.notes || 'Sin notas',
+                findings: s.interventions || [],
+                timestamp: s.date instanceof Date ? s.date.getTime() : 0
+            }));
+
+            const combinedHistory = [...normalizedEvals, ...normalizedSessions].sort((a, b) => b.timestamp - a.timestamp);
+            setHistory(combinedHistory);
 
         } catch (error) {
             console.error("Error loading patient", error);

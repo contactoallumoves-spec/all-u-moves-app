@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
+import { SessionService } from '../services/sessionService'; // [NEW]
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, Save, Plus, Trash2, CheckSquare } from 'lucide-react';
@@ -58,12 +59,24 @@ export default function EvolutionPage() {
     };
 
     const handleSave = async () => {
-        // TODO: Save to Firebase 'sessions' collection
-        console.log("Saving session...", {
-            notes, interventions, symptomsScore, adherence, tasks
-        });
-        alert("Sesión guardada (Simulado)");
-        navigate(`/users/${patientId}`);
+        if (!patientId) return;
+
+        try {
+            await SessionService.create({
+                patientId,
+                date: new Date(),
+                notes,
+                interventions,
+                symptomsScore,
+                adherence,
+                tasks,
+                status: 'completed'
+            });
+            navigate(`/users/${patientId}`);
+        } catch (error) {
+            console.error(error);
+            alert("Error al guardar sesión");
+        }
     };
 
     if (loading) return <div className="p-10 text-center">Cargando...</div>;
