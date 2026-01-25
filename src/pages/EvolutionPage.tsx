@@ -1,0 +1,189 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { PatientService } from '../services/patientService';
+import { Card, CardContent } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { ArrowLeft, Save, Plus, Trash2, CheckSquare } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { Patient } from '../types/patient';
+
+// Quick presets for session recording
+const INTERVENTIONS_PRESETS = [
+    { id: 'edu_pain', label: 'Educación Neurofisiología Dolor' },
+    { id: 'manual_pf', label: 'Terapia Manual Suelo Pélvico' },
+    { id: 'biofeedback', label: 'Biofeedback' },
+    { id: 'electro', label: 'Electroestimulación (TENS/EMS)' },
+    { id: 'ex_core', label: 'Control Motor / Core' },
+    { id: 'ex_breat', label: 'Reeducación Respiratoria' },
+    { id: 'ex_str', label: 'Entrenamiento Fuerza' },
+    { id: 'ex_mob', label: 'Movilidad Pélvica/Cadera' },
+];
+
+export default function EvolutionPage() {
+    const { patientId } = useParams(); // Note: route uses :patientId usually, or :id. Let's align.
+    const navigate = useNavigate();
+    const [patient, setPatient] = useState<Patient | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    // Session State
+    const [notes, setNotes] = useState('');
+    const [interventions, setInterventions] = useState<string[]>([]);
+    const [symptomsScore, setSymptomsScore] = useState(5); // 0-10
+    const [adherence, setAdherence] = useState(''); // 'high', 'medium', 'low'
+
+    // Tasks updates
+    const [tasks, setTasks] = useState([
+        { id: '1', label: 'Respiración Diafragmática', active: true },
+        { id: '2', label: 'Knack Pre-esfuerzo', active: true },
+        { id: '3', label: 'Caminata 15min', active: true },
+    ]);
+
+    useEffect(() => {
+        if (patientId) {
+            PatientService.getById(patientId).then(p => {
+                setPatient(p);
+                setLoading(false);
+            });
+        }
+    }, [patientId]);
+
+    const toggleIntervention = (id: string) => {
+        setInterventions(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleTask = (id: string) => {
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, active: !t.active } : t));
+    };
+
+    const handleSave = async () => {
+        // TODO: Save to Firebase 'sessions' collection
+        console.log("Saving session...", {
+            notes, interventions, symptomsScore, adherence, tasks
+        });
+        alert("Sesión guardada (Simulado)");
+        navigate(`/users/${patientId}`);
+    };
+
+    if (loading) return <div className="p-10 text-center">Cargando...</div>;
+
+    return (
+        <div className="max-w-3xl mx-auto space-y-6 pb-20 animate-in slide-in-from-bottom-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <Button variant="ghost" size="sm" onClick={() => navigate(`/users/${patientId}`)}>
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Cancelar
+                </Button>
+                <div>
+                    <h1 className="text-xl font-serif font-bold text-brand-900 text-center">Nueva Evolución</h1>
+                    <p className="text-xs text-brand-500 text-center">{patient?.firstName} {patient?.lastName}</p>
+                </div>
+                <Button onClick={handleSave} className="bg-brand-800 text-white shadow-lg">
+                    <Save className="w-4 h-4 mr-2" /> Guardar
+                </Button>
+            </div>
+
+            {/* Subjective / Notes */}
+            <Card>
+                <CardContent className="p-4 space-y-4">
+                    <h3 className="font-bold text-sm uppercase text-brand-500">Subjetivo (Notas)</h3>
+                    <textarea
+                        className="w-full p-3 bg-brand-50/50 border border-brand-100 rounded-xl min-h-[100px] focus:ring-2 focus:ring-brand-500/20 outline-none transition-all"
+                        placeholder="¿Cómo se siente hoy? Comentarios de la usuaria..."
+                        value={notes}
+                        onChange={e => setNotes(e.target.value)}
+                    />
+
+                    <div className="flex items-center gap-4">
+                        <label className="text-sm font-medium text-brand-700">Intensidad Síntomas (0-10):</label>
+                        <input
+                            type="range" min="0" max="10"
+                            value={symptomsScore} onChange={e => setSymptomsScore(Number(e.target.value))}
+                            className="w-full accent-brand-600"
+                        />
+                        <span className="font-bold text-brand-800 w-8">{symptomsScore}</span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm font-medium text-brand-700">Adherencia Tareas:</span>
+                        <div className="flex gap-2">
+                            {['Baja', 'Media', 'Alta'].map(lvl => (
+                                <button
+                                    key={lvl}
+                                    onClick={() => setAdherence(lvl.toLowerCase())}
+                                    className={cn(
+                                        "px-3 py-1 rounded-lg text-xs border transition-all",
+                                        adherence === lvl.toLowerCase() ? "bg-green-100 text-green-800 border-green-200 font-bold" : "bg-white text-gray-500 hover:bg-gray-50"
+                                    )}
+                                >
+                                    {lvl}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Objective / Interventions (The "Clicks") */}
+            <Card>
+                <CardContent className="p-4 space-y-4">
+                    <h3 className="font-bold text-sm uppercase text-brand-500">Intervenciones Realizadas (Objetivo)</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                        {INTERVENTIONS_PRESETS.map(intv => {
+                            const active = interventions.includes(intv.id);
+                            return (
+                                <button
+                                    key={intv.id}
+                                    onClick={() => toggleIntervention(intv.id)}
+                                    className={cn(
+                                        "p-3 rounded-xl border text-left text-sm transition-all flex items-center justify-between group",
+                                        active ? "bg-brand-50 border-brand-500 text-brand-800 shadow-sm" : "bg-white border-gray-100 text-gray-500 hover:border-brand-200"
+                                    )}
+                                >
+                                    {intv.label}
+                                    {active && <CheckSquare className="w-4 h-4 text-brand-600" />}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Plan / Tasks Update */}
+            <Card>
+                <CardContent className="p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-sm uppercase text-brand-500">Ajuste de Plan (Tareas)</h3>
+                        <Button variant="ghost" size="sm" className="text-brand-600 text-xs">
+                            <Plus className="w-3 h-3 mr-1" /> Añadir Tarea
+                        </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                        {tasks.map(task => (
+                            <div key={task.id} className={cn(
+                                "flex items-center justify-between p-3 rounded-lg border transition-all",
+                                task.active ? "bg-white border-brand-100" : "bg-gray-50 border-gray-100 opacity-60"
+                            )}>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={task.active}
+                                        onChange={() => toggleTask(task.id)}
+                                        className="rounded text-brand-600 focus:ring-brand-500"
+                                    />
+                                    <span className={cn("text-sm", task.active ? "text-brand-900" : "text-gray-400 line-through")}>{task.label}</span>
+                                </div>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-300 hover:text-red-500">
+                                    <Trash2 className="w-3 h-3" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+
+        </div>
+    );
+}

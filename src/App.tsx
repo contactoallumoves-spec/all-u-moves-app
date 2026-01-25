@@ -6,6 +6,8 @@ import PatientsPage from './pages/PatientsPage';
 import NewEvaluationPage from './pages/NewEvaluationPage';
 import FastEvaluationWizard from './pages/FastEvaluationWizard';
 import CompleteEvaluation from './pages/CompleteEvaluation';
+import PatientDetailPage from './pages/PatientDetailPage'; // [NEW]
+import EvolutionPage from './pages/EvolutionPage'; // [NEW]
 import { Button } from './components/ui/Button';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, User } from 'firebase/auth';
@@ -98,6 +100,10 @@ function App() {
                 <Route path="/eval/new/:patientId" element={user ? <MainLayout><NewEvaluationPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/fast/:patientId" element={user ? <MainLayout><FastEvaluationWizard /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/complete/:patientId" element={user ? <MainLayout><CompleteEvaluation /></MainLayout> : <Navigate to="/login" />} />
+
+                {/* Hub & Sessions */}
+                <Route path="/users/:id" element={user ? <MainLayout><PatientDetailPage /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/users/:patientId/sessions/new" element={user ? <MainLayout><EvolutionPage /></MainLayout> : <Navigate to="/login" />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" />} />

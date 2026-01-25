@@ -124,10 +124,10 @@ export default function PatientsPage() {
                             {patients.map(patient => (
                                 <div key={patient.id} className="p-4 flex items-center justify-between hover:bg-brand-50/50 transition-colors group">
                                     <div className="flex items-center gap-4">
-                                        <div className="cursor-pointer w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg" onClick={() => handleViewHistory(patient)}>
+                                        <div className="cursor-pointer w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg" onClick={() => navigate(`/users/${patient.id}`)}>
                                             {patient.firstName.charAt(0)}{patient.lastName.charAt(0)}
                                         </div>
-                                        <div className="cursor-pointer" onClick={() => handleViewHistory(patient)}>
+                                        <div className="cursor-pointer" onClick={() => navigate(`/users/${patient.id}`)}>
                                             <p className="font-semibold text-brand-900 text-lg">{patient.firstName} {patient.lastName}</p>
                                             <div className="flex items-center gap-3 text-xs text-brand-500">
                                                 <span className="bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium">{patient.stage}</span>
