@@ -531,7 +531,7 @@ export default function PatientDetailPage() {
                                                 <span className="text-xs font-bold text-brand-400 block">EDUCACIÓN</span>
                                                 <ul className="list-disc pl-5 text-sm text-gray-700">
                                                     {selectedItem.raw.plan.education.map((e: string, i: number) => (
-                                                        <li key={i}>{e}</li>
+                                                        <li key={i}>{getLabel(e)}</li>
                                                     ))}
                                                 </ul>
                                             </div>
@@ -542,7 +542,7 @@ export default function PatientDetailPage() {
                                                 <span className="text-xs font-bold text-brand-400 block">TAREAS / EJERCICIOS</span>
                                                 <ul className="list-disc pl-5 text-sm text-gray-700">
                                                     {selectedItem.raw.plan.tasks.map((t: string, i: number) => (
-                                                        <li key={i}>{t}</li>
+                                                        <li key={i}>{getLabel(t)}</li>
                                                     ))}
                                                 </ul>
                                             </div>

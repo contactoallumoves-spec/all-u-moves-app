@@ -12,6 +12,7 @@ export const ITEMS_CATALOG: Record<string, string> = {
     'task_hypopressive_intro': 'Iniciación a Hipopresivos',
     'task_keel_elevation': 'Elevación Pélvica (Keel)',
     // --- SYMPTOMS & CONDITIONS ---
+    'questionnaire': 'Cuestionarios',
     'symptoms': 'Síntomas',
     'comorbidities': 'Comorbilidades',
     'redFlags': 'Banderas Rojas',
