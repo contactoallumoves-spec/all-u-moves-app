@@ -5,11 +5,19 @@ import { EvaluationService } from '../services/evaluationService';
 import { SessionService } from '../services/sessionService';
 import { Patient } from '../types/patient';
 import { pdfService } from '../services/pdfService';
-import { Button } from '../components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { ArrowLeft, Clock, Calendar, FileText, Activity, PlayCircle, Plus, Trash2, ChevronLeft, CheckCircle2, AlertCircle, TrendingUp, PlusCircle, Maximize2 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
+import {
+    Calendar,
+    Activity,
+    FileText,
+    Clock,
+    PlayCircle,
+    Plus,
+    Trash2,
+    Maximize2
+} from 'lucide-react';
 import { getLabel } from '../data/catalog';
 
 import { ProgressChart } from '../components/patient/ProgressChart';
