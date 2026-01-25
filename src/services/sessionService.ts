@@ -10,6 +10,7 @@ export interface Session {
     interventionDetails?: Record<string, string>; // [NEW] Parameters details
     symptomsScore: number; // 0-10
     adherence: string; // low/medium/high
+    location?: string; // [NEW] Place of service
     tasks: { id: string; label: string; active: boolean }[];
     reassessment?: {
         oxford?: number;

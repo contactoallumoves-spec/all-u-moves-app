@@ -36,7 +36,8 @@ export default function EvolutionPage() {
     const [interventions, setInterventions] = useState<string[]>([]);
     const [interventionDetails, setInterventionDetails] = useState<Record<string, string>>({}); // [NEW]
     const [symptomsScore, setSymptomsScore] = useState(5); // 0-10
-    const [adherence, setAdherence] = useState(''); // 'high', 'medium', 'low'
+    const [location, setLocation] = useState('Consulta Kinesiológica');
+    const [manualLocation, setManualLocation] = useState('');
 
     // Re-assessment State
     const [oxford, setOxford] = useState<number | undefined>(undefined);
@@ -69,6 +70,14 @@ export default function EvolutionPage() {
                     setAdherence(s.adherence || '');
                     // [NEW] Load custom activities
                     setCustomActivities(s.customActivities || []);
+                    if (s.location) {
+                        if (['Consulta Kinesiológica', 'Domicilio', 'Online'].includes(s.location)) {
+                            setLocation(s.location);
+                        } else {
+                            setLocation('manual');
+                            setManualLocation(s.location);
+                        }
+                    }
 
                     if (s.reassessment) {
                         setOxford(s.reassessment.oxford);
@@ -139,6 +148,7 @@ export default function EvolutionPage() {
                 customActivities, // [NEW] Save custom rows
                 symptomsScore,
                 adherence,
+                location: location === 'manual' ? manualLocation : location,
                 reassessment: {
                     oxford,
                     tonicity,
@@ -177,6 +187,28 @@ export default function EvolutionPage() {
                 <div>
                     <h1 className="text-xl font-serif font-bold text-brand-900 text-center">Nueva Evolución</h1>
                     <p className="text-xs text-brand-500 text-center">{patient?.firstName} {patient?.lastName}</p>
+
+                    {/* Location Selector */}
+                    <div className="flex justify-center gap-2 mt-2">
+                        <select
+                            className="text-xs p-1 bg-white border border-brand-200 rounded-lg outline-none text-brand-700"
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                        >
+                            <option value="Consulta Kinesiológica">Consulta Kinesiológica</option>
+                            <option value="Domicilio">Domicilio</option>
+                            <option value="Online">Online</option>
+                            <option value="manual">Otro (Escribir)...</option>
+                        </select>
+                        {location === 'manual' && (
+                            <input
+                                className="text-xs p-1 border-b border-brand-300 outline-none"
+                                placeholder="Escribir lugar..."
+                                value={manualLocation}
+                                onChange={(e) => setManualLocation(e.target.value)}
+                            />
+                        )}
+                    </div>
                 </div>
                 <Button onClick={handleSave} className="bg-brand-800 text-white shadow-lg">
                     <Save className="w-4 h-4 mr-2" /> Guardar

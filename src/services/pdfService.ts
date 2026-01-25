@@ -117,13 +117,18 @@ export const pdfService = {
                 // Import catalog helper if not available in scope, or just duplicate logic if easier. 
                 // Since this is a service, let's assume we can import.
                 // NOTE: We need to update imports at top of file too.
-                allItems.slice(0, 5).forEach((item: string) => { // Added slice(0,5) to match original behavior
+                allItems.slice(0, 5).forEach((item: any) => { // Added slice(0,5) to match original behavior
                     doc.setTextColor(colors.highlight[0], colors.highlight[1], colors.highlight[2]);
                     doc.text("•", margin + 8, y);
                     doc.setTextColor(80, 80, 90);
 
-                    // Translate ID to Label
-                    const label = (ITEMS_CATALOG as any)[item] || item;
+                    // Translate ID to Label or use Object Description
+                    let label = item;
+                    if (typeof item === 'object' && item !== null) {
+                        label = item.description || item.label || 'Tarea sin nombre';
+                    } else {
+                        label = (ITEMS_CATALOG as any)[item] || item;
+                    }
 
                     doc.text(label, margin + 15, y); // Adjusted x-coordinate to match original
                     y += 10; // Adjusted increment to match original
