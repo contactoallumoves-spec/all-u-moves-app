@@ -58,6 +58,23 @@ export const EvaluationService = {
         }
     },
 
+    async getThisMonthCount() {
+        try {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            const q = query(
+                collection(db, COLLECTION_NAME),
+                where('date', '>=', Timestamp.fromDate(startOfMonth))
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        } catch (error) {
+            console.error("Error getting eval count", error);
+            return 0;
+        }
+    },
+
     async delete(id: string) {
         try {
             await deleteDoc(doc(db, COLLECTION_NAME, id));

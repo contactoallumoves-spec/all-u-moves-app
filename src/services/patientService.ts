@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, limit } from 'firebase/firestore';
 import { Patient } from '../types/patient';
 
 const COLLECTION_NAME = 'patients';
@@ -40,6 +40,30 @@ export const PatientService = {
         } catch (error) {
             console.error("Error getting patients: ", error);
             return [];
+        }
+    },
+
+    async getRecent(limitCount: number = 5) {
+        try {
+            const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'), limit(limitCount));
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Patient[];
+        } catch (error) {
+            console.error("Error getting recent patients: ", error);
+            return [];
+        }
+    },
+
+    async getCount() {
+        try {
+            // For small datasets, getting all docs is fine. For larger, use getCountFromServer (requires newer SDK)
+            const snapshot = await getDocs(collection(db, COLLECTION_NAME));
+            return snapshot.size;
+        } catch (error) {
+            return 0;
         }
     },
 
