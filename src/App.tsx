@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { MainLayout } from './components/layout/MainLayout';
 import DashboardPage from './pages/DashboardPage';
+import PatientsPage from './pages/PatientsPage';
 import NewEvaluationPage from './pages/NewEvaluationPage';
 import FastEvaluationWizard from './pages/FastEvaluationWizard';
 import { Button } from './components/ui/Button';
