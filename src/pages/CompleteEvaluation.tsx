@@ -43,11 +43,11 @@ export default function CompleteEvaluation() {
 
     // [NEW] Logic Brain
     const generateSuggestions = () => {
-        const result = logicService.analyze(evalData.symptoms);
-
         // Also infer from metrics (Oxford < 3 etc)
         const inferredSymptoms = logicService.evaluateMetrics({ pelvic: evalData.pelvic, msk: evalData.msk });
-        // (Optional: Merge inferred symptoms back into selection or just use for plan)
+
+        // Analyze combined symptoms (Manual + Inferred)
+        const result = logicService.analyze([...evalData.symptoms, ...inferredSymptoms]);
 
         // Update Plan with Suggestions
         // Append to existing to avoid overwriting manual unless empty? 
