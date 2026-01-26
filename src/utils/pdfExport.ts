@@ -13,10 +13,10 @@ export const generateProgressReport = async (
         const pageHeight = doc.internal.pageSize.getHeight();
 
         // --- Estilo Femenino y Premium (Paleta All U Moves) ---
-        const brandColor = [190, 24, 93]; // Pink 700
-        const brandLight = [252, 231, 243]; // Pink 100
-        const brandText = [88, 28, 135]; // Purple 900
-        const secondaryText = [130, 130, 130]; // Gray
+        const brandColor: [number, number, number] = [190, 24, 93]; // Pink 700
+        const brandLight: [number, number, number] = [252, 231, 243]; // Pink 100
+        const brandText: [number, number, number] = [88, 28, 135]; // Purple 900
+        const secondaryText: [number, number, number] = [130, 130, 130]; // Gray
 
         // 1. Decorative Header (Franja superior)
         doc.setFillColor(brandColor[0], brandColor[1], brandColor[2]);
