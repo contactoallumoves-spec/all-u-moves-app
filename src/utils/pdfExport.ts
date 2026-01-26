@@ -14,7 +14,8 @@ export const generateProgressReport = async (
 
         // --- Estilo Moderno y Minimalista ---
         // Paleta Soft & Clean
-        const colors = {
+        // Paleta Soft & Clean
+        const colors: { [key: string]: [number, number, number] } = {
             primary: [190, 24, 93],     // Pink 700 (Brand Accent)
             secondary: [161, 161, 170], // Gray 400 (Subtitles)
             text: [39, 39, 42],         // Zinc 800 (Main Text)
@@ -113,56 +114,6 @@ export const generateProgressReport = async (
 
                 return [date, eva, oxford, sane, psfs];
             });
-
-        autoTable(doc, {
-            startY: nextY,
-            head: [['Fecha', 'Dolor (EVA)', 'Fuerza (Oxford)', 'SANE', 'PSFS']],
-            body: tableBody,
-            theme: 'plain', // Minimalist theme
-            headStyles: {
-                fillColor: [255, 255, 255],
-                textColor: colors.primary, // Pink text for headers
-                fontStyle: 'bold',
-                halign: 'left',
-                lineWidth: 0,
-                fontSize: 10
-            },
-            styles: {
-                fontSize: 9,
-                cellPadding: 6,
-                textColor: colors.text,
-                lineColor: colors.line,
-                lineWidth: 0, // No vertical lines
-                valign: 'middle'
-            },
-            columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 30 }, // Date
-                1: { halign: 'center' },
-                2: { halign: 'center' },
-                3: { halign: 'center' }
-            },
-            // Add subtle bottom border to rows manually or via hooks if needed, 
-            // but 'plain' usually looks good. Let's try adding a bottom line per row.
-            didParseCell: (data) => {
-                if (data.section === 'head' || data.section === 'body') {
-                    // Custom border bottom
-                }
-            },
-            didDrawCell: (data) => {
-                // Add bottom border to every row for structure without heaviness
-                if (data.section === 'body' && data.column.index === 0) {
-                    // Draw line across whole page width for this row? 
-                    // autoTable handles this with 'grid' theme usually, but 'plain' is too plain.
-                    // Let's stick to 'grid' but override heavy borders.
-                }
-            },
-        });
-
-        // Re-run autoTable with 'grid' but customized for minimal look because 'plain' might be too open
-        // Actually, let's use Stripe but with very light colors
-
-        // Clearing the previous autoTable call (it writes directly). 
-        // Wait, I can't undo. I will use a fresh config below, ignoring the logic trace above.
 
         // Correct implementation:
         autoTable(doc, {
