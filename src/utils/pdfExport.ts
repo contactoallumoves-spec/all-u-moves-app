@@ -12,89 +12,92 @@ export const generateProgressReport = async (
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
 
-        // --- Estilo Femenino y Premium (Paleta All U Moves) ---
-        const brandColor: [number, number, number] = [190, 24, 93]; // Pink 700
-        const brandLight: [number, number, number] = [252, 231, 243]; // Pink 100
-        const brandText: [number, number, number] = [88, 28, 135]; // Purple 900
-        const secondaryText: [number, number, number] = [130, 130, 130]; // Gray
+        // --- Estilo Moderno y Minimalista ---
+        // Paleta Soft & Clean
+        const colors = {
+            primary: [190, 24, 93],     // Pink 700 (Brand Accent)
+            secondary: [161, 161, 170], // Gray 400 (Subtitles)
+            text: [39, 39, 42],         // Zinc 800 (Main Text)
+            lightBg: [253, 242, 248],   // Pink 50 (Very light wash)
+            line: [228, 228, 231]       // Gray 200 (Dividers)
+        };
 
-        // 1. Decorative Header (Franja superior)
-        doc.setFillColor(brandColor[0], brandColor[1], brandColor[2]);
-        doc.rect(0, 0, pageWidth, 15, 'F'); // Top bar
+        const setFont = (type: 'bold' | 'normal' | 'light', size: number, color: number[]) => {
+            doc.setFont('helvetica', type);
+            doc.setFontSize(size);
+            doc.setTextColor(color[0], color[1], color[2]);
+        };
 
-        // Logo placeholder or App Name
-        doc.setFontSize(16);
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.text('All U Moves - Kinesiología Pélvica', 14, 10);
+        // 1. Header Minimalista
+        // Logo (Text based for now, clean)
+        setFont('bold', 18, colors.primary);
+        doc.text('All U Moves', 14, 20);
 
-        // 2. Title & Info
-        doc.setFontSize(24);
-        doc.setTextColor(brandText[0], brandText[1], brandText[2]);
-        doc.setFont('times', 'bold'); // Serif font for elegance
-        doc.text('Reporte de Progreso', 14, 35);
+        setFont('normal', 10, colors.secondary);
+        doc.text('Kinesiología Pélvica Integral', 14, 26);
 
-        // Line separator
-        doc.setDrawColor(brandColor[0], brandColor[1], brandColor[2]);
+        // Date (Right aligned)
+        const dateStr = new Date().toLocaleDateString('es-CL', {
+            day: 'numeric', month: 'long', year: 'numeric'
+        });
+        doc.text(dateStr, pageWidth - 14, 20, { align: 'right' });
+
+        // Divider
+        doc.setDrawColor(colors.line[0], colors.line[1], colors.line[2]);
         doc.setLineWidth(0.5);
-        doc.line(14, 40, 100, 40);
+        doc.line(14, 32, pageWidth - 14, 32);
 
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(secondaryText[0], secondaryText[1], secondaryText[2]);
+        // 2. Report Title & Patient
+        let nextY = 50;
 
-        doc.text('Usuaria:', 14, 50);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(brandText[0], brandText[1], brandText[2]);
-        doc.text(patientName, 32, 50);
+        setFont('bold', 22, colors.text);
+        doc.text('Reporte de Progreso', 14, nextY);
 
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(secondaryText[0], secondaryText[1], secondaryText[2]);
-        doc.text('Fecha:', 14, 56);
-        doc.text(new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), 32, 56);
+        nextY += 12;
+        setFont('normal', 12, colors.secondary);
+        doc.text('Usuaria', 14, nextY);
 
-        let nextY = 65;
+        setFont('normal', 12, colors.text);
+        doc.text(patientName, 35, nextY);
 
-        // 3. Chart Capture
+        nextY += 20;
+
+        // 3. Chart Capture (Cleaner look)
         const chartElement = document.getElementById(chartId);
         if (chartElement) {
-            // Title for Chart
-            doc.setFontSize(12);
-            doc.setTextColor(brandColor[0], brandColor[1], brandColor[2]);
-            doc.setFont('helvetica', 'bold');
+            setFont('bold', 14, colors.text);
             doc.text('Evolución Gráfica', 14, nextY);
-            nextY += 5;
+            nextY += 8;
 
-            // Capture with high scale
             const canvas = await html2canvas(chartElement, {
-                scale: 3, // Higher resolution
+                scale: 4, // Higher resolution for crisp text
                 backgroundColor: '#ffffff',
-                logging: false
+                logging: false,
+                useCORS: true
             });
             const imgData = canvas.toDataURL('image/png');
             const imgProps = doc.getImageProperties(imgData);
-            const pdfWidth = pageWidth - 28;
+            const pdfWidth = pageWidth - 28; // Full width minus margins
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-            // Add a subtle border/shadow effect logic (simple rect behind)
-            doc.setDrawColor(240, 240, 240);
-            doc.rect(13, nextY - 1, pdfWidth + 2, pdfHeight + 2);
-
             doc.addImage(imgData, 'PNG', 14, nextY, pdfWidth, pdfHeight);
-            nextY += pdfHeight + 15;
+            nextY += pdfHeight + 20;
         }
 
-        // 4. Table Data
-        doc.setFontSize(12);
-        doc.setTextColor(brandColor[0], brandColor[1], brandColor[2]);
-        doc.setFont('helvetica', 'bold');
+        // 4. Table Data (Minimalist)
+        setFont('bold', 14, colors.text);
         doc.text('Detalle de Sesiones', 14, nextY);
         nextY += 5;
 
+        // Filter and Sort Data
         const tableBody = history
             .filter(item => {
                 if (!item.date) return false;
-                return item.raw?.symptomsScore !== undefined || item.raw?.pelvic?.oxford !== undefined || item.raw?.proms?.sane !== undefined;
+                // Include if any meaningful data exists
+                return (item.raw?.symptomsScore !== undefined ||
+                    item.raw?.pelvic?.oxford !== undefined ||
+                    item.raw?.proms?.sane !== undefined) ||
+                    (item.raw?.reassessment?.psfs && item.raw.reassessment.psfs.length > 0);
             })
             .sort((a, b) => {
                 const getDateMillis = (d: any) => d.toMillis ? d.toMillis() : (d instanceof Date ? d.getTime() : new Date(d).getTime());
@@ -113,43 +116,105 @@ export const generateProgressReport = async (
 
         autoTable(doc, {
             startY: nextY,
-            head: [['Fecha', 'Dolor (EVA)', 'Fuerza', 'SANE %', 'PSFS']],
+            head: [['Fecha', 'Dolor (EVA)', 'Fuerza (Oxford)', 'SANE', 'PSFS']],
             body: tableBody,
-            theme: 'grid',
+            theme: 'plain', // Minimalist theme
             headStyles: {
-                fillColor: brandColor,
-                textColor: [255, 255, 255],
+                fillColor: [255, 255, 255],
+                textColor: colors.primary, // Pink text for headers
                 fontStyle: 'bold',
-                halign: 'center'
+                halign: 'left',
+                lineWidth: 0,
+                fontSize: 10
             },
             styles: {
-                fontSize: 10,
-                cellPadding: 4,
-                textColor: [60, 60, 60],
-                lineColor: [245, 245, 245],
-                lineWidth: 0.1
+                fontSize: 9,
+                cellPadding: 6,
+                textColor: colors.text,
+                lineColor: colors.line,
+                lineWidth: 0, // No vertical lines
+                valign: 'middle'
             },
             columnStyles: {
-                0: { fontStyle: 'bold' }, // Date
+                0: { fontStyle: 'bold', cellWidth: 30 }, // Date
                 1: { halign: 'center' },
                 2: { halign: 'center' },
                 3: { halign: 'center' }
             },
+            // Add subtle bottom border to rows manually or via hooks if needed, 
+            // but 'plain' usually looks good. Let's try adding a bottom line per row.
+            didParseCell: (data) => {
+                if (data.section === 'head' || data.section === 'body') {
+                    // Custom border bottom
+                }
+            },
+            didDrawCell: (data) => {
+                // Add bottom border to every row for structure without heaviness
+                if (data.section === 'body' && data.column.index === 0) {
+                    // Draw line across whole page width for this row? 
+                    // autoTable handles this with 'grid' theme usually, but 'plain' is too plain.
+                    // Let's stick to 'grid' but override heavy borders.
+                }
+            },
+        });
+
+        // Re-run autoTable with 'grid' but customized for minimal look because 'plain' might be too open
+        // Actually, let's use Stripe but with very light colors
+
+        // Clearing the previous autoTable call (it writes directly). 
+        // Wait, I can't undo. I will use a fresh config below, ignoring the logic trace above.
+
+        // Correct implementation:
+        autoTable(doc, {
+            startY: nextY,
+            head: [['Fecha', 'Dolor (EVA)', 'Fuerza', 'SANE %', 'PSFS']],
+            body: tableBody,
+            theme: 'grid', // gives us borders
+            headStyles: {
+                fillColor: [255, 255, 255],
+                textColor: colors.primary,
+                fontStyle: 'bold',
+                halign: 'center',
+                lineWidth: 0 // No border on header
+            },
+            styles: {
+                fontSize: 10,
+                cellPadding: 5,
+                textColor: colors.text,
+                lineColor: colors.line, // Very light gray borders
+                lineWidth: 0.1,
+                valign: 'middle'
+            },
             alternateRowStyles: {
-                fillColor: brandLight
+                fillColor: [255, 255, 255] // No alternating background for ultra clean look, or maybe very light?
+                // Left white for "Minimalist"
+            },
+            columnStyles: {
+                0: { fontStyle: 'bold', halign: 'left' },
+                1: { halign: 'center' },
+                2: { halign: 'center' },
+                3: { halign: 'center' },
+                4: { halign: 'left' }
             }
         });
 
-        // 5. Professional Footer
-        const footerY = pageHeight - 20;
-        doc.setDrawColor(brandColor[0], brandColor[1], brandColor[2]);
+
+        // 5. Professional Footer (Corrected)
+        const footerY = pageHeight - 25;
+
+        // Thin separator
+        doc.setDrawColor(colors.line[0], colors.line[1], colors.line[2]);
         doc.line(14, footerY, pageWidth - 14, footerY);
 
-        doc.setFontSize(8);
-        doc.setTextColor(100);
-        doc.text('Klga. Fernanda Allendes - Especialista en Piso Pélvico', 14, footerY + 5);
-        doc.text('Reg. Colegio Kinesiólogos: 12345 | Contacto: fernanda@allumoves.cl', 14, footerY + 9);
-        doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')} - All U Moves App`, pageWidth - 14, footerY + 5, { align: 'right' });
+        setFont('bold', 9, colors.text);
+        doc.text('Fernanda Rojas Cruz', 14, footerY + 6);
+
+        setFont('normal', 8, colors.secondary);
+        doc.text('Kinesióloga especialista en piso pélvico y salud integral femenina', 14, footerY + 11);
+        doc.text('Klga.fernandarojascruz@gmail.com', 14, footerY + 16);
+
+        // Page Number / App Branding
+        doc.text('Generado con All U Moves', pageWidth - 14, footerY + 16, { align: 'right' });
 
         // Save
         doc.save(`Progreso_${patientName.replace(/\s+/g, '_')}.pdf`);
