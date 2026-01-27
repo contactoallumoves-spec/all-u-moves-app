@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BODY_FRONT_PARTS, BODY_BACK_PARTS } from './BodyMapAssets';
+import { SVG_CONFIG, FRONT_PATHS, BACK_PATHS, REGION_NAMES } from './BodyMapPaths';
 
 interface BodyMapProps {
     value?: {
@@ -15,17 +15,20 @@ type ViewMode = 'anterior' | 'posterior';
 export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as string[], painType: '' }, onChange }) => {
     const [view, setView] = useState<ViewMode>('anterior');
 
-    const handleRegionClick = (_: string, regionName: string) => {
+    const handleRegionClick = (_: string, regionKey: string) => {
+        // Look up the friendly name
+        const displayName = REGION_NAMES[regionKey] || regionKey;
+
         const currentRegions = value.painRegions || [];
-        const isSelected = currentRegions.includes(regionName);
+        const isSelected = currentRegions.includes(displayName);
 
         let newRegions;
         if (isSelected) {
-            newRegions = currentRegions.filter(r => r !== regionName);
+            newRegions = currentRegions.filter(r => r !== displayName);
         } else {
             // Remove 'SIN DOLOR' if selecting a region
             const tempRegions = currentRegions.filter(r => r !== 'SIN DOLOR');
-            newRegions = [...tempRegions, regionName];
+            newRegions = [...tempRegions, displayName];
         }
 
         onChange({
@@ -34,9 +37,13 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
         });
     };
 
-    const isSelected = (regionName: string) => value.painRegions?.includes(regionName);
+    const isSelected = (regionKey: string) => {
+        const displayName = REGION_NAMES[regionKey] || regionKey;
+        return value.painRegions?.includes(displayName);
+    };
 
-    const activeParts = view === 'anterior' ? BODY_FRONT_PARTS : BODY_BACK_PARTS;
+    // Choose which set of paths to render
+    const activePaths = view === 'anterior' ? FRONT_PATHS : BACK_PATHS;
 
     return (
         <div className="w-full max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
@@ -72,30 +79,45 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
                     </div>
 
                     <div className="relative w-full h-[600px] max-w-[300px]">
-                        <svg viewBox="0 0 400 800" className="w-full h-full drop-shadow-xl filter">
+                        <svg
+                            viewBox={SVG_CONFIG.viewBox}
+                            className="w-full h-full drop-shadow-xl filter"
+                            preserveAspectRatio="xMidYMid meet"
+                        >
                             <AnimatePresence mode='wait'>
                                 <g key={view}>
-                                    {activeParts.map((part) => (
-                                        <motion.path
-                                            key={part.id}
-                                            d={part.d}
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
+                                    {Object.entries(activePaths).map(([key, d]) => {
+                                        if (!d) return null; // Skip empty paths while user is filling them out
 
-                                            // Style & Interaction
-                                            fill={isSelected(part.name) ? '#EC4899' : '#FFFFFF'}
-                                            stroke={isSelected(part.name) ? '#BE185D' : '#CBD5E1'}
-                                            strokeWidth={isSelected(part.name) ? "3" : "2"}
+                                        return (
+                                            <motion.path
+                                                key={key}
+                                                d={d}
+                                                id={key}
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
 
-                                            className="cursor-pointer transition-all duration-200 hover:filter hover:brightness-95"
+                                                // Style & Interaction
+                                                fill={isSelected(key) ? '#EC4899' : '#FFFFFF'}
+                                                stroke={isSelected(key) ? '#BE185D' : '#CBD5E1'}
+                                                strokeWidth={isSelected(key) ? "3" : "2"}
 
-                                            onClick={() => handleRegionClick(part.id, part.name)}
+                                                className="cursor-pointer transition-all duration-200 hover:filter hover:brightness-95"
 
-                                            whileHover={{ scale: 1.01 }}
-                                            whileTap={{ scale: 0.98 }}
-                                        />
-                                    ))}
+                                                onClick={() => handleRegionClick(key, key)}
+
+                                                whileHover={{ scale: 1.01 }}
+                                                whileTap={{ scale: 0.98 }}
+                                            />
+                                        );
+                                    })}
+                                    {/* Placeholder message if no paths are filled */}
+                                    {Object.values(activePaths).every(v => v === "") && (
+                                        <text x="50%" y="50%" textAnchor="middle" className="text-xs fill-gray-400">
+                                            Esperando datos SVG...
+                                        </text>
+                                    )}
                                 </g>
                             </AnimatePresence>
                         </svg>
@@ -136,7 +158,12 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
                                     {region}
                                     {region !== 'SIN DOLOR' && (
                                         <button
-                                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleRegionClick('', region); }}
+                                            // Find the key for this displayName to remove it correctly
+                                            onClick={(e: React.MouseEvent) => {
+                                                e.stopPropagation();
+                                                const keyToRemove = Object.keys(REGION_NAMES).find(key => REGION_NAMES[key] === region) || region;
+                                                handleRegionClick('', keyToRemove);
+                                            }}
                                             className="hover:text-red-500 ml-1"
                                         >×</button>
                                     )}
