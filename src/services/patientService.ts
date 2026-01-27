@@ -93,7 +93,10 @@ export const PatientService = {
     async createProspective(data: any) {
         try {
             // Check if patient exists
-            const existing = await this.findByRut(data.rut);
+            const rut = data.rut as string;
+            if (!rut) throw new Error("RUT is required");
+
+            const existing = await this.findByRut(rut);
 
             if (existing) {
                 // If exists, perform a "smart update" or just log a new request

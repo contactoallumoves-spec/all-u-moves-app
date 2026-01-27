@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChevronRight, ChevronLeft, Check, AlertCircle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { PatientService } from '../../services/patientService';
 
 // --- Schema Definition ---
@@ -55,12 +55,8 @@ const PreAdmissionPage: React.FC = () => {
     const onSubmit = async (data: PreAdmissionData) => {
         setIsSubmitting(true);
         try {
-            // TODO: Call service to create/update prospective patient
-            console.log('Form Data:', data);
-
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
+            const result = await PatientService.createProspective(data);
+            console.log('Patient processed:', result);
             setIsSuccess(true);
         } catch (error) {
             console.error(error);
