@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, deleteDoc, doc, limit } from 'firebase/firestore';
 import { Patient } from '../types/patient';
 
 const COLLECTION_NAME = 'patients';
@@ -130,13 +130,21 @@ export const PatientService = {
                     admissionDate: Timestamp.now(),
                     status: 'prospective', // New status
 
-                    // Clinical snippet
+                    // Clinical snippet (Legacy + Premium)
                     prospectiveData: {
                         reason: data.reason,
                         story: data.story,
                         painLevel: data.painLevel,
                         expectations: data.expectations,
                         submittedAt: Timestamp.now()
+                    },
+                    // Populate main clinical data from form
+                    insurance: data.insurance,
+                    clinicalData: {
+                        redFlags: data.redFlags || [],
+                        gynObs: data.gynObs,
+                        habits: data.habits,
+                        bodyMap: data.bodyMap
                     }
                 };
 
@@ -148,6 +156,15 @@ export const PatientService = {
             }
         } catch (error) {
             console.error("Error creating prospective patient: ", error);
+            throw error;
+        }
+    },
+
+    async deletePatient(id: string) {
+        try {
+            await deleteDoc(doc(db, COLLECTION_NAME, id));
+        } catch (error) {
+            console.error("Error deleting patient: ", error);
             throw error;
         }
     }

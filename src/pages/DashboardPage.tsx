@@ -68,6 +68,16 @@ export default function DashboardPage() {
 
             // [NEW] Follow-up Alerts (Mock logic: if no activity in last 15 days)
             // We would need the last visit date from the patient record
+            // [NEW] New Admissions Alert
+            const newAdmissions = recent.filter(p => p.status === 'prospective');
+            if (newAdmissions.length > 0) {
+                newAlerts.push({
+                    type: 'redFlag', // Reuse styling
+                    patient: `${newAdmissions.length} Nuevas Solicitudes`,
+                    message: `Hay ${newAdmissions.length} fichas de pre-ingreso esperando revisión.`
+                });
+            }
+
             recent.slice(0, 2).forEach(p => {
                 // Mocking an alert for demo purposes 
                 if (Math.random() > 0.7) {

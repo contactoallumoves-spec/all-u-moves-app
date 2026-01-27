@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { PlusCircle, Search, Loader2, User as UserIcon, Phone, Mail, FileText } from 'lucide-react';
+import { PlusCircle, Search, Loader2, User as UserIcon, Phone, Mail, FileText, Trash2 } from 'lucide-react';
 import { PatientService } from '../services/patientService';
 import { Patient } from '../types/patient';
 import { useNavigate } from 'react-router-dom';
@@ -144,6 +144,20 @@ export default function PatientsPage() {
                                         <Button variant="ghost" size="sm" onClick={() => handleViewHistory(patient)} className="hidden md:flex text-brand-600 hover:text-brand-800 hover:bg-brand-50">
                                             Ver Historial
                                         </Button>
+                                        <button onClick={() => {
+                                            setFormData(patient);
+                                            setShowModal(true);
+                                        }} className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors" title="Editar">
+                                            <FileText size={18} />
+                                        </button>
+                                        <button onClick={async () => {
+                                            if (confirm(`¿Eliminar a ${patient.firstName}? Esta acción es irreversible.`)) {
+                                                await PatientService.deletePatient(patient.id!);
+                                                loadPatients();
+                                            }
+                                        }} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Eliminar">
+                                            <Trash2 size={18} />
+                                        </button>
                                         <Button variant="outline" size="sm" onClick={() => navigate(`/eval/new/${patient.id}`)} className="hidden md:flex">
                                             Nueva Evaluación
                                         </Button>
