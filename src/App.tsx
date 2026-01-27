@@ -12,6 +12,8 @@ import { Button } from './components/ui/Button';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, User } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
+import PublicLayout from './components/layout/PublicLayout';
+import PreAdmissionPage from './pages/public/PreAdmissionPage';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -104,6 +106,11 @@ function App() {
                 {/* Hub & Sessions */}
                 <Route path="/users/:id" element={user ? <MainLayout><PatientDetailPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/users/:patientId/sessions/new" element={user ? <MainLayout><EvolutionPage /></MainLayout> : <Navigate to="/login" />} />
+
+                {/* Public Routes */}
+                <Route path="/" element={<PublicLayout />}>
+                    <Route path="pre-ingreso" element={<PreAdmissionPage />} />
+                </Route>
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" />} />

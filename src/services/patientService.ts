@@ -75,5 +75,72 @@ export const PatientService = {
             console.error("Error updating patient: ", error);
             throw error;
         }
+    },
+
+    async findByRut(rut: string): Promise<Patient | null> {
+        try {
+            const q = query(collection(db, COLLECTION_NAME), where('rut', '==', rut));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) return null;
+            const doc = querySnapshot.docs[0];
+            return { id: doc.id, ...doc.data() } as Patient;
+        } catch (error) {
+            console.error("Error finding patient by RUT: ", error);
+            return null;
+        }
+    },
+
+    async createProspective(data: any) {
+        try {
+            // Check if patient exists
+            const existing = await this.findByRut(data.rut);
+
+            if (existing) {
+                // If exists, perform a "smart update" or just log a new request
+                // For now, let's update contact info if missing and add a label
+                const updates: any = {};
+                if (!existing.email) updates.email = data.email;
+                if (!existing.phone) updates.phone = data.phone;
+
+                // Add a "prospective_update" field or similar to notify admin
+                updates.lastProspectiveUpdate = Timestamp.now();
+                updates.prospectiveReason = data.reason; // Overwrite or append? Overwrite for now as "latest motive"
+
+                await this.update(existing.id, updates);
+                return { id: existing.id, status: 'updated' };
+            } else {
+                // Create new
+                // Map form data to Patient structure
+                const newPatient = {
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                    rut: data.rut,
+                    birthDate: data.birthDate, // Keep as string or convert if needed. The form sends string YYYY-MM-DD
+                    phone: data.phone,
+                    email: data.email,
+                    occupation: data.occupation,
+                    admissionDate: Timestamp.now(),
+                    status: 'prospective', // New status
+
+                    // Clinical snippet
+                    prospectiveData: {
+                        reason: data.reason,
+                        story: data.story,
+                        painLevel: data.painLevel,
+                        expectations: data.expectations,
+                        submittedAt: Timestamp.now()
+                    }
+                };
+
+                const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+                    ...newPatient,
+                    createdAt: Timestamp.now()
+                });
+                return { id: docRef.id, status: 'created' };
+            }
+        } catch (error) {
+            console.error("Error creating prospective patient: ", error);
+            throw error;
+        }
     }
 };
