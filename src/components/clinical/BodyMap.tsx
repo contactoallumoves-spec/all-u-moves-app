@@ -6,7 +6,7 @@ interface BodyMapProps {
         painRegions: string[];
         painType?: string;
     };
-    onChange: (value: { painRegions: string[]; painType: string }) => void;
+    onChange: (value: { painRegions: string[]; painType?: string }) => void;
 }
 
 type ViewMode = 'general-front' | 'general-back' | 'pelvis' | 'vulva';
