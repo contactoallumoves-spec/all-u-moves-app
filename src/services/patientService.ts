@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, deleteDoc, doc, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, deleteDoc, doc, limit, DocumentData } from 'firebase/firestore';
 import { Patient } from '../types/patient';
 
 const COLLECTION_NAME = 'patients';
@@ -33,7 +33,7 @@ export const PatientService = {
         try {
             const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
             const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => ({
+            return querySnapshot.docs.map((doc: DocumentData) => ({
                 id: doc.id,
                 ...doc.data()
             })) as Patient[];
@@ -47,7 +47,7 @@ export const PatientService = {
         try {
             const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'), limit(limitCount));
             const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => ({
+            return querySnapshot.docs.map((doc: DocumentData) => ({
                 id: doc.id,
                 ...doc.data()
             })) as Patient[];
