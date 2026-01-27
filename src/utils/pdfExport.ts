@@ -8,7 +8,7 @@ export const generateProgressReport = async (
     chartId: string
 ) => {
     try {
-        const doc = new jsPDF();
+        const doc = new jsPDF('l', 'mm', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
 
@@ -79,10 +79,25 @@ export const generateProgressReport = async (
             const imgData = canvas.toDataURL('image/png');
             const imgProps = doc.getImageProperties(imgData);
             const pdfWidth = pageWidth - 28; // Full width minus margins
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            // Constrain height if chart is too tall for the page, though usually width limits it first in portrait.
+            // In landscape, we have less height.
+            let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-            doc.addImage(imgData, 'PNG', 14, nextY, pdfWidth, pdfHeight);
-            nextY += pdfHeight + 20;
+            // Safety check: if chart height + nextY > pageHeight - footerMargin, scale down
+            const maxChartHeight = pageHeight - nextY - 50; // leave space for table start and footer
+            if (pdfHeight > maxChartHeight) {
+                pdfHeight = maxChartHeight;
+                // re-calculate width to maintain aspect ratio (optional, or just center it? 
+                // typically we want full width. If we constrain height, width shrinks.
+                // Let's just constrain height and center it.
+                const newWidth = (imgProps.width * pdfHeight) / imgProps.height;
+                const marginX = (pageWidth - newWidth) / 2;
+                doc.addImage(imgData, 'PNG', marginX, nextY, newWidth, pdfHeight);
+            } else {
+                doc.addImage(imgData, 'PNG', 14, nextY, pdfWidth, pdfHeight);
+            }
+
+            nextY += pdfHeight + 15;
         }
 
         // 4. Table Data (Minimalist)
