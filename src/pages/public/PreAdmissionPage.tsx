@@ -24,6 +24,7 @@ const preAdmissionSchema = z.object({
     story: z.string().optional(),
 
     // 3. Clinical - GynObs
+    // 3. Clinical - GynObs
     gynObs: z.object({
         gestations: z.number().min(0),
         births: z.number().min(0),
@@ -31,13 +32,28 @@ const preAdmissionSchema = z.object({
         abortions: z.number().optional(),
         menopause: z.boolean(),
         episiotomy: z.boolean().optional(),
+        surgeries: z.string().optional(),
     }),
 
-    // 4. Clinical - Habits & Pain
-    painLevel: z.number().min(0).max(10),
-    redFlags: z.array(z.string()).optional(), // e.g. "incontinencia", "dolor_relaciones"
+    // 4. Clinical - Habits
+    habits: z.object({
+        waterIntake: z.string().optional(),
+        activityLevel: z.string().optional(),
+        digestion: z.string().optional(),
+        sleepQuality: z.string().optional(),
+    }),
 
-    // 5. Goals
+    // 5. Clinical - Body Map
+    bodyMap: z.object({
+        painRegions: z.array(z.string()).default([]),
+        painType: z.string().optional(),
+    }),
+
+    // 6. Clinical - Pain Level
+    painLevel: z.number().min(0).max(10),
+    redFlags: z.array(z.string()).optional(),
+
+    // 7. Goals
     expectations: z.string().optional(),
 });
 
@@ -54,7 +70,8 @@ const PreAdmissionPage: React.FC = () => {
         defaultValues: {
             painLevel: 0,
             gynObs: { gestations: 0, births: 0, cesareans: 0, menopause: false },
-            redFlags: []
+            redFlags: [],
+            bodyMap: { painRegions: [] }
         }
     });
 
@@ -65,7 +82,9 @@ const PreAdmissionPage: React.FC = () => {
         { id: 'rut_contact', type: 'question', fields: ['rut', 'phone', 'email'] },
         { id: 'insurance', type: 'question', fields: ['insurance', 'birthDate', 'occupation'] },
         { id: 'reason', type: 'question', fields: ['reason', 'story'] },
-        { id: 'gyn_obs', type: 'question', fields: ['gynObs.gestations', 'gynObs.births', 'gynObs.cesareans'] },
+        { id: 'gyn_obs', type: 'question', fields: ['gynObs.gestations', 'gynObs.births', 'gynObs.cesareans', 'gynObs.surgeries'] },
+        { id: 'habits', type: 'question', fields: ['habits'] },
+        { id: 'body_map', type: 'question', fields: ['bodyMap'] },
         { id: 'pain', type: 'question', fields: ['painLevel'] },
         { id: 'red_flags', type: 'question', fields: ['redFlags'] },
         { id: 'expectations', type: 'question', fields: ['expectations'] },
@@ -276,9 +295,86 @@ const PreAdmissionPage: React.FC = () => {
                                     </div>
                                 </div>
 
+                                <div className="space-y-2">
+                                    <label className="block font-bold text-gray-700">Cirugías Previas</label>
+                                    <input {...register('gynObs.surgeries')} placeholder="Ej: Apéndice, Vesícula..." className="w-full text-lg p-3 rounded-lg border border-gray-300" />
+                                </div>
+
                                 <div className="flex items-center space-x-3 bg-gray-50 p-4 rounded-xl">
                                     <input type="checkbox" {...register('gynObs.menopause')} id="menopause" className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500" />
                                     <label htmlFor="menopause" className="text-lg text-gray-700">Estoy en etapa de Menopausia</label>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 5.1 HEALTH HABITS */}
+                        {steps[step].id === 'habits' && (
+                            <div className="space-y-6">
+                                <h2 className="text-3xl font-bold text-brand-900">Estilo de Vida</h2>
+                                <p className="text-gray-500">Cuéntanos un poco sobre tus hábitos diarios.</p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="font-bold text-gray-700">Hidratación (Agua)</label>
+                                        <select {...register('habits.waterIntake')} className="w-full p-3 rounded-lg border border-gray-300 bg-white">
+                                            <option value="">Selecciona...</option>
+                                            <option value="bajo">Baja (&lt; 1 litro)</option>
+                                            <option value="normal">Normal (1.5 - 2 litros)</option>
+                                            <option value="alto">Alta (&gt; 2 litros)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="font-bold text-gray-700">Actividad Física</label>
+                                        <select {...register('habits.activityLevel')} className="w-full p-3 rounded-lg border border-gray-300 bg-white">
+                                            <option value="">Selecciona...</option>
+                                            <option value="sedentario">Sedentaria</option>
+                                            <option value="ligero">Ligera (Camitas, Yoga suave)</option>
+                                            <option value="moderado">Moderada (Gimnasio 2-3 veces/sem)</option>
+                                            <option value="alto">Intensa (Deportista)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="font-bold text-gray-700">Digestión</label>
+                                        <select {...register('habits.digestion')} className="w-full p-3 rounded-lg border border-gray-300 bg-white">
+                                            <option value="">Selecciona...</option>
+                                            <option value="normal">Normal (Diaria)</option>
+                                            <option value="estreñimiento">Estreñimiento ocasional</option>
+                                            <option value="severo">Estreñimiento crónico</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="font-bold text-gray-700">Calidad de Sueño</label>
+                                        <select {...register('habits.sleepQuality')} className="w-full p-3 rounded-lg border border-gray-300 bg-white">
+                                            <option value="">Selecciona...</option>
+                                            <option value="buena">Buena (Descanso bien)</option>
+                                            <option value="regular">Regular (Despierto cansada)</option>
+                                            <option value="mala">Mala (Insomnio/Despertares)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 5.2 BODY MAP */}
+                        {steps[step].id === 'body_map' && (
+                            <div className="space-y-6">
+                                <h2 className="text-3xl font-bold text-brand-900">Mapa del Dolor</h2>
+                                <p className="text-gray-500">¿Dónde sientes mayor molestia? (Selecciona múltiples)</p>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    {['Cervical (Cuello)', 'Dorsal (Espalda Alta)', 'Lumbar (Espalda Baja)', 'Pélvico (Bajo vientre)', 'Cadera', 'Rodillas', 'Suelo Pélvico', 'Abdomen'].map((region) => (
+                                        <div key={region} className="relative">
+                                            <input type="checkbox" value={region} {...register('bodyMap.painRegions')} id={region} className="peer sr-only" />
+                                            <label htmlFor={region} className="flex items-center p-3 bg-white border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all font-medium text-gray-700 text-sm">
+                                                {region}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-4">
+                                    <label className="block font-bold text-gray-700 mb-2">¿Cómo describirías el dolor?</label>
+                                    <input {...register('bodyMap.painType')} placeholder="Ej: Punzante, como corriente, pesado..." className="w-full text-lg p-3 rounded-lg border border-gray-300" />
                                 </div>
                             </div>
                         )}
