@@ -109,8 +109,13 @@ export const PatientService = {
                 updates.lastProspectiveUpdate = Timestamp.now();
                 updates.prospectiveReason = data.reason; // Overwrite or append? Overwrite for now as "latest motive"
 
-                await this.update(existing.id, updates);
-                return { id: existing.id, status: 'updated' };
+                if (existing.id) {
+                    await this.update(existing.id, updates);
+                    return { id: existing.id, status: 'updated' };
+                } else {
+                    console.error("Found patient without ID, cannot update");
+                    throw new Error("Found patient without ID");
+                }
             } else {
                 // Create new
                 // Map form data to Patient structure
