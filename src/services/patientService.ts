@@ -126,16 +126,16 @@ export const PatientService = {
                     birthDate: data.birthDate, // Keep as string or convert if needed. The form sends string YYYY-MM-DD
                     phone: data.phone,
                     email: data.email,
-                    occupation: data.occupation,
+                    occupation: data.occupation || null,
                     admissionDate: Timestamp.now(),
                     status: 'prospective', // New status
 
                     // Clinical snippet (Legacy + Premium)
                     prospectiveData: {
                         reason: data.reason,
-                        story: data.story,
+                        story: data.story || '',
                         painLevel: data.painLevel,
-                        expectations: data.expectations,
+                        expectations: data.expectations || '',
                         submittedAt: Timestamp.now()
                     },
                     // Populate main clinical data from form
@@ -143,8 +143,8 @@ export const PatientService = {
                     clinicalData: {
                         redFlags: data.redFlags || [],
                         gynObs: data.gynObs,
-                        habits: data.habits,
-                        bodyMap: data.bodyMap
+                        habits: data.habits || {},     // Default to empty object if undefined
+                        bodyMap: data.bodyMap || {}     // Default to empty object if undefined
                     }
                 };
 
