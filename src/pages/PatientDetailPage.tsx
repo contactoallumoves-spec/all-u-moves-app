@@ -257,556 +257,558 @@ export default function PatientDetailPage() {
                         Nueva Sesión
                     </Button>
                 </div>
-                {/* TAB CONTENT */}
-                {/* ANAMNESIS VIEW */}
-                {activeTab === 'anamnesis' && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {!patient.clinicalData && !patient.prospectiveData ? (
-                            <Card><CardContent className="p-8 text-center text-gray-500">No hay datos de pre-ingreso disponibles.</CardContent></Card>
-                        ) : (
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {/* Card 1: Main Info */}
-                                <Card>
-                                    <CardHeader><CardTitle>Motivo de Consulta</CardTitle></CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div>
-                                            <h4 className="text-xs font-bold text-brand-500 uppercase">Motivo Principal</h4>
-                                            <p className="text-lg font-medium text-brand-900">{patient.prospectiveData?.reason || patient.clinicalData?.prospectiveReason || '-'}</p>
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xs font-bold text-brand-500 uppercase">Historia</h4>
-                                            <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{patient.prospectiveData?.story || '-'}</p>
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xs font-bold text-brand-500 uppercase">Expectativas</h4>
-                                            <p className="text-brand-700 italic">"{patient.prospectiveData?.expectations || '-'}"</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Card 2: Clinical Background */}
-                                <Card>
-                                    <CardHeader><CardTitle>Antecedentes Clínicos</CardTitle></CardHeader>
-                                    <CardContent className="space-y-6">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                                                <h4 className="text-xs font-bold text-red-500 uppercase mb-2">Banderas Rojas</h4>
-                                                {patient.clinicalData?.redFlags && patient.clinicalData.redFlags.length > 0 ? (
-                                                    <ul className="list-disc pl-4 text-sm text-red-700">
-                                                        {patient.clinicalData.redFlags.map((f: string) => <li key={f}>{getLabel(f)}</li>)}
-                                                    </ul>
-                                                ) : <span className="text-sm text-gray-400">Ninguna reportada</span>}
-                                            </div>
-                                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                                <h4 className="text-xs font-bold text-blue-500 uppercase mb-2">Gineco-Obstétrico</h4>
-                                                {patient.clinicalData?.gynObs ? (
-                                                    <div className="text-sm space-y-1 text-blue-800">
-                                                        <div className="flex justify-between"><span>Gestaciones:</span> <b>{patient.clinicalData.gynObs.gestations}</b></div>
-                                                        <div className="flex justify-between"><span>Partos:</span> <b>{patient.clinicalData.gynObs.births}</b></div>
-                                                        <div className="flex justify-between"><span>Cesáreas:</span> <b>{patient.clinicalData.gynObs.cesareans}</b></div>
-                                                        {patient.clinicalData.gynObs.menopause && <div className="mt-2 text-xs bg-white px-2 py-1 rounded border border-blue-200 text-center font-bold">MENOPAUSIA</div>}
-                                                    </div>
-                                                ) : <span className="text-sm text-gray-400">Sin datos</span>}
-                                            </div>
-                                        </div>
-
-                                        {patient.insurance && (
-                                            <div className="flex items-center gap-2 text-sm">
-                                                <span className="font-bold text-brand-500">Previsión:</span>
-                                                <span className="capitalize px-2 py-0.5 bg-gray-100 rounded text-gray-700">{patient.insurance}</span>
-                                            </div>
-                                        )}
-
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* TAB CONTENT: CLINICAL DASHBOARD */}
-                {activeTab === 'clinical' && (
-                    <div className="grid md:grid-cols-3 gap-6">
-
-                        {/* Left Column: Timeline & History */}
-                        <div className="md:col-span-2 space-y-6">
-
-                            {/* Active Alerts / Next Session Checklist */}
-                            <Card className="bg-orange-50/50 border-orange-100">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm uppercase tracking-wider text-orange-800 flex items-center gap-2">
-                                        <Activity className="w-4 h-4" /> Checklist Próxima Sesión
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <ul className="space-y-2">
-                                        {checklist.map((item, idx) => (
-                                            <li key={idx} className="flex items-center gap-2 text-sm text-brand-800">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={item.checked}
-                                                    onChange={() => handleChecklistChange(idx)}
-                                                    className="rounded text-brand-600 focus:ring-brand-500 cursor-pointer"
-                                                />
-                                                <span className={item.checked ? "line-through opacity-50" : ""}>{item.label}</span>
-                                            </li>
-                                        ))}
-                                        <li className="pt-2">
-                                            <Button variant="ghost" size="sm" className="text-xs text-orange-600 h-6" onClick={() => {
-                                                const label = prompt("Nueva tarea:");
-                                                if (label) {
-                                                    const newItem = { label, checked: false };
-                                                    const newChecklist = [...checklist, newItem];
-                                                    setChecklist(newChecklist);
-                                                    // Safe update (if patient loaded)
-                                                    if (patient?.id) PatientService.update(patient.id, { nextSessionChecklist: newChecklist });
-                                                }
-                                            }}>
-                                                + Agregar Item
-                                            </Button>
-                                        </li>
-                                    </ul>
-                                </CardContent>
-                            </Card>
-
-                            {/* Timeline */}
-                            <div className="space-y-4">
-                                <h2 className="text-xl font-bold text-brand-800 flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-brand-400" /> Historial Clínico
-                                </h2>
-
-                                <div className="relative border-l-2 border-brand-100 ml-3 space-y-8 pl-8 py-2">
-                                    {history.length === 0 && <p className="text-sm text-brand-400 italic">No hay registros aún.</p>}
-
-                                    {history.map((item, idx) => (
-                                        <div key={idx} className="relative group cursor-pointer" onClick={() => setSelectedItem(item)}>
-                                            {/* Dot */}
-                                            <div className={cn(
-                                                "absolute -left-[41px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110",
-                                                item.type.includes('eval') ? "bg-purple-500" : "bg-brand-500"
-                                            )} />
-
-                                            <div className="bg-white p-4 rounded-xl border border-brand-100 shadow-sm hover:shadow-md transition-all group-hover:border-brand-300">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h3 className="font-bold text-brand-900">{item.title}</h3>
-                                                        <p className="text-xs text-brand-400 flex items-center gap-1">
-                                                            <Calendar className="w-3 h-3" />
-                                                            {(() => {
-                                                                let d = new Date();
-                                                                if (item.date?.toDate) d = item.date.toDate();
-                                                                else if (item.date instanceof Date) d = item.date;
-                                                                else if (item.date) d = new Date(item.date);
-                                                                return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
-                                                            })()}
-                                                            {item.raw?.location && <span className="text-brand-300 ml-2">• {item.raw.location}</span>}
-                                                        </p>
-                                                    </div>
-                                                    <span className="text-xs font-mono text-brand-300 bg-brand-50 px-2 py-1 rounded">
-                                                        {item.type === 'session' ? 'SESIÓN' : 'EVAL'}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.summary}</p>
-
-                                                {/* Tags/Chips */}
-                                                <div className="flex flex-wrap gap-2">
-                                                    {item.findings?.slice(0, 3).map((f: string, i: number) => (
-                                                        <span key={i} className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md">
-                                                            {getLabel(f)}
-                                                        </span>
-                                                    ))}
-                                                    {item.findings?.length > 3 && <span className="text-xs text-brand-400">+{item.findings.length - 3} más</span>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Column: Active Plan & Stats */}
-                        <div className="space-y-6">
+            </div>
+            {/* TAB CONTENT */}
+            {/* ANAMNESIS VIEW */}
+            {activeTab === 'anamnesis' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {!patient.clinicalData && !patient.prospectiveData ? (
+                        <Card><CardContent className="p-8 text-center text-gray-500">No hay datos de pre-ingreso disponibles.</CardContent></Card>
+                    ) : (
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {/* Card 1: Main Info */}
                             <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-sm uppercase tracking-wider text-brand-500">Plan Actual</CardTitle>
-                                </CardHeader>
+                                <CardHeader><CardTitle>Motivo de Consulta</CardTitle></CardHeader>
                                 <CardContent className="space-y-4">
                                     <div>
-                                        <h4 className="font-bold text-xs text-brand-400 mb-2 uppercase">Tareas Activas</h4>
-                                        <div className="space-y-2">
-                                            {patient.activeTasks && patient.activeTasks.length > 0 ? (
-                                                patient.activeTasks.map((task, i) => (
-                                                    <div key={i} className="flex flex-col p-2 bg-brand-50 rounded-lg text-sm text-brand-700 border border-brand-100">
-                                                        <div className="flex items-center gap-2 font-medium">
-                                                            <FileText className="w-3 h-3 text-brand-400" /> {task.description}
-                                                        </div>
-                                                        <span className="text-xs text-brand-400 ml-5">{task.frequency}</span>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <p className="text-xs text-gray-400 italic">No hay tareas activas asignadas.</p>
-                                            )}
-                                        </div>
+                                        <h4 className="text-xs font-bold text-brand-500 uppercase">Motivo Principal</h4>
+                                        <p className="text-lg font-medium text-brand-900">{patient.prospectiveData?.reason || patient.clinicalData?.prospectiveReason || '-'}</p>
                                     </div>
-
                                     <div>
-                                        <h4 className="font-bold text-xs text-brand-400 mb-2 uppercase">Próximo Objetivo</h4>
-                                        {/* TODO: Make this dynamic from latest session or patient goal field */}
-                                        <p className="text-sm text-brand-900 italic">"Lograr estornudar sin escapes para la próxima semana"</p>
+                                        <h4 className="text-xs font-bold text-brand-500 uppercase">Historia</h4>
+                                        <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{patient.prospectiveData?.story || '-'}</p>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Button variant="outline" className="text-xs" size="sm" onClick={() => pdfService.generateHomePlanPDF(patient, patient.activeTasks || [])}>
-                                            <FileText className="w-3 h-3 mr-1" /> PDF Plan
-                                        </Button>
-                                        <Button variant="outline" className="text-xs" size="sm" onClick={() => navigate(`/users/${id}/sessions/new`)}>
-                                            Editar Plan
-                                        </Button>
+                                    <div>
+                                        <h4 className="text-xs font-bold text-brand-500 uppercase">Expectativas</h4>
+                                        <p className="text-brand-700 italic">"{patient.prospectiveData?.expectations || '-'}"</p>
                                     </div>
-
-                                    <Button
-                                        className="w-full text-xs bg-green-500 hover:bg-green-600 text-white border-none"
-                                        size="sm"
-                                        onClick={() => {
-                                            if (!patient.activeTasks || patient.activeTasks.length === 0) {
-                                                alert("No hay tareas activas para enviar.");
-                                                return;
-                                            }
-                                            const tasksList = patient.activeTasks.map(t => `- ${t.description} (${t.frequency})`).join('\n');
-                                            const text = `Hola ${patient.firstName}, aquí tienes tu plan actualizado:\n\n` +
-                                                `Tareas:\n${tasksList}\n\n` +
-                                                `¡Tú puedes! 💪`;
-                                            window.open(`https://wa.me/${patient.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent(text)}`, '_blank');
-                                        }}
-                                    >
-                                        Enviar por WhatsApp
-                                    </Button>
                                 </CardContent>
                             </Card>
 
+                            {/* Card 2: Clinical Background */}
                             <Card>
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-sm uppercase tracking-wider text-brand-500">Progreso</CardTitle>
-                                    <button
-                                        onClick={() => setIsExpanded(true)}
-                                        className="text-brand-400 hover:text-brand-600 transition-colors p-1 hover:bg-brand-50 rounded-full"
-                                        title="Expandir gráfico"
-                                    >
-                                        <Maximize2 size={16} />
-                                    </button>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="relative group cursor-pointer" onClick={() => setIsExpanded(true)}>
-                                        <ProgressChart history={history} />
-                                    </div>
-
-                                    {/* Dynamic Stats */}
-                                    <div className="mt-4 flex justify-between text-xs text-center border-t border-gray-50 pt-4">
-                                        <div>
-                                            <div className="font-bold text-brand-900 text-lg">
-                                                {(() => {
-                                                    const item = history.find(h => (h.raw?.pelvic?.oxford !== undefined) || (h.raw?.reassessment?.oxford !== undefined));
-                                                    if (!item) return '-/5';
-                                                    const val = item.raw?.reassessment?.oxford ?? item.raw?.pelvic?.oxford;
-                                                    return `${val}/5`;
-                                                })()}
-                                            </div>
-                                            <div className="text-brand-400">Oxford</div>
+                                <CardHeader><CardTitle>Antecedentes Clínicos</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                                            <h4 className="text-xs font-bold text-red-500 uppercase mb-2">Banderas Rojas</h4>
+                                            {patient.clinicalData?.redFlags && patient.clinicalData.redFlags.length > 0 ? (
+                                                <ul className="list-disc pl-4 text-sm text-red-700">
+                                                    {patient.clinicalData.redFlags.map((f: string) => <li key={f}>{getLabel(f)}</li>)}
+                                                </ul>
+                                            ) : <span className="text-sm text-gray-400">Ninguna reportada</span>}
                                         </div>
-                                        <div>
-                                            <div className="font-bold text-brand-900 text-lg">
-                                                {(() => {
-                                                    // Priority: ICIQ -> SANE -> Any other
-                                                    const iciqItem = history.find(h => h.raw?.functional?.questionnaire?.score !== undefined);
-                                                    if (iciqItem) return iciqItem.raw.functional.questionnaire.score;
-
-                                                    const saneItem = history.find(h => h.raw?.proms?.sane !== undefined);
-                                                    if (saneItem) return `${saneItem.raw.proms.sane}%`;
-
-                                                    return '-';
-                                                })()}
-                                            </div>
-                                            <div className="text-brand-400">
-                                                {history.some(h => h.raw?.functional?.questionnaire?.score) ? 'ICIQ-UI' : 'SANE'}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-brand-900 text-lg">
-                                                {(() => {
-                                                    const sessions = history.filter(h => h.type === 'session' && h.raw?.adherence);
-                                                    if (sessions.length === 0) return '-';
-                                                    const total = sessions.reduce((acc, s) => {
-                                                        if (s.raw.adherence === 'alta') return acc + 100;
-                                                        if (s.raw.adherence === 'media') return acc + 50;
-                                                        return acc;
-                                                    }, 0);
-                                                    return `${Math.round(total / sessions.length)}%`;
-                                                })()}
-                                            </div>
-                                            <div className="text-brand-400">Adherencia</div>
+                                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                            <h4 className="text-xs font-bold text-blue-500 uppercase mb-2">Gineco-Obstétrico</h4>
+                                            {patient.clinicalData?.gynObs ? (
+                                                <div className="text-sm space-y-1 text-blue-800">
+                                                    <div className="flex justify-between"><span>Gestaciones:</span> <b>{patient.clinicalData.gynObs.gestations}</b></div>
+                                                    <div className="flex justify-between"><span>Partos:</span> <b>{patient.clinicalData.gynObs.births}</b></div>
+                                                    <div className="flex justify-between"><span>Cesáreas:</span> <b>{patient.clinicalData.gynObs.cesareans}</b></div>
+                                                    {patient.clinicalData.gynObs.menopause && <div className="mt-2 text-xs bg-white px-2 py-1 rounded border border-blue-200 text-center font-bold">MENOPAUSIA</div>}
+                                                </div>
+                                            ) : <span className="text-sm text-gray-400">Sin datos</span>}
                                         </div>
                                     </div>
+
+                                    {patient.insurance && (
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <span className="font-bold text-brand-500">Previsión:</span>
+                                            <span className="capitalize px-2 py-0.5 bg-gray-100 rounded text-gray-700">{patient.insurance}</span>
+                                        </div>
+                                    )}
+
                                 </CardContent>
                             </Card>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* TAB CONTENT: CLINICAL DASHBOARD */}
+            {activeTab === 'clinical' && (
+                <div className="grid md:grid-cols-3 gap-6">
+
+                    {/* Left Column: Timeline & History */}
+                    <div className="md:col-span-2 space-y-6">
+
+                        {/* Active Alerts / Next Session Checklist */}
+                        <Card className="bg-orange-50/50 border-orange-100">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm uppercase tracking-wider text-orange-800 flex items-center gap-2">
+                                    <Activity className="w-4 h-4" /> Checklist Próxima Sesión
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ul className="space-y-2">
+                                    {checklist.map((item, idx) => (
+                                        <li key={idx} className="flex items-center gap-2 text-sm text-brand-800">
+                                            <input
+                                                type="checkbox"
+                                                checked={item.checked}
+                                                onChange={() => handleChecklistChange(idx)}
+                                                className="rounded text-brand-600 focus:ring-brand-500 cursor-pointer"
+                                            />
+                                            <span className={item.checked ? "line-through opacity-50" : ""}>{item.label}</span>
+                                        </li>
+                                    ))}
+                                    <li className="pt-2">
+                                        <Button variant="ghost" size="sm" className="text-xs text-orange-600 h-6" onClick={() => {
+                                            const label = prompt("Nueva tarea:");
+                                            if (label) {
+                                                const newItem = { label, checked: false };
+                                                const newChecklist = [...checklist, newItem];
+                                                setChecklist(newChecklist);
+                                                // Safe update (if patient loaded)
+                                                if (patient?.id) PatientService.update(patient.id, { nextSessionChecklist: newChecklist });
+                                            }
+                                        }}>
+                                            + Agregar Item
+                                        </Button>
+                                    </li>
+                                </ul>
+                            </CardContent>
+                        </Card>
+
+                        {/* Timeline */}
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-bold text-brand-800 flex items-center gap-2">
+                                <Clock className="w-5 h-5 text-brand-400" /> Historial Clínico
+                            </h2>
+
+                            <div className="relative border-l-2 border-brand-100 ml-3 space-y-8 pl-8 py-2">
+                                {history.length === 0 && <p className="text-sm text-brand-400 italic">No hay registros aún.</p>}
+
+                                {history.map((item, idx) => (
+                                    <div key={idx} className="relative group cursor-pointer" onClick={() => setSelectedItem(item)}>
+                                        {/* Dot */}
+                                        <div className={cn(
+                                            "absolute -left-[41px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110",
+                                            item.type.includes('eval') ? "bg-purple-500" : "bg-brand-500"
+                                        )} />
+
+                                        <div className="bg-white p-4 rounded-xl border border-brand-100 shadow-sm hover:shadow-md transition-all group-hover:border-brand-300">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h3 className="font-bold text-brand-900">{item.title}</h3>
+                                                    <p className="text-xs text-brand-400 flex items-center gap-1">
+                                                        <Calendar className="w-3 h-3" />
+                                                        {(() => {
+                                                            let d = new Date();
+                                                            if (item.date?.toDate) d = item.date.toDate();
+                                                            else if (item.date instanceof Date) d = item.date;
+                                                            else if (item.date) d = new Date(item.date);
+                                                            return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
+                                                        })()}
+                                                        {item.raw?.location && <span className="text-brand-300 ml-2">• {item.raw.location}</span>}
+                                                    </p>
+                                                </div>
+                                                <span className="text-xs font-mono text-brand-300 bg-brand-50 px-2 py-1 rounded">
+                                                    {item.type === 'session' ? 'SESIÓN' : 'EVAL'}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.summary}</p>
+
+                                            {/* Tags/Chips */}
+                                            <div className="flex flex-wrap gap-2">
+                                                {item.findings?.slice(0, 3).map((f: string, i: number) => (
+                                                    <span key={i} className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md">
+                                                        {getLabel(f)}
+                                                    </span>
+                                                ))}
+                                                {item.findings?.length > 3 && <span className="text-xs text-brand-400">+{item.findings.length - 3} más</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                )}
 
-                {/* Premium Detail Modal */}
-                <ProgressDetailModal
-                    isOpen={isExpanded}
-                    onClose={() => setIsExpanded(false)}
-                    history={history}
-                    patientName={`${patient?.firstName} ${patient?.lastName}`}
-                />
-
-                {/* Detail Modal */}
-                {selectedItem && (
-                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 backdrop-blur-sm">
-                        <div className="bg-white rounded-2xl w-full max-w-4xl p-8 shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar">
-                            <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
+                    {/* Right Column: Active Plan & Stats */}
+                    <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-sm uppercase tracking-wider text-brand-500">Plan Actual</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
                                 <div>
-                                    <h2 className="text-2xl font-serif font-bold text-brand-900">{selectedItem.title}</h2>
-                                    <p className="text-brand-500 text-sm">
-                                        {(() => {
-                                            let d = new Date();
-                                            if (selectedItem.date?.toDate) d = selectedItem.date.toDate();
-                                            else if (selectedItem.date instanceof Date) d = selectedItem.date;
-                                            else if (selectedItem.date) d = new Date(selectedItem.date);
-                                            return d.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                                        })()}
-                                        {selectedItem.raw?.location && <span className="ml-2 font-medium">• {selectedItem.raw.location}</span>}
-                                    </p>
+                                    <h4 className="font-bold text-xs text-brand-400 mb-2 uppercase">Tareas Activas</h4>
+                                    <div className="space-y-2">
+                                        {patient.activeTasks && patient.activeTasks.length > 0 ? (
+                                            patient.activeTasks.map((task, i) => (
+                                                <div key={i} className="flex flex-col p-2 bg-brand-50 rounded-lg text-sm text-brand-700 border border-brand-100">
+                                                    <div className="flex items-center gap-2 font-medium">
+                                                        <FileText className="w-3 h-3 text-brand-400" /> {task.description}
+                                                    </div>
+                                                    <span className="text-xs text-brand-400 ml-5">{task.frequency}</span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-xs text-gray-400 italic">No hay tareas activas asignadas.</p>
+                                        )}
+                                    </div>
                                 </div>
-                                <button onClick={() => setSelectedItem(null)} className="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
-                            </div>
 
-                            <div className="space-y-6">
+                                <div>
+                                    <h4 className="font-bold text-xs text-brand-400 mb-2 uppercase">Próximo Objetivo</h4>
+                                    {/* TODO: Make this dynamic from latest session or patient goal field */}
+                                    <p className="text-sm text-brand-900 italic">"Lograr estornudar sin escapes para la próxima semana"</p>
+                                </div>
 
-                                {/* --- SESSION DETAILS --- */}
-                                {selectedItem.type === 'session' && (
-                                    <>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="bg-brand-50 p-4 rounded-xl">
-                                                <span className="text-xs font-bold text-brand-400 uppercase block mb-1">EVA / Síntomas</span>
-                                                <span className="text-2xl font-bold text-brand-700">{selectedItem.raw.symptomsScore}/10</span>
-                                            </div>
-                                            <div className="bg-green-50 p-4 rounded-xl">
-                                                <span className="text-xs font-bold text-green-600 uppercase block mb-1">Adherencia</span>
-                                                <span className="text-2xl font-bold text-green-700 capitalize">{selectedItem.raw.adherence || '-'}</span>
-                                            </div>
-                                        </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button variant="outline" className="text-xs" size="sm" onClick={() => pdfService.generateHomePlanPDF(patient, patient.activeTasks || [])}>
+                                        <FileText className="w-3 h-3 mr-1" /> PDF Plan
+                                    </Button>
+                                    <Button variant="outline" className="text-xs" size="sm" onClick={() => navigate(`/users/${id}/sessions/new`)}>
+                                        Editar Plan
+                                    </Button>
+                                </div>
 
-                                        <div className="space-y-2">
-                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Notas Subjetivas</h3>
-                                            <p className="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm whitespace-pre-wrap">{selectedItem.raw.notes || 'Sin notas.'}</p>
-                                        </div>
-
-                                        {/* Re-assessment Data [NEW] */}
-                                        {selectedItem.raw.reassessment && (
-                                            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                                                <h3 className="font-bold text-blue-800 text-sm uppercase mb-3">Re-evaluación Física</h3>
-                                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                                    {selectedItem.raw.reassessment.oxford !== undefined && (
-                                                        <div className="flex flex-col">
-                                                            <span className="text-blue-400 text-xs">Oxford</span>
-                                                            <span className="font-bold text-blue-900 text-lg">{selectedItem.raw.reassessment.oxford}/5</span>
-                                                        </div>
-                                                    )}
-                                                    {selectedItem.raw.reassessment.tonicity && (
-                                                        <div className="flex flex-col">
-                                                            <span className="text-blue-400 text-xs">Tonicidad</span>
-                                                            <span className="font-bold text-blue-900">{selectedItem.raw.reassessment.tonicity}</span>
-                                                        </div>
-                                                    )}
-                                                    {selectedItem.raw.reassessment.breating && (
-                                                        <div className="flex flex-col">
-                                                            <span className="text-blue-400 text-xs">Patrón Respiratorio</span>
-                                                            <span className="font-bold text-blue-900">{selectedItem.raw.reassessment.breating}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div className="space-y-2">
-                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Intervenciones Realizadas</h3>
-
-                                            {/* Presets with Details */}
-                                            <div className="flex flex-col gap-2">
-                                                {selectedItem.raw.interventions?.length > 0 ? selectedItem.raw.interventions.map((inte: string, i: number) => (
-                                                    <div key={i} className="flex justify-between items-center bg-purple-50 text-purple-700 px-3 py-2 rounded-md text-sm border border-purple-100 shadow-sm">
-                                                        <span className="font-medium">{getLabel(inte)}</span>
-                                                        {selectedItem.raw.interventionDetails?.[inte] && (
-                                                            <span className="text-xs font-mono bg-white px-2 py-0.5 rounded border border-purple-100">
-                                                                {selectedItem.raw.interventionDetails[inte]}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )) : <span className="text-sm text-gray-400 italic mb-2">No se seleccionaron presets.</span>}
-                                            </div>
-
-                                            {/* [NEW] Custom Activities Render */}
-                                            {selectedItem.raw.customActivities?.length > 0 && (
-                                                <div className="mt-4">
-                                                    <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Actividades Específicas</h4>
-                                                    <div className="grid gap-2">
-                                                        {selectedItem.raw.customActivities.map((act: any, idx: number) => (
-                                                            <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-lg text-sm">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="px-1.5 py-0.5 bg-white rounded text-[10px] border border-gray-200 uppercase font-bold text-gray-400">
-                                                                        {act.category}
-                                                                    </span>
-                                                                    <span className="font-medium text-gray-700">{act.name}</span>
-                                                                </div>
-                                                                {act.params && (
-                                                                    <span className="font-mono text-xs text-brand-600 bg-brand-50 px-2 py-1 rounded">
-                                                                        {act.params}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Revisión de Tareas</h3>
-                                            <ul className="space-y-1">
-                                                {selectedItem.raw.tasks?.map((t: any, i: number) => {
-                                                    const isActive = t.completed !== undefined ? t.completed : t.active;
-                                                    // Note: Logic in EvolutionPage seems to treat 'completed' as the status of the task in the session context? 
-                                                    // Actually in EvolutionPage 'completed' is boolean.
-                                                    // Wait, if it's "Review tasks", usually we check if they were done.
-                                                    // Let's assume 'completed' or 'active' true means checked/done.
-
-                                                    return (
-                                                        <li key={i} className="flex items-center gap-2 text-sm">
-                                                            <span className={isActive ? "text-green-600" : "text-gray-400"}>
-                                                                {isActive ? "✓" : "•"}
-                                                            </span>
-                                                            <span className={isActive ? "text-gray-700" : "text-gray-500"}>
-                                                                {t.description || t.label || "Tarea sin nombre"}
-                                                                {t.frequency && <span className="text-xs text-gray-400 ml-1">({t.frequency})</span>}
-                                                            </span>
-                                                        </li>
-                                                    );
-                                                })}
-                                                {(!selectedItem.raw.tasks || selectedItem.raw.tasks.length === 0) && <li className="text-sm text-gray-400 italic">Sin lista de tareas.</li>}
-                                            </ul>
-                                        </div>
-                                    </>
-                                )}
-
-
-                                {/* --- EVALUATION DETAILS --- */}
-                                {(selectedItem.type === 'eval_fast' || selectedItem.type === 'eval_complete') && (
-                                    <>
-                                        {/* Red Flags Alert */}
-                                        {selectedItem.raw.patientData?.redFlags?.length > 0 && (
-                                            <div className="bg-red-50 border border-red-200 p-4 rounded-xl">
-                                                <h3 className="text-red-800 font-bold flex items-center gap-2">
-                                                    <Activity className="w-5 h-5" /> Red Flags Detectadas
-                                                </h3>
-                                                <div className="flex flex-wrap gap-2 mt-2">
-                                                    {selectedItem.raw.patientData.redFlags.map((flag: string, i: number) => (
-                                                        <span key={i} className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-100">
-                                                            {flag}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Evaluation Summary */}
-                                        <div className="space-y-2">
-                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Resumen del Caso</h3>
-                                            <p className="text-gray-700 text-sm leading-relaxed">{selectedItem.summary}</p>
-                                        </div>
-
-                                        {/* Detailed Physical Exam Data - FULL RENDERER */}
-                                        {selectedItem.raw.details && (
-                                            <div className="bg-gray-50 p-4 rounded-xl space-y-4">
-                                                <h3 className="font-bold text-gray-700 text-sm uppercase">Detalles Clínicos Completos</h3>
-                                                <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-                                                    <DataRenderer data={selectedItem.raw.details} />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Active Clusters */}
-                                        {selectedItem.raw.clusters?.active?.length > 0 && (
-                                            <div className="space-y-2">
-                                                <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Hipótesis / Clusters Activos</h3>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {selectedItem.raw.clusters.active.map((c: string, i: number) => (
-                                                        <span key={i} className="bg-brand-100 text-brand-800 px-3 py-1 rounded-full text-xs font-bold">
-                                                            {getLabel(c)}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Plan */}
-                                        <div className="space-y-2">
-                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Plan de Tratamiento</h3>
-
-                                            {selectedItem.raw.plan?.education?.length > 0 && (
-                                                <div className="mb-2">
-                                                    <span className="text-xs font-bold text-brand-400 block">EDUCACIÓN</span>
-                                                    <ul className="list-disc pl-5 text-sm text-gray-700">
-                                                        {selectedItem.raw.plan.education.map((e: string, i: number) => (
-                                                            <li key={i}>{getLabel(e)}</li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-
-                                            {selectedItem.raw.plan?.tasks?.length > 0 && (
-                                                <div>
-                                                    <span className="text-xs font-bold text-brand-400 block">TAREAS / EJERCICIOS</span>
-                                                    <ul className="list-disc pl-5 text-sm text-gray-700">
-                                                        {selectedItem.raw.plan.tasks.map((t: string, i: number) => (
-                                                            <li key={i}>{getLabel(t)}</li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-
-                            <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
-                                <Button variant="ghost" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(selectedItem)}>
-                                    <Trash2 className="w-4 h-4 mr-2" /> Eliminar Registro
+                                <Button
+                                    className="w-full text-xs bg-green-500 hover:bg-green-600 text-white border-none"
+                                    size="sm"
+                                    onClick={() => {
+                                        if (!patient.activeTasks || patient.activeTasks.length === 0) {
+                                            alert("No hay tareas activas para enviar.");
+                                            return;
+                                        }
+                                        const tasksList = patient.activeTasks.map(t => `- ${t.description} (${t.frequency})`).join('\n');
+                                        const text = `Hola ${patient.firstName}, aquí tienes tu plan actualizado:\n\n` +
+                                            `Tareas:\n${tasksList}\n\n` +
+                                            `¡Tú puedes! 💪`;
+                                        window.open(`https://wa.me/${patient.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent(text)}`, '_blank');
+                                    }}
+                                >
+                                    Enviar por WhatsApp
                                 </Button>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" onClick={() => setSelectedItem(null)}>
-                                        Cerrar
-                                    </Button>
-                                    <Button
-                                        onClick={() => {
-                                            if (!selectedItem) return;
-                                            if (selectedItem.type === 'session') {
-                                                // Assume we create a route /users/:patientId/sessions/:sessionId/edit OR query param
-                                                // Navigation to generic creator with edit param is easier for now
-                                                navigate(`/users/${id}/sessions/new?editId=${selectedItem.id}`);
-                                            } else {
-                                                const mode = selectedItem.type.includes('fast') ? 'fast' : 'complete';
-                                                navigate(`/eval/${mode}/${id}?editId=${selectedItem.id}`);
-                                            }
-                                        }}
-                                        className="bg-brand-100 text-brand-700 hover:bg-brand-200"
-                                    >
-                                        Editar
-                                    </Button>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <CardTitle className="text-sm uppercase tracking-wider text-brand-500">Progreso</CardTitle>
+                                <button
+                                    onClick={() => setIsExpanded(true)}
+                                    className="text-brand-400 hover:text-brand-600 transition-colors p-1 hover:bg-brand-50 rounded-full"
+                                    title="Expandir gráfico"
+                                >
+                                    <Maximize2 size={16} />
+                                </button>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="relative group cursor-pointer" onClick={() => setIsExpanded(true)}>
+                                    <ProgressChart history={history} />
                                 </div>
+
+                                {/* Dynamic Stats */}
+                                <div className="mt-4 flex justify-between text-xs text-center border-t border-gray-50 pt-4">
+                                    <div>
+                                        <div className="font-bold text-brand-900 text-lg">
+                                            {(() => {
+                                                const item = history.find(h => (h.raw?.pelvic?.oxford !== undefined) || (h.raw?.reassessment?.oxford !== undefined));
+                                                if (!item) return '-/5';
+                                                const val = item.raw?.reassessment?.oxford ?? item.raw?.pelvic?.oxford;
+                                                return `${val}/5`;
+                                            })()}
+                                        </div>
+                                        <div className="text-brand-400">Oxford</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-brand-900 text-lg">
+                                            {(() => {
+                                                // Priority: ICIQ -> SANE -> Any other
+                                                const iciqItem = history.find(h => h.raw?.functional?.questionnaire?.score !== undefined);
+                                                if (iciqItem) return iciqItem.raw.functional.questionnaire.score;
+
+                                                const saneItem = history.find(h => h.raw?.proms?.sane !== undefined);
+                                                if (saneItem) return `${saneItem.raw.proms.sane}%`;
+
+                                                return '-';
+                                            })()}
+                                        </div>
+                                        <div className="text-brand-400">
+                                            {history.some(h => h.raw?.functional?.questionnaire?.score) ? 'ICIQ-UI' : 'SANE'}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-brand-900 text-lg">
+                                            {(() => {
+                                                const sessions = history.filter(h => h.type === 'session' && h.raw?.adherence);
+                                                if (sessions.length === 0) return '-';
+                                                const total = sessions.reduce((acc, s) => {
+                                                    if (s.raw.adherence === 'alta') return acc + 100;
+                                                    if (s.raw.adherence === 'media') return acc + 50;
+                                                    return acc;
+                                                }, 0);
+                                                return `${Math.round(total / sessions.length)}%`;
+                                            })()}
+                                        </div>
+                                        <div className="text-brand-400">Adherencia</div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            )}
+
+            {/* Premium Detail Modal */}
+            <ProgressDetailModal
+                isOpen={isExpanded}
+                onClose={() => setIsExpanded(false)}
+                history={history}
+                patientName={`${patient?.firstName} ${patient?.lastName}`}
+            />
+
+            {/* Detail Modal */}
+            {selectedItem && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-4xl p-8 shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar">
+                        <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
+                            <div>
+                                <h2 className="text-2xl font-serif font-bold text-brand-900">{selectedItem.title}</h2>
+                                <p className="text-brand-500 text-sm">
+                                    {(() => {
+                                        let d = new Date();
+                                        if (selectedItem.date?.toDate) d = selectedItem.date.toDate();
+                                        else if (selectedItem.date instanceof Date) d = selectedItem.date;
+                                        else if (selectedItem.date) d = new Date(selectedItem.date);
+                                        return d.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                                    })()}
+                                    {selectedItem.raw?.location && <span className="ml-2 font-medium">• {selectedItem.raw.location}</span>}
+                                </p>
+                            </div>
+                            <button onClick={() => setSelectedItem(null)} className="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
+                        </div>
+
+                        <div className="space-y-6">
+
+                            {/* --- SESSION DETAILS --- */}
+                            {selectedItem.type === 'session' && (
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-brand-50 p-4 rounded-xl">
+                                            <span className="text-xs font-bold text-brand-400 uppercase block mb-1">EVA / Síntomas</span>
+                                            <span className="text-2xl font-bold text-brand-700">{selectedItem.raw.symptomsScore}/10</span>
+                                        </div>
+                                        <div className="bg-green-50 p-4 rounded-xl">
+                                            <span className="text-xs font-bold text-green-600 uppercase block mb-1">Adherencia</span>
+                                            <span className="text-2xl font-bold text-green-700 capitalize">{selectedItem.raw.adherence || '-'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Notas Subjetivas</h3>
+                                        <p className="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm whitespace-pre-wrap">{selectedItem.raw.notes || 'Sin notas.'}</p>
+                                    </div>
+
+                                    {/* Re-assessment Data [NEW] */}
+                                    {selectedItem.raw.reassessment && (
+                                        <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                                            <h3 className="font-bold text-blue-800 text-sm uppercase mb-3">Re-evaluación Física</h3>
+                                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                                {selectedItem.raw.reassessment.oxford !== undefined && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-blue-400 text-xs">Oxford</span>
+                                                        <span className="font-bold text-blue-900 text-lg">{selectedItem.raw.reassessment.oxford}/5</span>
+                                                    </div>
+                                                )}
+                                                {selectedItem.raw.reassessment.tonicity && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-blue-400 text-xs">Tonicidad</span>
+                                                        <span className="font-bold text-blue-900">{selectedItem.raw.reassessment.tonicity}</span>
+                                                    </div>
+                                                )}
+                                                {selectedItem.raw.reassessment.breating && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-blue-400 text-xs">Patrón Respiratorio</span>
+                                                        <span className="font-bold text-blue-900">{selectedItem.raw.reassessment.breating}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Intervenciones Realizadas</h3>
+
+                                        {/* Presets with Details */}
+                                        <div className="flex flex-col gap-2">
+                                            {selectedItem.raw.interventions?.length > 0 ? selectedItem.raw.interventions.map((inte: string, i: number) => (
+                                                <div key={i} className="flex justify-between items-center bg-purple-50 text-purple-700 px-3 py-2 rounded-md text-sm border border-purple-100 shadow-sm">
+                                                    <span className="font-medium">{getLabel(inte)}</span>
+                                                    {selectedItem.raw.interventionDetails?.[inte] && (
+                                                        <span className="text-xs font-mono bg-white px-2 py-0.5 rounded border border-purple-100">
+                                                            {selectedItem.raw.interventionDetails[inte]}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )) : <span className="text-sm text-gray-400 italic mb-2">No se seleccionaron presets.</span>}
+                                        </div>
+
+                                        {/* [NEW] Custom Activities Render */}
+                                        {selectedItem.raw.customActivities?.length > 0 && (
+                                            <div className="mt-4">
+                                                <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Actividades Específicas</h4>
+                                                <div className="grid gap-2">
+                                                    {selectedItem.raw.customActivities.map((act: any, idx: number) => (
+                                                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-lg text-sm">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="px-1.5 py-0.5 bg-white rounded text-[10px] border border-gray-200 uppercase font-bold text-gray-400">
+                                                                    {act.category}
+                                                                </span>
+                                                                <span className="font-medium text-gray-700">{act.name}</span>
+                                                            </div>
+                                                            {act.params && (
+                                                                <span className="font-mono text-xs text-brand-600 bg-brand-50 px-2 py-1 rounded">
+                                                                    {act.params}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Revisión de Tareas</h3>
+                                        <ul className="space-y-1">
+                                            {selectedItem.raw.tasks?.map((t: any, i: number) => {
+                                                const isActive = t.completed !== undefined ? t.completed : t.active;
+                                                // Note: Logic in EvolutionPage seems to treat 'completed' as the status of the task in the session context? 
+                                                // Actually in EvolutionPage 'completed' is boolean.
+                                                // Wait, if it's "Review tasks", usually we check if they were done.
+                                                // Let's assume 'completed' or 'active' true means checked/done.
+
+                                                return (
+                                                    <li key={i} className="flex items-center gap-2 text-sm">
+                                                        <span className={isActive ? "text-green-600" : "text-gray-400"}>
+                                                            {isActive ? "✓" : "•"}
+                                                        </span>
+                                                        <span className={isActive ? "text-gray-700" : "text-gray-500"}>
+                                                            {t.description || t.label || "Tarea sin nombre"}
+                                                            {t.frequency && <span className="text-xs text-gray-400 ml-1">({t.frequency})</span>}
+                                                        </span>
+                                                    </li>
+                                                );
+                                            })}
+                                            {(!selectedItem.raw.tasks || selectedItem.raw.tasks.length === 0) && <li className="text-sm text-gray-400 italic">Sin lista de tareas.</li>}
+                                        </ul>
+                                    </div>
+                                </>
+                            )}
+
+
+                            {/* --- EVALUATION DETAILS --- */}
+                            {(selectedItem.type === 'eval_fast' || selectedItem.type === 'eval_complete') && (
+                                <>
+                                    {/* Red Flags Alert */}
+                                    {selectedItem.raw.patientData?.redFlags?.length > 0 && (
+                                        <div className="bg-red-50 border border-red-200 p-4 rounded-xl">
+                                            <h3 className="text-red-800 font-bold flex items-center gap-2">
+                                                <Activity className="w-5 h-5" /> Red Flags Detectadas
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {selectedItem.raw.patientData.redFlags.map((flag: string, i: number) => (
+                                                    <span key={i} className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-100">
+                                                        {flag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Evaluation Summary */}
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Resumen del Caso</h3>
+                                        <p className="text-gray-700 text-sm leading-relaxed">{selectedItem.summary}</p>
+                                    </div>
+
+                                    {/* Detailed Physical Exam Data - FULL RENDERER */}
+                                    {selectedItem.raw.details && (
+                                        <div className="bg-gray-50 p-4 rounded-xl space-y-4">
+                                            <h3 className="font-bold text-gray-700 text-sm uppercase">Detalles Clínicos Completos</h3>
+                                            <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                                                <DataRenderer data={selectedItem.raw.details} />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Active Clusters */}
+                                    {selectedItem.raw.clusters?.active?.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Hipótesis / Clusters Activos</h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedItem.raw.clusters.active.map((c: string, i: number) => (
+                                                    <span key={i} className="bg-brand-100 text-brand-800 px-3 py-1 rounded-full text-xs font-bold">
+                                                        {getLabel(c)}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Plan */}
+                                    <div className="space-y-2">
+                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Plan de Tratamiento</h3>
+
+                                        {selectedItem.raw.plan?.education?.length > 0 && (
+                                            <div className="mb-2">
+                                                <span className="text-xs font-bold text-brand-400 block">EDUCACIÓN</span>
+                                                <ul className="list-disc pl-5 text-sm text-gray-700">
+                                                    {selectedItem.raw.plan.education.map((e: string, i: number) => (
+                                                        <li key={i}>{getLabel(e)}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        {selectedItem.raw.plan?.tasks?.length > 0 && (
+                                            <div>
+                                                <span className="text-xs font-bold text-brand-400 block">TAREAS / EJERCICIOS</span>
+                                                <ul className="list-disc pl-5 text-sm text-gray-700">
+                                                    {selectedItem.raw.plan.tasks.map((t: string, i: number) => (
+                                                        <li key={i}>{getLabel(t)}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
+                            <Button variant="ghost" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(selectedItem)}>
+                                <Trash2 className="w-4 h-4 mr-2" /> Eliminar Registro
+                            </Button>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={() => setSelectedItem(null)}>
+                                    Cerrar
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        if (!selectedItem) return;
+                                        if (selectedItem.type === 'session') {
+                                            // Assume we create a route /users/:patientId/sessions/:sessionId/edit OR query param
+                                            // Navigation to generic creator with edit param is easier for now
+                                            navigate(`/users/${id}/sessions/new?editId=${selectedItem.id}`);
+                                        } else {
+                                            const mode = selectedItem.type.includes('fast') ? 'fast' : 'complete';
+                                            navigate(`/eval/${mode}/${id}?editId=${selectedItem.id}`);
+                                        }
+                                    }}
+                                    className="bg-brand-100 text-brand-700 hover:bg-brand-200"
+                                >
+                                    Editar
+                                </Button>
                             </div>
                         </div>
-                )}
-            </div>
-            );
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
