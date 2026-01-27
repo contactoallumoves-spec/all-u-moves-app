@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 interface BodyMapProps {
     value?: {
         painRegions: string[];
-        painType: string;
+        painType?: string;
     };
     onChange: (value: { painRegions: string[]; painType: string }) => void;
 }
@@ -259,7 +259,7 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [], pai
                         <h4 className="font-bold text-gray-700 mb-2">Descripción del Dolor</h4>
                         <p className="text-xs text-gray-500 mb-2">¿Cómo describirías la sensación? (Ej: Punzante, Quemazón, Pesadez...)</p>
                         <textarea
-                            value={value.painType}
+                            value={value.painType || ''}
                             onChange={(e) => onChange({ ...value, painType: e.target.value })}
                             className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:outline-none resize-none h-32 text-sm"
                             placeholder="Escribe aquí..."
