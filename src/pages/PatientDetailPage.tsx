@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
@@ -257,17 +257,9 @@ export default function PatientDetailPage() {
                         Nueva Sesión
                     </Button>
                 </div>
-            )}
-                {/* End Conditional Grid */}
-
                 {/* TAB CONTENT */}
-                {activeTab === 'clinical' ? (
-                    /* EXISTING GRID */
-                    <div className="grid md:grid-cols-3 gap-6">
-                        {/* ... existing content ... */}
-                    </>
-                ) : (
-                    /* NEW ANAMNESIS VIEW */
+                {/* ANAMNESIS VIEW */}
+                {activeTab === 'anamnesis' && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {!patient.clinicalData && !patient.prospectiveData ? (
                             <Card><CardContent className="p-8 text-center text-gray-500">No hay datos de pre-ingreso disponibles.</CardContent></Card>
@@ -301,7 +293,7 @@ export default function PatientDetailPage() {
                                                 <h4 className="text-xs font-bold text-red-500 uppercase mb-2">Banderas Rojas</h4>
                                                 {patient.clinicalData?.redFlags && patient.clinicalData.redFlags.length > 0 ? (
                                                     <ul className="list-disc pl-4 text-sm text-red-700">
-                                                        {patient.clinicalData.redFlags.map(f => <li key={f}>{getLabel(f)}</li>)}
+                                                        {patient.clinicalData.redFlags.map((f: string) => <li key={f}>{getLabel(f)}</li>)}
                                                     </ul>
                                                 ) : <span className="text-sm text-gray-400">Ninguna reportada</span>}
                                             </div>
@@ -332,9 +324,9 @@ export default function PatientDetailPage() {
                     </div>
                 )}
 
-                {/* CLOSE TAB CONTENT DIV if activeTab === 'clinical' */}
+                {/* TAB CONTENT: CLINICAL DASHBOARD */}
                 {activeTab === 'clinical' && (
-                    <>
+                    <div className="grid md:grid-cols-3 gap-6">
 
                         {/* Left Column: Timeline & History */}
                         <div className="md:col-span-2 space-y-6">
@@ -558,6 +550,7 @@ export default function PatientDetailPage() {
                             </Card>
                         </div>
                     </div>
+                )}
 
                 {/* Premium Detail Modal */}
                 <ProgressDetailModal
