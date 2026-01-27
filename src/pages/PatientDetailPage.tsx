@@ -806,7 +806,6 @@ export default function PatientDetailPage() {
                                 </div>
                             </div>
                         </div>
-                    </div>
                 )}
             </div>
             );
