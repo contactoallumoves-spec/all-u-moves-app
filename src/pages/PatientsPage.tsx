@@ -60,7 +60,11 @@ export default function PatientsPage() {
         setError('');
         setSaving(true);
         try {
-            await PatientService.create(formData as Patient);
+            if (formData.id) {
+                await PatientService.update(formData.id, formData);
+            } else {
+                await PatientService.create(formData as Patient);
+            }
             await loadPatients();
             setShowModal(false);
             setFormData({ firstName: '', lastName: '', rut: '', stage: 'Nuligesta', birthDate: '', phone: '', email: '', occupation: '' });
@@ -93,7 +97,10 @@ export default function PatientsPage() {
                     <h1 className="text-3xl font-serif font-bold text-brand-900">Directorio de Usuarias</h1>
                     <p className="text-brand-500 mt-1">Gestión de fichas clínicas y contactos.</p>
                 </div>
-                <Button onClick={() => setShowModal(true)}>
+                <Button onClick={() => {
+                    setFormData({ firstName: '', lastName: '', rut: '', stage: 'Nuligesta', birthDate: '', phone: '', email: '', occupation: '' });
+                    setShowModal(true);
+                }}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Nueva Usuaria
                 </Button>
             </div>
@@ -174,8 +181,11 @@ export default function PatientsPage() {
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-serif font-bold text-brand-900">Nueva Ficha Clínica</h2>
-                            <button onClick={() => setShowModal(false)} className="text-brand-400 hover:text-brand-600">✕</button>
+                            <h2 className="text-2xl font-serif font-bold text-brand-900">{formData.id ? 'Editar Ficha' : 'Nueva Ficha Clínica'}</h2>
+                            <button onClick={() => {
+                                setShowModal(false);
+                                setFormData({ firstName: '', lastName: '', rut: '', stage: 'Nuligesta', birthDate: '', phone: '', email: '', occupation: '' });
+                            }} className="text-brand-400 hover:text-brand-600">✕</button>
                         </div>
 
                         {error && (

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Shield, Activity, Baby } from 'lucide-react';
 import { PatientService } from '../../services/patientService';
 import { ADMIN_PHOTO } from '../../assets/adminPhoto';
+import { BodyMap } from '../../components/clinical/BodyMap';
 
 // --- Schema Definition ---
 const preAdmissionSchema = z.object({
@@ -253,11 +254,35 @@ const PreAdmissionPage: React.FC = () => {
                         {steps[step].id === 'reason' && (
                             <div className="space-y-6">
                                 <h2 className="text-3xl font-bold text-brand-900">¿Qué te trae por aquí?</h2>
+
+                                {/* Quick Motives */}
+                                <div>
+                                    <label className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-2 block">Selección Rápida</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {["Dolor Pélvico", "Incontinencia", "Prolapso", "Sexualidad", "Embarazo", "Post-Parto", "Chequeo", "Dolor Lumbar", "Diástasis"].map(r => (
+                                            <button
+                                                key={r}
+                                                type="button"
+                                                className="px-3 py-1.5 bg-brand-50 text-brand-700 rounded-full text-sm font-medium border border-brand-100 hover:bg-brand-100 transition-colors hover:shadow-sm"
+                                                onClick={() => {
+                                                    const current = watch('reason') || '';
+                                                    // Avoid duplicates
+                                                    if (!current.includes(r)) {
+                                                        setValue('reason', current ? `${current}, ${r}` : r);
+                                                    }
+                                                }}
+                                            >
+                                                + {r}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <Controller
                                     name="reason"
                                     control={control}
                                     render={({ field }) => (
-                                        <textarea {...field} rows={2} placeholder="Motivo principal..." className="w-full text-2xl p-4 border-none focus:ring-0 bg-transparent placeholder-gray-300 resize-none" autoFocus />
+                                        <textarea {...field} rows={2} placeholder="Escribe o selecciona arriba..." className="w-full text-2xl p-4 border-none focus:ring-0 bg-transparent placeholder-gray-300 resize-none" autoFocus />
                                     )}
                                 />
                                 <div className="h-px bg-gray-200 w-full mb-4"></div>
@@ -357,25 +382,17 @@ const PreAdmissionPage: React.FC = () => {
 
                         {/* 5.2 BODY MAP */}
                         {steps[step].id === 'body_map' && (
-                            <div className="space-y-6">
-                                <h2 className="text-3xl font-bold text-brand-900">Mapa del Dolor</h2>
-                                <p className="text-gray-500">¿Dónde sientes mayor molestia? (Selecciona múltiples)</p>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    {['Cervical (Cuello)', 'Dorsal (Espalda Alta)', 'Lumbar (Espalda Baja)', 'Pélvico (Bajo vientre)', 'Cadera', 'Rodillas', 'Suelo Pélvico', 'Abdomen'].map((region) => (
-                                        <div key={region} className="relative">
-                                            <input type="checkbox" value={region} {...register('bodyMap.painRegions')} id={region} className="peer sr-only" />
-                                            <label htmlFor={region} className="flex items-center p-3 bg-white border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all font-medium text-gray-700 text-sm">
-                                                {region}
-                                            </label>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="mt-4">
-                                    <label className="block font-bold text-gray-700 mb-2">¿Cómo describirías el dolor?</label>
-                                    <input {...register('bodyMap.painType')} placeholder="Ej: Punzante, como corriente, pesado..." className="w-full text-lg p-3 rounded-lg border border-gray-300" />
-                                </div>
+                            <div className="space-y-1">
+                                <Controller
+                                    name="bodyMap"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <BodyMap
+                                            value={field.value}
+                                            onChange={(val) => field.onChange(val)}
+                                        />
+                                    )}
+                                />
                             </div>
                         )}
 
