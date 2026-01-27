@@ -236,10 +236,10 @@ export default function PatientDetailPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant={activeTab === 'clinical' ? 'default' : 'outline'} onClick={() => setActiveTab('clinical')}>
+                    <Button variant={activeTab === 'clinical' ? 'primary' : 'outline'} onClick={() => setActiveTab('clinical')}>
                         Resumen Clínico
                     </Button>
-                    <Button variant={activeTab === 'anamnesis' ? 'default' : 'outline'} onClick={() => setActiveTab('anamnesis')}>
+                    <Button variant={activeTab === 'anamnesis' ? 'primary' : 'outline'} onClick={() => setActiveTab('anamnesis')}>
                         Anamnesis Remota
                     </Button>
                 </div>

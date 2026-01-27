@@ -13,8 +13,15 @@ export interface Patient {
     createdAt?: any; // Firestore Timestamp
     notes?: string;
     insurance?: 'fonasa' | 'isapre' | 'particular';
+    status?: 'active' | 'inactive' | 'archived' | 'prospective';
+    prospectiveData?: {
+        reason: string;
+        story: string; // Historia/Relato
+        expectations: string;
+    };
     clinicalData?: {
         redFlags?: string[];
+        prospectiveReason?: string;
         // Premium Anamnesis Fields
         gynObs?: {
             gestations: number;

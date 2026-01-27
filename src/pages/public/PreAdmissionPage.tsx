@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, Check, Heart, Shield, Activity, Baby, Moon } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Shield, Activity, Baby } from 'lucide-react';
 import { PatientService } from '../../services/patientService';
 import { ADMIN_PHOTO } from '../../assets/adminPhoto';
 
