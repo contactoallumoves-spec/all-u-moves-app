@@ -224,7 +224,6 @@ const PreAdmissionPage: React.FC = () => {
     );
 
     return (
-    return (
         <div className="min-h-[90vh] flex flex-col font-sans text-brand-900 overflow-hidden relative bg-[#F9F6F3]">
             {/* Dynamic Aurora Background - Brand Pinks/Terracotta */}
             <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none -z-0">
