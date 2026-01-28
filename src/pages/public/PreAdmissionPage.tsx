@@ -224,29 +224,14 @@ const PreAdmissionPage: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen flex flex-col font-sans text-gray-800 overflow-hidden relative">
-            {/* Dynamic Aurora Background - Framer Motion */}
-            <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden bg-brand-50/20">
-                <motion.div
-                    animate={{ x: [0, 80, 0], y: [0, -50, 0], scale: [1, 1.3, 1], rotate: [0, 45, 0] }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[-10%] right-[-10%] w-[90vh] h-[90vh] rounded-full bg-indigo-400/60 blur-[120px] mix-blend-multiply"
-                />
-                <motion.div
-                    animate={{ x: [0, -60, 0], y: [0, 80, 0], scale: [1, 1.4, 1], rotate: [0, -45, 0] }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-[0%] left-[-20%] w-[80vh] h-[80vh] rounded-full bg-brand-400/60 blur-[120px] mix-blend-multiply"
-                />
-                <motion.div
-                    animate={{ x: [0, 90, 0], y: [0, 60, 0], scale: [1, 1.35, 1], rotate: [0, 30, 0] }}
-                    transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[30%] left-[20%] w-[60vh] h-[60vh] rounded-full bg-pink-300/50 blur-[90px] mix-blend-multiply"
-                />
-                <motion.div
-                    animate={{ x: [0, -50, 0], y: [0, -80, 0], scale: [1, 1.25, 1], rotate: [0, -30, 0] }}
-                    transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-[20%] right-[10%] w-[50vh] h-[50vh] rounded-full bg-purple-300/50 blur-[130px] mix-blend-multiply"
-                />
+        <div className="min-h-screen flex flex-col font-sans text-gray-800 overflow-hidden relative bg-gray-50">
+            {/* Dynamic Aurora Background - CSS Keyframes (Fail-safe) */}
+            <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none -z-0">
+                <div className="absolute top-0 left-0 w-full h-full bg-white opacity-40 mix-blend-overlay"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+                <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+                <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-80 h-80 bg-brand-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
             </div>
 
             {/* Progress Bar */}
