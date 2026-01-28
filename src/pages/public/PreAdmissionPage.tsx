@@ -224,26 +224,26 @@ const PreAdmissionPage: React.FC = () => {
     );
 
     return (
-        <div className="min-h-[90vh] flex flex-col font-sans text-brand-900 overflow-hidden relative bg-[#F9F6F3]">
-            {/* Dynamic Aurora Background - Brand Pinks/Terracotta */}
+        <div className="min-h-[90vh] flex flex-col font-sans text-[#4A4A4A] overflow-hidden relative bg-[#FDFBF9]">
+            {/* Dynamic Aurora Background - Subtle Monochromatic Rose */}
             <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none -z-0">
-                <div className="absolute top-0 left-0 w-full h-full bg-white opacity-20 mix-blend-overlay"></div>
-                <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#E8C4B8] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob"></div>
-                <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-[#F4DCD3] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-2000"></div>
-                <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-[#D4A59A] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-4000"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-80 h-80 bg-[#E6B8A2] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-2000"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-white opacity-40 mix-blend-overlay"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#FADADD] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
+                <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-[#FBE7E9] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
+                <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-[#FADADD] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-4000"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-80 h-80 bg-[#FBE7E9] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
             </div>
 
             {/* Progress Bar */}
-            <div className="fixed top-0 left-0 w-full h-1 bg-brand-100/50 z-50 backdrop-blur-sm">
-                <motion.div className="h-full bg-brand-600"
+            <div className="fixed top-0 left-0 w-full h-1 bg-[#E8E0DC] z-50">
+                <motion.div className="h-full bg-[#8C7063]"
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.5 }}
                 />
             </div>
 
-            <main className="flex-grow flex flex-col px-6 pt-20 pb-6 relative z-10 max-w-lg mx-auto w-full">
+            <main className="flex-grow flex flex-col px-6 pt-16 pb-24 relative z-10 max-w-lg mx-auto w-full justify-center min-h-[600px]">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={step}
@@ -255,17 +255,17 @@ const PreAdmissionPage: React.FC = () => {
                     >
                         {/* 0. WELCOME */}
                         {steps[step].id === 'welcome' && (
-                            <div className="text-center space-y-6 mt-10">
-                                <h1 className="text-5xl font-bold font-serif text-brand-900 leading-tight">
+                            <div className="text-center space-y-6">
+                                <h1 className="text-5xl font-bold font-serif text-[#4A4A4A] leading-tight">
                                     Hola.
                                 </h1>
-                                <p className="text-xl text-brand-600 font-light leading-relaxed">
+                                <p className="text-xl text-[#6D6D6D] font-light leading-relaxed">
                                     Experiencia clínica diseñada para ti.
                                 </p>
                                 <motion.button
                                     whileTap={{ scale: 0.95 }}
                                     onClick={nextStep}
-                                    className="px-8 py-4 bg-brand-900 text-white rounded-full text-lg font-medium shadow-xl transition-all flex items-center mx-auto gap-2 mt-8"
+                                    className="px-8 py-4 bg-[#8C7063] text-white rounded-full text-lg font-medium shadow-lg hover:bg-[#7A6156] transition-all flex items-center mx-auto gap-2 mt-8"
                                 >
                                     Comenzar <ArrowRight className="w-5 h-5" />
                                 </motion.button>
@@ -274,31 +274,31 @@ const PreAdmissionPage: React.FC = () => {
 
                         {/* NAME */}
                         {steps[step].id === 'name' && (
-                            <div className="space-y-8 mt-4">
-                                <div className="space-y-1 text-center">
-                                    <h2 className="text-4xl font-bold text-brand-900 font-serif">Hola.</h2>
-                                    <p className="text-brand-500 text-lg font-light">¿Cuál es tu nombre?</p>
+                            <div className="space-y-8">
+                                <div className="space-y-2 text-center">
+                                    <h2 className="text-4xl font-bold text-[#4A4A4A] font-serif">Hola.</h2>
+                                    <p className="text-[#6D6D6D] text-lg font-light">¿Cuál es tu nombre?</p>
                                 </div>
-                                <div className="space-y-6 bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/50 shadow-sm">
-                                    <input {...register('firstName')} placeholder="Nombre" className="w-full text-2xl p-2 border-b border-brand-200 focus:border-brand-600 outline-none bg-transparent placeholder-brand-300/70 text-brand-900" autoFocus />
-                                    <input {...register('lastName')} placeholder="Apellido" className="w-full text-2xl p-2 border-b border-brand-200 focus:border-brand-600 outline-none bg-transparent placeholder-brand-300/70 text-brand-900" />
+                                <div className="space-y-6 bg-white/70 p-6 rounded-3xl backdrop-blur-md border border-white shadow-sm">
+                                    <input {...register('firstName')} placeholder="Nombre" className="w-full text-2xl p-3 border-b border-[#D1D1D1] focus:border-[#8C7063] outline-none bg-transparent placeholder-[#A0A0A0] text-[#4A4A4A]" autoFocus />
+                                    <input {...register('lastName')} placeholder="Apellido" className="w-full text-2xl p-3 border-b border-[#D1D1D1] focus:border-[#8C7063] outline-none bg-transparent placeholder-[#A0A0A0] text-[#4A4A4A]" />
                                 </div>
                             </div>
                         )}
 
                         {/* INSURANCE (PROFILE) */}
                         {steps[step].id === 'insurance' && (
-                            <div className="space-y-6 mt-4">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif mb-2">Tu Perfil</h2>
-                                <div className="space-y-5 bg-white/40 p-6 rounded-3xl border border-white/50 shadow-sm backdrop-blur-sm">
+                            <div className="space-y-6">
+                                <h2 className="text-3xl font-bold text-[#4A4A4A] font-serif mb-2 text-center">Tu Perfil</h2>
+                                <div className="space-y-5 bg-white/70 p-6 rounded-3xl border border-white shadow-sm backdrop-blur-md">
                                     <div>
-                                        <label className="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2 ml-1">Previsión</label>
+                                        <label className="block text-xs font-bold text-[#8C7063] uppercase tracking-widest mb-3 ml-1">Previsión</label>
                                         <div className="grid grid-cols-3 gap-2">
                                             {['fonasa', 'isapre', 'particular'].map((opt) => (
                                                 <button key={opt} type="button"
-                                                    className={`p-2 rounded-xl text-sm font-medium capitalize transition-all border ${watch('insurance') === opt
-                                                        ? 'bg-brand-900 text-white border-brand-900 shadow-md'
-                                                        : 'bg-white/60 text-brand-600 border-transparent hover:bg-white'}`}
+                                                    className={`p-2.5 rounded-xl text-sm font-medium capitalize transition-all border shadow-sm ${watch('insurance') === opt
+                                                        ? 'bg-[#8C7063] text-white border-[#8C7063] shadow-md transform scale-[1.02]'
+                                                        : 'bg-white text-[#6D6D6D] border-gray-100 hover:border-[#E0D0C8] hover:bg-[#FAF8F6]'}`}
                                                     onClick={() => setValue('insurance', opt as any)}
                                                 >
                                                     {opt}
@@ -308,12 +308,12 @@ const PreAdmissionPage: React.FC = () => {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-3">Nacimiento</label>
-                                            <input {...register('birthDate')} type="date" className="w-full text-lg p-4 rounded-xl border border-gray-100 bg-white/80 focus:ring-2 focus:ring-brand-200 outline-none text-brand-900" />
+                                            <label className="block text-xs font-bold text-[#8C7063] uppercase tracking-widest mb-3">Nacimiento</label>
+                                            <input {...register('birthDate')} type="date" className="w-full text-lg p-4 rounded-xl border border-[#D1D1D1] bg-white/80 focus:ring-2 focus:ring-[#8C7063]/20 outline-none text-[#4A4A4A]" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-3">Ocupación</label>
-                                            <input {...register('occupation')} placeholder="Ej. Abogada..." className="w-full text-lg p-4 rounded-xl border border-gray-100 bg-white/80 focus:ring-2 focus:ring-brand-200 outline-none text-brand-900" />
+                                            <label className="block text-xs font-bold text-[#8C7063] uppercase tracking-widest mb-3">Ocupación</label>
+                                            <input {...register('occupation')} placeholder="Ej. Abogada..." className="w-full text-lg p-4 rounded-xl border border-[#D1D1D1] bg-white/80 focus:ring-2 focus:ring-[#8C7063]/20 outline-none text-[#4A4A4A] placeholder-[#A0A0A0]" />
                                         </div>
                                     </div>
                                 </div>
@@ -323,11 +323,11 @@ const PreAdmissionPage: React.FC = () => {
                         {/* CONTACT */}
                         {steps[step].id === 'rut_contact' && (
                             <div className="space-y-6">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif">Contacto</h2>
-                                <div className="space-y-4 bg-white/60 p-6 rounded-3xl border border-white shadow-lg backdrop-blur-sm">
-                                    <input {...register('rut')} placeholder="RUT (12.345.678-9)" className="w-full text-lg p-4 rounded-xl border border-gray-100 bg-white/80 focus:ring-2 focus:ring-brand-200 outline-none" />
-                                    <input {...register('phone')} placeholder="Teléfono (+569...)" type="tel" className="w-full text-lg p-4 rounded-xl border border-gray-100 bg-white/80 focus:ring-2 focus:ring-brand-200 outline-none" />
-                                    <input {...register('email')} placeholder="Email" type="email" className="w-full text-lg p-4 rounded-xl border border-gray-100 bg-white/80 focus:ring-2 focus:ring-brand-200 outline-none" />
+                                <h2 className="text-3xl font-bold text-[#4A4A4A] font-serif text-center">Contacto</h2>
+                                <div className="space-y-4 bg-white/70 p-6 rounded-3xl border border-white shadow-lg backdrop-blur-md">
+                                    <input {...register('rut')} placeholder="RUT (12.345.678-9)" className="w-full text-lg p-4 rounded-xl border border-[#D1D1D1] bg-white/80 focus:ring-2 focus:ring-[#8C7063]/20 outline-none text-[#4A4A4A] placeholder-[#A0A0A0]" />
+                                    <input {...register('phone')} placeholder="Teléfono (+569...)" type="tel" className="w-full text-lg p-4 rounded-xl border border-[#D1D1D1] bg-white/80 focus:ring-2 focus:ring-[#8C7063]/20 outline-none text-[#4A4A4A] placeholder-[#A0A0A0]" />
+                                    <input {...register('email')} placeholder="Email" type="email" className="w-full text-lg p-4 rounded-xl border border-[#D1D1D1] bg-white/80 focus:ring-2 focus:ring-[#8C7063]/20 outline-none text-[#4A4A4A] placeholder-[#A0A0A0]" />
                                 </div>
                             </div>
                         )}
@@ -335,22 +335,19 @@ const PreAdmissionPage: React.FC = () => {
                         {/* REASON */}
                         {steps[step].id === 'reason' && (
                             <div className="space-y-6">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif">¿Qué sientes?</h2>
-                                <div className="bg-white/60 p-6 rounded-3xl border border-white shadow-lg backdrop-blur-sm space-y-4">
-                                    <textarea {...register('reason')} rows={2} placeholder="Descríbelo en tus palabras..." className="w-full text-2xl p-0 border-none bg-transparent placeholder-brand-200/70 focus:ring-0 resize-none font-serif text-brand-900" autoFocus />
-                                    <div className="w-full h-px bg-gradient-to-r from-transparent via-brand-200 to-transparent"></div>
+                                <h2 className="text-3xl font-bold text-[#4A4A4A] font-serif text-center">¿Qué sientes?</h2>
+                                <div className="bg-white/70 p-6 rounded-3xl border border-white shadow-lg backdrop-blur-md space-y-4">
+                                    <textarea {...register('reason')} rows={3} placeholder="Descríbelo en tus palabras..." className="w-full text-xl p-4 border border-[#F0EAE6] rounded-xl bg-white/50 placeholder-[#A0A0A0] focus:ring-2 focus:ring-[#8C7063]/20 focus:border-[#8C7063] resize-none font-sans text-[#4A4A4A] outline-none transition-all" autoFocus />
 
-                                    {/* Specific Symptoms Chips */}
-                                    <div>
-                                        <label className="text-xs font-bold text-brand-400 uppercase tracking-widest mb-3 block">Accesos Rápidos</label>
+                                    <div className="pt-2">
+                                        <label className="text-xs font-bold text-[#8C7063] uppercase tracking-widest mb-3 block ml-1">Accesos Rápidos</label>
                                         <div className="flex flex-wrap gap-2">
                                             {SPECIFIC_SYMPTOMS.map((symptom) => {
                                                 const isSelected = watchSymptoms.includes(symptom.id);
                                                 return (
                                                     <button key={symptom.id} type="button"
                                                         onClick={() => toggleSelection('symptoms', symptom.id)}
-                                                        className={`px-3 py-2 rounded-lg text-sm transition-all border ${isSelected ? 'bg-brand-100/50 text-brand-800 border-brand-200' : 'bg-white/50 text-gray-500 border-transparent hover:bg-white'
-                                                            }`}
+                                                        className={`px-3 py-2 rounded-lg text-sm transition-all border shadow-sm ${isSelected ? 'bg-[#8C7063] text-white border-[#8C7063]' : 'bg-white text-[#6D6D6D] border-gray-100 hover:border-[#E0D0C8] hover:bg-[#FAF8F6]'}`}
                                                     >
                                                         {symptom.label}
                                                     </button>
@@ -362,30 +359,28 @@ const PreAdmissionPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* CHRONICITY [NEW] */}
+                        {/* CHRONICITY */}
                         {steps[step].id === 'chronicity' && (
-                            <div className="space-y-8">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif flex items-center gap-2">
-                                    <Clock className="w-8 h-8 text-brand-400" />
-                                    Cronología
+                            <div className="space-y-6">
+                                <h2 className="text-3xl font-bold text-[#4A4A4A] font-serif text-center flex items-center justify-center gap-2">
+                                    <Clock className="w-8 h-8 text-[#8C7063]" /> Cronología
                                 </h2>
-                                <p className="text-xl text-gray-500">¿Hace cuánto tiempo sientes esto?</p>
+                                <p className="text-center text-[#6D6D6D]">¿Hace cuánto tiempo sientes esto?</p>
 
-                                <div className="grid gap-4">
+                                <div className="grid gap-3">
                                     {CHRONICITY_OPTIONS.map((opt) => (
                                         <button key={opt.value} type="button"
                                             onClick={() => setValue('chronicity', opt.value)}
-                                            className={`p-5 rounded-2xl text-left transition-all border group relative overflow-hidden ${watch('chronicity') === opt.value
-                                                ? 'bg-brand-900 text-white border-brand-900 shadow-2xl scale-[1.02]'
-                                                : 'bg-white text-gray-500 border-gray-100 hover:bg-brand-50'
-                                                }`}
+                                            className={`p-4 rounded-2xl text-left transition-all border shadow-sm group ${watch('chronicity') === opt.value
+                                                ? 'bg-[#8C7063] text-white border-[#8C7063] shadow-md transform scale-[1.01]'
+                                                : 'bg-white text-[#4A4A4A] border-gray-100 hover:bg-[#FAF8F6] hover:border-[#E0D0C8]'}`}
                                         >
-                                            <div className="relative z-10 flex justify-between items-center">
+                                            <div className="flex justify-between items-center">
                                                 <div>
-                                                    <div className={`text-lg font-bold ${watch('chronicity') === opt.value ? 'text-white' : 'text-brand-900'}`}>{opt.label}</div>
-                                                    <div className={`text-sm ${watch('chronicity') === opt.value ? 'text-brand-200' : 'text-gray-400'}`}>{opt.sub}</div>
+                                                    <div className="font-bold text-lg">{opt.label}</div>
+                                                    <div className={`text-sm ${watch('chronicity') === opt.value ? 'text-white/80' : 'text-gray-400'}`}>{opt.sub}</div>
                                                 </div>
-                                                {watch('chronicity') === opt.value && <Check className="w-6 h-6 text-brand-200" />}
+                                                {watch('chronicity') === opt.value && <Check className="w-5 h-5 text-white" />}
                                             </div>
                                         </button>
                                     ))}
@@ -395,29 +390,28 @@ const PreAdmissionPage: React.FC = () => {
 
                         {/* GYNOBS */}
                         {steps[step].id === 'gyn_obs' && (
-                            <div className="space-y-8">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif flex items-center gap-2">
-                                    <Baby className="w-8 h-8 text-brand-400" />
-                                    Maternidad
+                            <div className="space-y-6">
+                                <h2 className="text-3xl font-bold text-[#4A4A4A] font-serif text-center flex items-center justify-center gap-2">
+                                    <Baby className="w-8 h-8 text-[#8C7063]" /> Maternidad
                                 </h2>
-                                <div className="bg-white/60 p-8 rounded-3xl border border-white shadow-lg backdrop-blur-sm space-y-6">
+                                <div className="bg-white/70 p-6 rounded-3xl border border-white shadow-lg backdrop-blur-md space-y-6">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xl font-medium text-brand-900">¿Eres madre?</span>
-                                        <div className="flex bg-gray-100/50 p-1 rounded-xl">
-                                            <button type="button" onClick={() => setValue('isMother', false)} className={`px-6 py-2 rounded-lg font-bold transition-all ${!watchIsMother ? 'bg-white shadow text-brand-900' : 'text-gray-400'}`}>No</button>
-                                            <button type="button" onClick={() => setValue('isMother', true)} className={`px-6 py-2 rounded-lg font-bold transition-all ${watchIsMother ? 'bg-white shadow text-brand-900' : 'text-gray-400'}`}>Sí</button>
+                                        <span className="text-lg font-medium text-[#4A4A4A]">¿Eres madre?</span>
+                                        <div className="flex bg-[#F0EAE6] p-1 rounded-xl">
+                                            <button type="button" onClick={() => setValue('isMother', false)} className={`px-5 py-2 rounded-lg font-bold transition-all ${!watchIsMother ? 'bg-white shadow text-[#8C7063]' : 'text-[#A0A0A0]'}`}>No</button>
+                                            <button type="button" onClick={() => setValue('isMother', true)} className={`px-5 py-2 rounded-lg font-bold transition-all ${watchIsMother ? 'bg-white shadow text-[#8C7063]' : 'text-[#A0A0A0]'}`}>Sí</button>
                                         </div>
                                     </div>
                                     <AnimatePresence>
                                         {watchIsMother && (
-                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="space-y-4 pt-4 border-t border-gray-100 overflow-hidden">
+                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="space-y-4 pt-4 border-t border-[#E8E0DC] overflow-hidden">
                                                 <div className="grid grid-cols-3 gap-3">
                                                     {['Partos', 'Cesáreas', 'Pérdidas'].map((label, i) => {
                                                         const field = i === 0 ? 'gynObs.births' : i === 1 ? 'gynObs.cesareans' : 'gynObs.abortions';
                                                         return (
                                                             <div key={label} className="bg-white p-3 rounded-xl border border-gray-100 text-center">
-                                                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">{label}</label>
-                                                                <input {...register(field as any, { valueAsNumber: true })} type="number" min="0" className="w-full text-center font-bold text-xl text-brand-900 outline-none bg-transparent" />
+                                                                <label className="block text-xs font-bold text-[#8C7063] uppercase mb-1">{label}</label>
+                                                                <input {...register(field as any, { valueAsNumber: true })} type="number" min="0" className="w-full text-center font-bold text-xl text-[#4A4A4A] outline-none bg-transparent" />
                                                             </div>
                                                         );
                                                     })}
@@ -426,46 +420,44 @@ const PreAdmissionPage: React.FC = () => {
                                         )}
                                     </AnimatePresence>
                                     <div className="flex items-center gap-3 pt-2">
-                                        <input type="checkbox" {...register('gynObs.menopause')} className="w-5 h-5 accent-brand-600" />
-                                        <span className="text-gray-600">Menopausia</span>
+                                        <input type="checkbox" {...register('gynObs.menopause')} className="w-5 h-5 accent-[#8C7063]" />
+                                        <span className="text-[#6D6D6D]">Menopausia</span>
                                     </div>
-                                    <input {...register('gynObs.surgeries')} placeholder="Cirugías Previas (Opcional)" className="w-full p-4 rounded-xl bg-gray-50/50 border-none outline-none focus:bg-white transition-colors" />
+                                    <input {...register('gynObs.surgeries')} placeholder="Cirugías Previas (Opcional)" className="w-full p-4 rounded-xl bg-white border border-[#E8E0DC] text-[#4A4A4A] placeholder-[#A0A0A0] outline-none focus:border-[#8C7063] transition-colors" />
                                 </div>
                             </div>
                         )}
 
-                        {/* HABITS & STRESS */}
+                        {/* HABITS */}
                         {steps[step].id === 'habits' && (
-                            <div className="space-y-8">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif">Estilo de Vida</h2>
-                                <div className="bg-white/60 p-6 rounded-3xl border border-white shadow-lg backdrop-blur-sm space-y-6">
-                                    {/* Stress Slider [NEW] */}
+                            <div className="space-y-6">
+                                <h2 className="text-3xl font-bold text-[#4A4A4A] font-serif text-center">Estilo de Vida</h2>
+                                <div className="bg-white/70 p-6 rounded-3xl border border-white shadow-lg backdrop-blur-md space-y-6">
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-center">
-                                            <label className="font-bold text-brand-800 text-sm flex items-center gap-2">
-                                                <Zap className="w-4 h-4 text-brand-400" /> Nivel de Estrés / Cansancio
+                                            <label className="font-bold text-[#4A4A4A] text-sm flex items-center gap-2">
+                                                <Zap className="w-4 h-4 text-[#8C7063]" /> Nivel de Estrés
                                             </label>
-                                            <span className="text-2xl font-black text-brand-600">{watchStress}</span>
+                                            <span className="text-2xl font-black text-[#8C7063]">{watchStress}</span>
                                         </div>
                                         <input type="range" min="0" max="10"
                                             {...register('habits.stressLevel', { valueAsNumber: true })}
-                                            className="w-full h-3 bg-gray-200 rounded-full appearance-none cursor-pointer accent-brand-600"
+                                            className="w-full h-2 bg-[#E8E0DC] rounded-full appearance-none cursor-pointer accent-[#8C7063]"
                                         />
-                                        <div className="flex justify-between text-xs text-gray-400 font-medium">
+                                        <div className="flex justify-between text-xs text-[#A0A0A0] font-medium">
                                             <span>Zen</span>
                                             <span>Burnout</span>
                                         </div>
                                     </div>
-                                    <div className="h-px bg-gray-100"></div>
-                                    {/* Simple Selects for others */}
+                                    <div className="h-px bg-[#E8E0DC]"></div>
                                     <div className="grid grid-cols-2 gap-4">
                                         {['Agua', 'Actividad', 'Digestión', 'Sueño'].map((label, i) => {
                                             const field = i === 0 ? 'habits.waterIntake' : i === 1 ? 'habits.activityLevel' : i === 2 ? 'habits.digestion' : 'habits.sleepQuality';
                                             const options = i === 0 ? ['Baja', 'Normal', 'Alta'] : i === 1 ? ['Sedentaria', 'Ligera', 'Activa'] : i === 2 ? ['Normal', 'Estreñimiento'] : ['Bien', 'Regular', 'Mal'];
                                             return (
                                                 <div key={label} className="space-y-1">
-                                                    <label className="text-xs font-bold text-gray-400 uppercase">{label}</label>
-                                                    <select {...register(field as any)} className="w-full p-2 rounded-lg bg-white border border-gray-100 text-sm font-medium text-brand-900 outline-none">
+                                                    <label className="text-xs font-bold text-[#8C7063] uppercase">{label}</label>
+                                                    <select {...register(field as any)} className="w-full p-2 rounded-lg bg-white border border-[#E8E0DC] text-sm font-medium text-[#4A4A4A] outline-none">
                                                         <option value="">...</option>
                                                         {options.map(o => <option key={o} value={o}>{o}</option>)}
                                                     </select>
@@ -480,8 +472,8 @@ const PreAdmissionPage: React.FC = () => {
                         {/* BODY MAP */}
                         {steps[step].id === 'body_map' && (
                             <div className="space-y-4">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif text-center">Mapa Corporal</h2>
-                                <div className="transform scale-90 sm:scale-100 transition-transform">
+                                <h2 className="text-3xl font-bold text-[#4A4A4A] font-serif text-center">Mapa Corporal</h2>
+                                <div className="transform scale-95 sm:scale-100 transition-transform">
                                     <Controller
                                         name="bodyMap"
                                         control={control}
@@ -490,7 +482,7 @@ const PreAdmissionPage: React.FC = () => {
                                                 value={field.value}
                                                 onChange={(val) => field.onChange(val)}
                                                 containerClassName="relative w-full overflow-hidden flex items-center justify-center transition-all bg-transparent"
-                                                bodyFill="#946353"
+                                                bodyFill="#D4A59A"
                                             />
                                         )}
                                     />
@@ -501,25 +493,22 @@ const PreAdmissionPage: React.FC = () => {
                         {/* PAIN */}
                         {steps[step].id === 'pain' && (
                             <div className="space-y-8 text-center">
-                                <h2 className="text-4xl font-bold text-brand-900 font-serif flex items-center justify-center gap-2">
-                                    <Activity className="w-8 h-8 text-brand-400" /> Molestia
+                                <h2 className="text-4xl font-bold text-[#4A4A4A] font-serif flex items-center justify-center gap-2">
+                                    <Activity className="w-8 h-8 text-[#8C7063]" /> Molestia
                                 </h2>
-                                <p className="text-gray-500 text-lg">Del 1 al 10, ¿cuánto te duele hoy?</p>
+                                <p className="text-[#6D6D6D] text-lg">Del 1 al 10, ¿cuánto te duele hoy?</p>
 
-                                <div className="space-y-8 max-w-sm mx-auto p-12 rounded-[3rem] bg-gradient-to-br from-white to-gray-50 border border-white shadow-2xl backdrop-blur-sm relative overflow-hidden group">
-                                    <div className="absolute inset-0 bg-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    <div className={`text-9xl font-black tracking-tighter transition-colors duration-300 ${watch('painLevel') < 4 ? 'text-green-500' :
-                                        watch('painLevel') < 8 ? 'text-yellow-500' : 'text-red-500'
-                                        }`}>
+                                <div className="space-y-8 max-w-sm mx-auto p-10 rounded-[3rem] bg-white border border-white shadow-2xl backdrop-blur-sm relative overflow-hidden">
+                                    <div className={`text-9xl font-black tracking-tighter transition-colors duration-300 ${watch('painLevel') < 4 ? 'text-green-500' : watch('painLevel') < 8 ? 'text-yellow-500' : 'text-red-500'}`}>
                                         {watch('painLevel')}
                                     </div>
                                     <div className="relative">
                                         <input
                                             type="range" min="0" max="10"
                                             {...register('painLevel', { valueAsNumber: true })}
-                                            className="w-full h-4 bg-gray-200 rounded-full appearance-none cursor-pointer accent-brand-900 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                                            className="w-full h-3 bg-[#E8E0DC] rounded-full appearance-none cursor-pointer accent-[#8C7063]"
                                         />
-                                        <div className="flex justify-between text-xs font-bold text-gray-400 mt-2 uppercase tracking-wider">
+                                        <div className="flex justify-between text-xs font-bold text-[#A0A0A0] mt-2 uppercase tracking-wider">
                                             <span>Nada</span>
                                             <span>Mucho</span>
                                         </div>
@@ -531,19 +520,18 @@ const PreAdmissionPage: React.FC = () => {
                         {/* RED FLAGS */}
                         {steps[step].id === 'red_flags' && (
                             <div className="space-y-6">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif flex items-center gap-2">
-                                    <Shield className="w-8 h-8 text-brand-400" /> Importante
+                                <h2 className="text-3xl font-bold text-[#4A4A4A] font-serif flex items-center gap-2">
+                                    <Shield className="w-8 h-8 text-[#8C7063]" /> Importante
                                 </h2>
-                                <p className="text-gray-500">Selecciona si presentas alguna de estas condiciones.</p>
+                                <p className="text-[#6D6D6D]">Selecciona si presentas alguna de estas condiciones.</p>
                                 <div className="grid gap-3">
                                     {RED_FLAGS_LIST.map((flag) => {
                                         const isChecked = watchRedFlags.includes(flag.id);
                                         return (
                                             <div key={flag.id} onClick={() => toggleSelection('redFlags', flag.id)}
-                                                className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center gap-4 ${isChecked ? 'bg-red-50 border-red-200 text-red-900' : 'bg-white border-gray-100 hover:bg-gray-50 text-gray-600'
-                                                    }`}
+                                                className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center gap-4 ${isChecked ? 'bg-[#FADADD]/30 border-red-200 text-red-900' : 'bg-white border-gray-100 hover:bg-[#FAF8F6] text-[#4A4A4A]'}`}
                                             >
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isChecked ? 'bg-red-500 border-red-500' : 'border-gray-300'}`}>
+                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isChecked ? 'bg-red-500 border-red-500' : 'border-[#D1D1D1] bg-white'}`}>
                                                     {isChecked && <Check className="w-3 h-3 text-white" />}
                                                 </div>
                                                 <span className="font-medium">{flag.label}</span>
@@ -557,27 +545,27 @@ const PreAdmissionPage: React.FC = () => {
                         {/* EXPECTATIONS */}
                         {steps[step].id === 'expectations' && (
                             <div className="space-y-6">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif">Objetivo</h2>
+                                <h2 className="text-3xl font-bold text-[#4A4A4A] font-serif text-center">Objetivo</h2>
                                 <div className="relative">
-                                    <Star className="absolute top-6 left-6 text-brand-300 w-6 h-6" />
-                                    <textarea {...register('expectations')} rows={4} className="w-full text-2xl p-6 pl-16 border-none rounded-3xl bg-white/60 shadow-xl backdrop-blur-sm focus:bg-white transition-all placeholder-brand-200/50 text-brand-900 resize-none outline-none" placeholder="¿Qué esperas lograr?" autoFocus />
+                                    <Star className="absolute top-6 left-6 text-[#8C7063] w-6 h-6" />
+                                    <textarea {...register('expectations')} rows={4} className="w-full text-xl p-6 pl-16 border-none rounded-3xl bg-white/70 shadow-lg backdrop-blur-sm focus:bg-white transition-all placeholder-[#A0A0A0] text-[#4A4A4A] resize-none outline-none" placeholder="¿Qué esperas lograr?" autoFocus />
                                 </div>
                             </div>
                         )}
 
                         {/* FINISH */}
                         {steps[step].id === 'finish' && (
-                            <div className="text-center space-y-10">
-                                <h2 className="text-5xl font-bold text-brand-900 font-serif">Todo Listo.</h2>
+                            <div className="text-center space-y-10 mt-10">
+                                <h2 className="text-5xl font-bold text-[#4A4A4A] font-serif">Todo Listo.</h2>
                                 <motion.button
                                     onClick={() => handleSubmit(onSubmit)()}
                                     disabled={isSubmitting}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="px-12 py-6 bg-brand-900 text-white rounded-full text-2xl font-bold shadow-2xl hover:shadow-brand-900/50 transition-all flex items-center gap-3 mx-auto"
+                                    className="px-12 py-6 bg-[#8C7063] text-white rounded-full text-2xl font-bold shadow-2xl hover:shadow-lg transition-all flex items-center gap-3 mx-auto"
                                 >
                                     {isSubmitting ? 'Enviando...' : (
-                                        <>Enviar Ficha <Heart className="w-6 h-6 fill-brand-400 text-brand-400" /></>
+                                        <>Enviar Ficha <Heart className="w-6 h-6 fill-white text-white" /></>
                                     )}
                                 </motion.button>
                             </div>
@@ -589,16 +577,16 @@ const PreAdmissionPage: React.FC = () => {
             {/* Footer Nav */}
             {step > 0 && !isSuccess && (
                 <div className="fixed bottom-0 left-0 w-full p-6 flex justify-between items-center z-40 max-w-4xl mx-auto left-0 right-0">
-                    <button onClick={prevStep} className="p-3 bg-white/20 backdrop-blur-md rounded-full text-brand-900 hover:bg-white/40 transition-colors">
+                    <button onClick={prevStep} className="p-3 bg-white/50 backdrop-blur-md rounded-full text-[#4A4A4A] hover:bg-white transition-colors shadow-sm">
                         <ArrowLeft className="w-6 h-6" />
                     </button>
                     <div className="flex gap-1.5 opacity-50">
                         {steps.slice(0, -1).map((_, i) => (
-                            <motion.div key={i} className={`h-1.5 rounded-full ${i === step ? 'bg-brand-900 w-6' : 'bg-brand-900/20 w-1.5'}`} layout />
+                            <motion.div key={i} className={`h-1.5 rounded-full ${i === step ? 'bg-[#8C7063] w-6' : 'bg-[#E8E0DC] w-1.5'}`} layout />
                         ))}
                     </div>
                     {step < steps.length - 1 ? (
-                        <button onClick={nextStep} className="p-3 bg-brand-900 text-white rounded-full shadow-lg hover:bg-brand-800 transition-colors">
+                        <button onClick={nextStep} className="p-3 bg-[#8C7063] text-white rounded-full shadow-lg hover:bg-[#7A6156] transition-colors">
                             <ArrowRight className="w-6 h-6" />
                         </button>
                     ) : <div className="w-12"></div>}
@@ -609,3 +597,4 @@ const PreAdmissionPage: React.FC = () => {
 };
 
 export default PreAdmissionPage;
+
