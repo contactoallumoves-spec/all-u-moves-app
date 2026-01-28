@@ -334,27 +334,48 @@ export default function PatientDetailPage() {
                     {/* Left Column: Timeline & History */}
                     <div className="md:col-span-2 space-y-6">
 
+
                         {/* [NEW] BodyMap Summary Card (Most Recent) */}
                         {(() => {
-                            // Find latest evaluation with body map data
-                            const latestMap = history.find(h =>
+                            // 1. Try to find latest evaluation with body map data
+                            const latestEvalMap = history.find(h =>
                                 (h.type.includes('eval') && (h.raw?.details?.pelvic?.painRegions?.length > 0 || h.raw?.painMap))
                             );
 
-                            if (!latestMap) return null;
+                            let mapData = null;
+                            let mapDate = null;
+                            let mapSource = '';
 
-                            const mapData = {
-                                painRegions: latestMap.raw?.details?.pelvic?.painRegions || latestMap.raw?.painMap?.painRegions || [],
-                                painType: ''
-                            };
+                            if (latestEvalMap) {
+                                mapData = {
+                                    painRegions: latestEvalMap.raw?.details?.pelvic?.painRegions || latestEvalMap.raw?.painMap?.painRegions || [],
+                                    painType: ''
+                                };
+                                mapDate = latestEvalMap.date;
+                                mapSource = 'Evaluación';
+                            } else if (patient?.clinicalData?.bodyMap?.painRegions?.length > 0) {
+                                // 2. Fallback: Check Patient Initial Data (Pre-Ingreso / Anamnesis)
+                                mapData = {
+                                    painRegions: patient.clinicalData.bodyMap.painRegions,
+                                    painType: patient.clinicalData.bodyMap.painType || ''
+                                };
+                                // Use patient creation date or today if unknown
+                                mapDate = patient.createdAt || new Date();
+                                mapSource = 'Pre-Ingreso';
+                            }
+
+                            if (!mapData) return null;
 
                             return (
                                 <Card className="bg-white border-brand-100 overflow-hidden">
                                     <CardHeader className="pb-2 bg-slate-50 border-b border-brand-50">
                                         <CardTitle className="text-sm uppercase tracking-wider text-brand-800 flex items-center gap-2">
-                                            <Activity className="w-4 h-4 text-brand-500" /> Mapa Corporal Actual
+                                            <Activity className="w-4 h-4 text-brand-500" /> Mapa Corporal ({mapSource})
                                             <span className="ml-auto text-xs font-normal text-gray-400">
-                                                {new Date(latestMap.date).toLocaleDateString()}
+                                                {/* Handle date formatting safely */}
+                                                {mapDate instanceof Date ? mapDate.toLocaleDateString() :
+                                                    (mapDate && typeof mapDate.toDate === 'function') ? mapDate.toDate().toLocaleDateString() :
+                                                        new Date().toLocaleDateString()}
                                             </span>
                                         </CardTitle>
                                     </CardHeader>
