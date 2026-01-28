@@ -99,8 +99,8 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
                                                 exit={{ opacity: 0 }}
 
                                                 // Style & Interaction
-                                                fill={isSelected(key) ? '#EC4899' : '#FFFFFF'}
-                                                stroke={isSelected(key) ? '#BE185D' : '#CBD5E1'}
+                                                fill={isSelected(key) ? '#EC4899' : '#F1F5F9'}
+                                                stroke={isSelected(key) ? '#BE185D' : '#94A3B8'}
                                                 strokeWidth={isSelected(key) ? "3" : "2"}
 
                                                 className="cursor-pointer transition-all duration-200 hover:filter hover:brightness-95"
