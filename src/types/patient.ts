@@ -32,11 +32,13 @@ export interface Patient {
             menopause?: boolean;
             surgeries?: string;
         };
+        painChronicity?: string; // e.g. "Agudo (<3 meses)", "Crónico (>3 meses)"
         habits?: {
-            waterIntake?: string; // e.g. "Poca (<1L)", "Normal (1.5-2L)", "Mucha (>2L)"
+            waterIntake?: string;
             activityLevel?: string;
-            digestion?: string; // e.g. "Estreñimiento", "Normal"
+            digestion?: string;
             sleepQuality?: string;
+            stressLevel?: number; // 0-10
         };
         bodyMap?: {
             painRegions: string[]; // e.g. ["Lumbar", "Pélvico", "Cadera Izq"]
