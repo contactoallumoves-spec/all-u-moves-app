@@ -25,7 +25,7 @@ import { ProgressChart } from '../components/patient/ProgressChart';
 import { ProgressDetailModal } from '../components/patient/ProgressDetailModal';
 import { BodyMap } from '../components/clinical/BodyMap';
 import { BodyMapHistoryModal } from '../components/patient/BodyMapHistoryModal';
-import { Maximize2, Activity } from 'lucide-react'; const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
+const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
     if (data === null || data === undefined) return null;
     if (typeof data !== 'object') return <span className="text-gray-800 ml-2 font-medium">{String(data)}</span>;
     if (Object.keys(data).length === 0) return null;
@@ -125,9 +125,10 @@ export default function PatientDetailPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'clinical' | 'anamnesis'>('clinical');
 
-    // States for Modal    // Modal State
+    // Modal States
     const [selectedItem, setSelectedItem] = useState<any>(null);
-    const [isExpanded, setIsExpanded] = useState(false); // [NEW] Expanded View Modal>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isBodyMapHistoryOpen, setIsBodyMapHistoryOpen] = useState(false);
     const [checklist, setChecklist] = useState<{ label: string, checked: boolean }[]>([]);
 
     useEffect(() => {
