@@ -84,7 +84,7 @@ const PreAdmissionPage: React.FC = () => {
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
 
-    const { control, register, handleSubmit, formState: { errors }, trigger, watch, setValue } = useForm<PreAdmissionData>({
+    const { control, register, handleSubmit, trigger, watch, setValue } = useForm<PreAdmissionData>({
         resolver: zodResolver(preAdmissionSchema),
         mode: 'onChange',
         defaultValues: {
@@ -389,8 +389,8 @@ const PreAdmissionPage: React.FC = () => {
                                         <button key={opt.value} type="button"
                                             onClick={() => setValue('chronicity', opt.value)}
                                             className={`p-5 rounded-2xl text-left transition-all border group relative overflow-hidden ${watch('chronicity') === opt.value
-                                                    ? 'bg-brand-900 text-white border-brand-900 shadow-2xl scale-[1.02]'
-                                                    : 'bg-white text-gray-500 border-gray-100 hover:bg-brand-50'
+                                                ? 'bg-brand-900 text-white border-brand-900 shadow-2xl scale-[1.02]'
+                                                : 'bg-white text-gray-500 border-gray-100 hover:bg-brand-50'
                                                 }`}
                                         >
                                             <div className="relative z-10 flex justify-between items-center">
