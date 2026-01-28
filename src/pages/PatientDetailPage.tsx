@@ -24,7 +24,8 @@ import { getLabel } from '../data/catalog';
 import { ProgressChart } from '../components/patient/ProgressChart';
 import { ProgressDetailModal } from '../components/patient/ProgressDetailModal';
 import { BodyMap } from '../components/clinical/BodyMap';
-const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
+import { BodyMapHistoryModal } from '../components/patient/BodyMapHistoryModal';
+import { Maximize2, Activity } from 'lucide-react'; const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
     if (data === null || data === undefined) return null;
     if (typeof data !== 'object') return <span className="text-gray-800 ml-2 font-medium">{String(data)}</span>;
     if (Object.keys(data).length === 0) return null;
@@ -335,62 +336,99 @@ export default function PatientDetailPage() {
                     <div className="md:col-span-2 space-y-6">
 
 
+
                         {/* [NEW] BodyMap Summary Card (Most Recent) */}
                         {(() => {
-                            // 1. Try to find latest evaluation with body map data
-                            const latestEvalMap = history.find(h =>
-                                (h.type.includes('eval') && (h.raw?.details?.pelvic?.painRegions?.length > 0 || h.raw?.painMap))
-                            );
+                            // --- Aggregate ALL Body Maps for History ---
+                            const allMaps: any[] = [];
 
-                            let mapData = null;
-                            let mapDate = null;
-                            let mapSource = '';
+                            // 1. Evaluations (Newest first implicitly if history is sorted, otherwise sort later)
+                            history.forEach(h => {
+                                if (h.type.includes('eval') && (h.raw?.details?.pelvic?.painRegions?.length > 0 || h.raw?.painMap)) {
+                                    allMaps.push({
+                                        date: h.date,
+                                        source: 'Evaluación',
+                                        data: {
+                                            painRegions: h.raw?.details?.pelvic?.painRegions || h.raw?.painMap?.painRegions || [],
+                                            painType: ''
+                                        }
+                                    });
+                                }
+                            });
 
-                            if (latestEvalMap) {
-                                mapData = {
-                                    painRegions: latestEvalMap.raw?.details?.pelvic?.painRegions || latestEvalMap.raw?.painMap?.painRegions || [],
-                                    painType: ''
-                                };
-                                mapDate = latestEvalMap.date;
-                                mapSource = 'Evaluación';
-                            } else if (patient?.clinicalData?.bodyMap?.painRegions && patient.clinicalData.bodyMap.painRegions.length > 0) {
-                                // 2. Fallback: Check Patient Initial Data (Pre-Ingreso / Anamnesis)
-                                mapData = {
-                                    painRegions: patient.clinicalData?.bodyMap?.painRegions || [],
-                                    painType: patient.clinicalData?.bodyMap?.painType || ''
-                                };
-                                // Use patient creation date or today if unknown
-                                mapDate = patient.createdAt || new Date();
-                                mapSource = 'Pre-Ingreso';
+                            // 2. Pre-Ingreso (Push at the end, then sort)
+                            if (patient?.clinicalData?.bodyMap?.painRegions && patient.clinicalData.bodyMap.painRegions.length > 0) {
+                                allMaps.push({
+                                    date: patient.createdAt || new Date(),
+                                    source: 'Pre-Ingreso',
+                                    data: {
+                                        painRegions: patient.clinicalData.bodyMap.painRegions,
+                                        painType: patient.clinicalData.bodyMap.painType || ''
+                                    }
+                                });
                             }
 
-                            if (!mapData) return null;
+                            // Sort Descending (Newest First)
+                            allMaps.sort((a, b) => {
+                                const dateA = a.date instanceof Date ? a.date : (a.date as any)?.toDate?.() || new Date(a.date);
+                                const dateB = b.date instanceof Date ? b.date : (b.date as any)?.toDate?.() || new Date(b.date);
+                                return dateB.getTime() - dateA.getTime();
+                            });
+
+
+                            // 3. Determine Most Recent for Display
+                            const latestMap = allMaps.length > 0 ? allMaps[0] : null;
+
+                            if (!latestMap) return null;
 
                             return (
-                                <Card className="bg-white border-brand-100 overflow-hidden">
-                                    <CardHeader className="pb-2 bg-slate-50 border-b border-brand-50">
-                                        <CardTitle className="text-sm uppercase tracking-wider text-brand-800 flex items-center gap-2">
-                                            <Activity className="w-4 h-4 text-brand-500" /> Mapa Corporal ({mapSource})
-                                            <span className="ml-auto text-xs font-normal text-gray-400">
-                                                {/* Handle date formatting safely */}
-                                                {mapDate instanceof Date ? mapDate.toLocaleDateString() :
-                                                    (mapDate && typeof mapDate.toDate === 'function') ? mapDate.toDate().toLocaleDateString() :
-                                                        new Date().toLocaleDateString()}
-                                            </span>
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-0">
-                                        <div className="flex bg-slate-900/5 justify-center py-4 relative h-[400px] overflow-hidden">
-                                            <div className="scale-75 origin-top absolute top-4">
-                                                <BodyMap
-                                                    value={mapData}
-                                                    onChange={() => { }}
-                                                    readOnly={true}
-                                                />
+                                <>
+                                    <Card className="bg-white border-brand-100 overflow-hidden">
+                                        <CardHeader className="pb-2 bg-slate-50 border-b border-brand-50">
+                                            <CardTitle className="text-sm uppercase tracking-wider text-brand-800 flex items-center gap-2 w-full">
+                                                <div className="flex items-center gap-2">
+                                                    <Activity className="w-4 h-4 text-brand-500" />
+                                                    Mapa Corporal ({latestMap.source})
+                                                </div>
+
+                                                <div className="ml-auto flex items-center gap-3">
+                                                    <span className="text-xs font-normal text-gray-400 hidden sm:inline-block">
+                                                        {latestMap.date instanceof Date ? latestMap.date.toLocaleDateString() :
+                                                            (latestMap.date as any)?.toDate ? (latestMap.date as any).toDate().toLocaleDateString() :
+                                                                new Date(latestMap.date).toLocaleDateString()}
+                                                    </span>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 px-2 text-xs text-brand-600 hover:text-brand-800 hover:bg-brand-50"
+                                                        onClick={() => setIsBodyMapHistoryOpen(true)}
+                                                    >
+                                                        <Maximize2 className="w-3 h-3 mr-1" /> Expandir / Ver Todo ({allMaps.length})
+                                                    </Button>
+                                                </div>
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-0">
+                                            {/* Adjusted height to show more body */}
+                                            <div className="flex bg-slate-900/5 justify-center py-4 relative h-[500px] overflow-hidden">
+                                                <div className="scale-75 origin-top absolute top-4">
+                                                    <BodyMap
+                                                        value={latestMap.data}
+                                                        onChange={() => { }}
+                                                        readOnly={true}
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+
+                                    <BodyMapHistoryModal
+                                        isOpen={isBodyMapHistoryOpen}
+                                        onClose={() => setIsBodyMapHistoryOpen(false)}
+                                        maps={allMaps}
+                                        patientName={`${patient?.firstName} ${patient?.lastName}`}
+                                    />
+                                </>
                             );
                         })()}
 
