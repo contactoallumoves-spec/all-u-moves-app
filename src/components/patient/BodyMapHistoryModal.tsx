@@ -1,9 +1,9 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/Dialog';
 import { BodyMap } from '../clinical/BodyMap';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '../ui/Badge';
+import { X } from 'lucide-react';
 
 interface BodyMapEntry {
     date: Date;
@@ -27,16 +27,32 @@ export const BodyMapHistoryModal: React.FC<BodyMapHistoryModalProps> = ({
     maps,
     patientName
 }) => {
-    return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle className="text-xl font-display text-brand-900">
-                        Historial de Mapas Corporales - {patientName}
-                    </DialogTitle>
-                </DialogHeader>
+    if (!isOpen) return null;
 
-                <div className="space-y-8 py-4">
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+                onClick={onClose}
+            ></div>
+
+            <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+                    <div>
+                        <h2 className="text-xl font-display font-bold text-brand-900">
+                            Historial de Mapas Corporales
+                        </h2>
+                        <p className="text-brand-500 text-sm">Pac: {patientName}</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-slate-50/50">
                     {maps.length === 0 ? (
                         <div className="text-center text-gray-500 py-10">
                             No hay registros de mapas corporales.
@@ -65,9 +81,9 @@ export const BodyMapHistoryModal: React.FC<BodyMapHistoryModalProps> = ({
                                     </div>
                                     <span className="text-xs text-brand-300 font-mono">#{maps.length - index}</span>
                                 </div>
-                                <div className="flex justify-center bg-slate-900/5 py-6">
+                                <div className="flex justify-center bg-slate-900/5 py-8">
                                     {/* Wrapper to control scaling/sizing specifically for the history view */}
-                                    <div className="relative w-[300px] h-[550px] flex items-center justify-center">
+                                    <div className="relative w-[300px] h-[550px] flex items-center justify-center pointer-events-none">
                                         <div className="transform scale-90 origin-center">
                                             <BodyMap
                                                 value={map.data}
@@ -86,7 +102,7 @@ export const BodyMapHistoryModal: React.FC<BodyMapHistoryModalProps> = ({
                         ))
                     )}
                 </div>
-            </DialogContent>
-        </Dialog>
+            </div>
+        </div>
     );
 };
