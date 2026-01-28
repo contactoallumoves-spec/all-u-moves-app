@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { SVG_CONFIG, FRONT_PATHS, BACK_PATHS, REGION_NAMES } from './BodyMapPaths';
 
 interface BodyMapProps {
