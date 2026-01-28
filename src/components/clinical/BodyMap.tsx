@@ -190,7 +190,7 @@ export const BodyMap: React.FC<BodyMapProps & { readOnly?: boolean }> = ({ value
                                         />
 
                                         {/* OVERLAY LAYERS (Patterns for other symptoms) */}
-                                        {otherSymptoms.map((symptom, idx) => (
+                                        {otherSymptoms.map((symptom) => (
                                             <path
                                                 key={`${key}-${symptom.type}`}
                                                 d={path}
