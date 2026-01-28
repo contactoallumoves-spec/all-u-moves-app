@@ -224,82 +224,82 @@ const PreAdmissionPage: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen flex flex-col font-sans text-gray-800 overflow-hidden relative bg-gray-50">
-            {/* Dynamic Aurora Background - CSS Keyframes (Fail-safe) */}
+    return (
+        <div className="min-h-[90vh] flex flex-col font-sans text-brand-900 overflow-hidden relative bg-[#F9F6F3]">
+            {/* Dynamic Aurora Background - Brand Pinks/Terracotta */}
             <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none -z-0">
-                <div className="absolute top-0 left-0 w-full h-full bg-white opacity-40 mix-blend-overlay"></div>
-                <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
-                <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
-                <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-80 h-80 bg-brand-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-white opacity-20 mix-blend-overlay"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#E8C4B8] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob"></div>
+                <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-[#F4DCD3] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-2000"></div>
+                <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-[#D4A59A] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-4000"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-80 h-80 bg-[#E6B8A2] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob animation-delay-2000"></div>
             </div>
 
             {/* Progress Bar */}
-            <div className="fixed top-0 left-0 w-full h-1.5 bg-gray-100/50 z-50 backdrop-blur-sm">
-                <motion.div className="h-full bg-gradient-to-r from-brand-400 to-brand-600"
+            <div className="fixed top-0 left-0 w-full h-1 bg-brand-100/50 z-50 backdrop-blur-sm">
+                <motion.div className="h-full bg-brand-600"
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.5 }}
                 />
             </div>
 
-            <main className="flex-grow flex items-center justify-center p-4 sm:p-8 relative z-10">
+            <main className="flex-grow flex flex-col px-6 pt-20 pb-6 relative z-10 max-w-lg mx-auto w-full">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={step}
-                        initial={{ opacity: 0, x: 20, filter: 'blur(10px)' }}
-                        animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                        exit={{ opacity: 0, x: -20, filter: 'blur(10px)' }}
-                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} // Custom easing
-                        className="w-full max-w-2xl"
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.3 }}
+                        className="w-full"
                     >
                         {/* 0. WELCOME */}
                         {steps[step].id === 'welcome' && (
-                            <div className="text-center space-y-8">
-                                <h1 className="text-4xl md:text-7xl font-bold font-serif text-brand-900 leading-tight drop-shadow-sm">
-                                    All U Moves
+                            <div className="text-center space-y-6 mt-10">
+                                <h1 className="text-5xl font-bold font-serif text-brand-900 leading-tight">
+                                    Hola.
                                 </h1>
-                                <p className="text-xl md:text-2xl text-gray-600 max-w-lg mx-auto font-light leading-relaxed">
-                                    Experiencia clínica de alto nivel, diseñada para ti.
+                                <p className="text-xl text-brand-600 font-light leading-relaxed">
+                                    Experiencia clínica diseñada para ti.
                                 </p>
                                 <motion.button
-                                    whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={nextStep}
-                                    className="px-10 py-5 bg-brand-900 text-white rounded-full text-xl font-medium shadow-2xl hover:shadow-brand-900/30 transition-all flex items-center mx-auto gap-2 group"
+                                    className="px-8 py-4 bg-brand-900 text-white rounded-full text-lg font-medium shadow-xl transition-all flex items-center mx-auto gap-2 mt-8"
                                 >
-                                    Comenzar <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    Comenzar <ArrowRight className="w-5 h-5" />
                                 </motion.button>
                             </div>
                         )}
 
                         {/* NAME */}
                         {steps[step].id === 'name' && (
-                            <div className="space-y-10 text-center md:text-left">
-                                <div className="space-y-2">
-                                    <h2 className="text-4xl md:text-5xl font-bold text-brand-900 font-serif">Hola.</h2>
-                                    <p className="text-gray-500 text-xl font-light">¿Cuál es tu nombre?</p>
+                            <div className="space-y-8 mt-4">
+                                <div className="space-y-1 text-center">
+                                    <h2 className="text-4xl font-bold text-brand-900 font-serif">Hola.</h2>
+                                    <p className="text-brand-500 text-lg font-light">¿Cuál es tu nombre?</p>
                                 </div>
-                                <div className="space-y-6">
-                                    <input {...register('firstName')} placeholder="Nombre" className="w-full text-3xl md:text-4xl p-4 border-b-2 border-brand-100 focus:border-brand-600 outline-none bg-transparent placeholder-brand-200 transition-colors font-serif text-brand-800" autoFocus />
-                                    <input {...register('lastName')} placeholder="Apellido" className="w-full text-3xl md:text-4xl p-4 border-b-2 border-brand-100 focus:border-brand-600 outline-none bg-transparent placeholder-brand-200 transition-colors font-serif text-brand-800" />
+                                <div className="space-y-6 bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/50 shadow-sm">
+                                    <input {...register('firstName')} placeholder="Nombre" className="w-full text-2xl p-2 border-b border-brand-200 focus:border-brand-600 outline-none bg-transparent placeholder-brand-300/70 text-brand-900" autoFocus />
+                                    <input {...register('lastName')} placeholder="Apellido" className="w-full text-2xl p-2 border-b border-brand-200 focus:border-brand-600 outline-none bg-transparent placeholder-brand-300/70 text-brand-900" />
                                 </div>
                             </div>
                         )}
 
                         {/* INSURANCE (PROFILE) */}
                         {steps[step].id === 'insurance' && (
-                            <div className="space-y-8">
-                                <h2 className="text-3xl font-bold text-brand-900 font-serif">Tu Perfil</h2>
-                                <div className="space-y-6 bg-white/60 p-6 rounded-3xl border border-white shadow-lg backdrop-blur-sm">
+                            <div className="space-y-6 mt-4">
+                                <h2 className="text-3xl font-bold text-brand-900 font-serif mb-2">Tu Perfil</h2>
+                                <div className="space-y-5 bg-white/40 p-6 rounded-3xl border border-white/50 shadow-sm backdrop-blur-sm">
                                     <div>
-                                        <label className="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-3">Previsión</label>
-                                        <div className="flex gap-4">
+                                        <label className="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2 ml-1">Previsión</label>
+                                        <div className="grid grid-cols-3 gap-2">
                                             {['fonasa', 'isapre', 'particular'].map((opt) => (
                                                 <button key={opt} type="button"
-                                                    className={`flex-1 p-4 rounded-2xl text-lg font-medium capitalize transition-all border ${watch('insurance') === opt
-                                                        ? 'bg-brand-900 text-white border-brand-900 shadow-xl scale-105'
-                                                        : 'bg-white text-gray-400 border-gray-100 hover:border-brand-200'}`}
+                                                    className={`p-2 rounded-xl text-sm font-medium capitalize transition-all border ${watch('insurance') === opt
+                                                        ? 'bg-brand-900 text-white border-brand-900 shadow-md'
+                                                        : 'bg-white/60 text-brand-600 border-transparent hover:bg-white'}`}
                                                     onClick={() => setValue('insurance', opt as any)}
                                                 >
                                                     {opt}
