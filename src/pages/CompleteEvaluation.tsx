@@ -551,6 +551,45 @@ export default function CompleteEvaluation() {
                         </div>
                     </div>
                 )}
+                {/* Navigation Buttons */}
+                <div className="flex justify-between items-center pt-8 border-t border-brand-100 mt-8">
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            const curIdx = tabs.findIndex(t => t.id === activeTab);
+                            if (curIdx > 0) setActiveTab(tabs[curIdx - 1].id as any);
+                        }}
+                        disabled={activeTab === tabs[0].id}
+                        className={cn("px-6", activeTab === tabs[0].id ? "opacity-50" : "")}
+                    >
+                        ← Anterior
+                    </Button>
+
+                    <Button
+                        className="bg-brand-800 text-white shadow-lg px-8 hover:bg-brand-900"
+                        onClick={() => {
+                            const curIdx = tabs.findIndex(t => t.id === activeTab);
+                            if (curIdx < tabs.length - 1) {
+                                setActiveTab(tabs[curIdx + 1].id as any);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            } else {
+                                // Last tab: Save
+                                handleSave();
+                            }
+                        }}
+                    >
+                        {activeTab === tabs[tabs.length - 1].id ? (
+                            <>
+                                {saving ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                                Finalizar y Guardar
+                            </>
+                        ) : (
+                            <>
+                                Siguiente →
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
         </div>
     );

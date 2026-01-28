@@ -23,6 +23,7 @@ import { getLabel } from '../data/catalog';
 
 import { ProgressChart } from '../components/patient/ProgressChart';
 import { ProgressDetailModal } from '../components/patient/ProgressDetailModal';
+import { BodyMap } from '../components/clinical/BodyMap';
 const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
     if (data === null || data === undefined) return null;
     if (typeof data !== 'object') return <span className="text-gray-800 ml-2 font-medium">{String(data)}</span>;
@@ -725,6 +726,35 @@ export default function PatientDetailPage() {
                                         <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Resumen del Caso</h3>
                                         <p className="text-gray-700 text-sm leading-relaxed">{selectedItem.summary}</p>
                                     </div>
+
+                                    {/* [NEW] History Field Explicit Render */}
+                                    {selectedItem.raw.details?.anamnesis?.history && (
+                                        <div className="space-y-2">
+                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Historia Clínica</h3>
+                                            <p className="text-gray-700 text-sm whitespace-pre-wrap bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                {selectedItem.raw.details.anamnesis.history}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* [NEW] Body Map Visualization */}
+                                    {(selectedItem.raw.details?.pelvic?.painRegions?.length > 0 || selectedItem.raw.painMap) && (
+                                        <div className="space-y-2">
+                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Mapa Corporal</h3>
+                                            <div className="border border-gray-200 rounded-xl overflow-hidden bg-slate-900/5 p-2">
+                                                <div className="scale-75 origin-top -mb-[150px]"> {/* Scale down to fit nicely */}
+                                                    <BodyMap
+                                                        value={{
+                                                            painRegions: selectedItem.raw.details?.pelvic?.painRegions || selectedItem.raw.painMap?.painRegions || [],
+                                                            painType: ''
+                                                        }}
+                                                        onChange={() => { }}
+                                                        readOnly={true}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Detailed Physical Exam Data - FULL RENDERER */}
                                     {selectedItem.raw.details && (
