@@ -236,14 +236,15 @@ const PreAdmissionPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-brand-50/30 flex flex-col font-sans text-gray-800 overflow-hidden relative">
-            {/* Dynamic Aurora Background */}
+            {/* Dynamic Aurora Background - Stronger & More Visible */}
             <div
-                className="fixed top-0 left-0 w-[120%] h-[120%] opacity-40 pointer-events-none overflow-hidden blur-3xl -z-10 transition-transform duration-[2000ms] ease-out will-change-transform"
+                className="fixed top-0 left-0 w-[140%] h-[140%] pointer-events-none overflow-hidden -z-10 transition-transform duration-[4000ms] ease-out will-change-transform"
                 style={{ transform: `translate(-${bgPos.x}px, -${bgPos.y}px)` }}
             >
-                <div className="absolute top-[-10%] right-[-10%] w-[80vh] h-[80vh] rounded-full bg-brand-200/50 mix-blend-multiply"></div>
-                <div className="absolute bottom-[10%] left-[-20%] w-[70vh] h-[70vh] rounded-full bg-brand-100/60 mix-blend-multiply"></div>
-                <div className="absolute top-[40%] left-[30%] w-[50vh] h-[50vh] rounded-full bg-pink-50/50 mix-blend-multiply"></div>
+                <div className="absolute top-[-10%] right-[-10%] w-[90vh] h-[90vh] rounded-full bg-indigo-300/40 blur-[100px] mix-blend-multiply animate-pulse"></div>
+                <div className="absolute bottom-[0%] left-[-20%] w-[80vh] h-[80vh] rounded-full bg-brand-300/50 blur-[100px] mix-blend-multiply"></div>
+                <div className="absolute top-[30%] left-[20%] w-[60vh] h-[60vh] rounded-full bg-pink-200/40 blur-[80px] mix-blend-multiply"></div>
+                <div className="absolute bottom-[20%] right-[10%] w-[50vh] h-[50vh] rounded-full bg-purple-200/40 blur-[120px] mix-blend-multiply"></div>
             </div>
 
             {/* Progress Bar */}
@@ -502,7 +503,7 @@ const PreAdmissionPage: React.FC = () => {
                                             <BodyMap
                                                 value={field.value}
                                                 onChange={(val) => field.onChange(val)}
-                                                containerClassName="relative w-full overflow-hidden bg-brand-50/50 rounded-3xl border border-white shadow-xl flex items-center justify-center transition-all backdrop-blur-sm"
+                                                containerClassName="relative w-full overflow-hidden flex items-center justify-center transition-all bg-transparent"
                                                 bodyFill="#946353"
                                             />
                                         )}
@@ -517,15 +518,26 @@ const PreAdmissionPage: React.FC = () => {
                                 <h2 className="text-4xl font-bold text-brand-900 font-serif flex items-center justify-center gap-2">
                                     <Activity className="w-8 h-8 text-brand-400" /> Molestia
                                 </h2>
-                                <div className="space-y-6 max-w-sm mx-auto p-8 rounded-full bg-white/50 border border-white shadow-xl backdrop-blur-sm">
-                                    <div className="text-9xl font-black text-brand-900 tracking-tighter">
+                                <p className="text-gray-500 text-lg">Del 1 al 10, ¿cuánto te duele hoy?</p>
+
+                                <div className="space-y-8 max-w-sm mx-auto p-12 rounded-[3rem] bg-gradient-to-br from-white to-gray-50 border border-white shadow-2xl backdrop-blur-sm relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-brand-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <div className={`text-9xl font-black tracking-tighter transition-colors duration-300 ${watch('painLevel') < 4 ? 'text-green-500' :
+                                            watch('painLevel') < 8 ? 'text-yellow-500' : 'text-red-500'
+                                        }`}>
                                         {watch('painLevel')}
                                     </div>
-                                    <input
-                                        type="range" min="0" max="10"
-                                        {...register('painLevel', { valueAsNumber: true })}
-                                        className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-brand-900"
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type="range" min="0" max="10"
+                                            {...register('painLevel', { valueAsNumber: true })}
+                                            className="w-full h-4 bg-gray-200 rounded-full appearance-none cursor-pointer accent-brand-900 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                                        />
+                                        <div className="flex justify-between text-xs font-bold text-gray-400 mt-2 uppercase tracking-wider">
+                                            <span>Nada</span>
+                                            <span>Mucho</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
