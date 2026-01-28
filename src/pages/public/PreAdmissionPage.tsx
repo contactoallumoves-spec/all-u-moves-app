@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -71,18 +71,7 @@ const PreAdmissionPage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
-    // Aurora Background Logic
-    const [bgPos, setBgPos] = useState({ x: 0, y: 0 });
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            setBgPos({
-                x: (e.clientX / window.innerWidth) * 20,
-                y: (e.clientY / window.innerHeight) * 20
-            });
-        };
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, []);
+
 
     const { control, register, handleSubmit, trigger, watch, setValue } = useForm<PreAdmissionData>({
         resolver: zodResolver(preAdmissionSchema),
