@@ -139,8 +139,8 @@ export const BodyMap: React.FC<BodyMapProps & { readOnly?: boolean }> = ({
                 <div className="relative z-10 w-full flex justify-center items-center h-full p-4">
                     <svg
                         viewBox={SVG_CONFIG.viewBox}
-                        className="h-full w-full drop-shadow-2xl"
-                        style={{ height: '700px', maxWidth: '100%', filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.5))' }}
+                        className="h-full w-full"
+                        style={{ height: '700px', maxWidth: '100%' }}
                     >
                         <defs>
                             {/* PATTERN: Tingling (Yellow Stripes) */}
