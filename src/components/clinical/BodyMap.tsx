@@ -80,8 +80,8 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
                     <button
                         onClick={() => setView('anterior')}
                         className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${view === 'anterior'
-                                ? 'bg-slate-700 text-white shadow-lg'
-                                : 'text-slate-400 hover:text-white'
+                            ? 'bg-slate-700 text-white shadow-lg'
+                            : 'text-slate-400 hover:text-white'
                             }`}
                     >
                         Vista Anterior
@@ -89,8 +89,8 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
                     <button
                         onClick={() => setView('posterior')}
                         className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${view === 'posterior'
-                                ? 'bg-slate-700 text-white shadow-lg'
-                                : 'text-slate-400 hover:text-white'
+                            ? 'bg-slate-700 text-white shadow-lg'
+                            : 'text-slate-400 hover:text-white'
                             }`}
                     >
                         Vista Posterior
@@ -105,8 +105,8 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
                                 key={type.id}
                                 onClick={() => setSelectedType(type.id)}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 text-xs font-medium ${selectedType === type.id
-                                        ? `bg-slate-700 border-slate-500 text-white shadow-md ${type.ring} ring-1`
-                                        : 'bg-transparent border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                                    ? `bg-slate-700 border-slate-500 text-white shadow-md ${type.ring} ring-1`
+                                    : 'bg-transparent border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
                                     }`}
                             >
                                 <span className={`w-2.5 h-2.5 rounded-full ${type.bg}`} />
@@ -164,7 +164,7 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
                                         strokeWidth={isSelected ? 2 : 1}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handleRegionClick(e, key);
+                                            handleRegionClick('', key);
                                         }}
                                         className={`cursor-pointer transition-all duration-200 hover:opacity-80 ${isSelected ? 'filter drop-shadow-md' : ''
                                             }`}
