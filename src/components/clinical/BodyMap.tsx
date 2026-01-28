@@ -46,7 +46,7 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
     const activePaths = view === 'anterior' ? FRONT_PATHS : BACK_PATHS;
 
     return (
-        <div className="w-full max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
+        <div className="w-full max-w-5xl mx-auto md:p-6 bg-white md:rounded-2xl md:shadow-lg md:border border-gray-100">
             <div className="flex flex-col md:flex-row justify-between items-center mb-6">
                 <h3 className="text-xl font-serif font-bold text-gray-800">Mapa del Dolor</h3>
 
@@ -70,7 +70,7 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
             <div className="grid md:grid-cols-2 gap-12">
 
                 {/* Interactive SVG Area */}
-                <div className="relative bg-gray-50 rounded-3xl border border-gray-200 p-8 flex flex-col items-center justify-center min-h-[500px]">
+                <div className="relative bg-gray-50 md:rounded-3xl border-y md:border border-gray-200 py-8 flex flex-col items-center justify-center min-h-[600px] md:min-h-[700px]">
 
                     {/* Orientation Labels */}
                     <div className="absolute top-4 w-full flex justify-between px-8 text-xs font-bold text-gray-400 uppercase tracking-widest pointer-events-none">
@@ -78,7 +78,7 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
                         <span>{view === 'anterior' ? 'Izquierda' : 'Derecha'}</span>
                     </div>
 
-                    <div className="relative w-full h-[600px] max-w-[300px]">
+                    <div className="relative w-full h-[700px] max-w-[400px]">
                         <svg
                             viewBox={SVG_CONFIG.viewBox}
                             className="w-full h-full drop-shadow-xl filter"
@@ -99,8 +99,8 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
                                                 exit={{ opacity: 0 }}
 
                                                 // Style & Interaction
-                                                fill={isSelected(key) ? '#EC4899' : '#F1F5F9'}
-                                                stroke={isSelected(key) ? '#BE185D' : '#94A3B8'}
+                                                fill={isSelected(key) ? '#EC4899' : '#334155'} // Slate-700 for unselected
+                                                stroke={isSelected(key) ? '#BE185D' : '#475569'} // Slate-600 for stroke
                                                 strokeWidth={isSelected(key) ? "3" : "2"}
 
                                                 className="cursor-pointer transition-all duration-200 hover:filter hover:brightness-95"
