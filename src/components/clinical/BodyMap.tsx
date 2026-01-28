@@ -8,11 +8,19 @@ interface BodyMapProps {
         painType?: string;
     };
     onChange: (value: { painRegions: string[]; painType?: string }) => void;
+    containerClassName?: string;
+    bodyFill?: string;
 }
 
 type ViewMode = 'anterior' | 'posterior';
 
-export const BodyMap: React.FC<BodyMapProps & { readOnly?: boolean }> = ({ value = { painRegions: [] as string[], painType: '' }, onChange, readOnly = false }) => {
+export const BodyMap: React.FC<BodyMapProps & { readOnly?: boolean }> = ({
+    value = { painRegions: [] as string[], painType: '' },
+    onChange,
+    readOnly = false,
+    containerClassName,
+    bodyFill = '#334155'
+}) => {
     const [view, setView] = useState<ViewMode>('anterior');
 
     // Symptom types and colors
@@ -125,7 +133,7 @@ export const BodyMap: React.FC<BodyMapProps & { readOnly?: boolean }> = ({ value
 
             {/* Body Map SVG Container */}
             <div
-                className="relative w-full overflow-hidden bg-slate-800/30 rounded-3xl border border-slate-700/50 shadow-2xl flex items-center justify-center transition-all"
+                className={containerClassName || "relative w-full overflow-hidden bg-slate-800/30 rounded-3xl border border-slate-700/50 shadow-2xl flex items-center justify-center transition-all"}
                 style={{ minHeight: '700px' }}
             >
                 <div className="relative z-10 w-full flex justify-center items-center h-full p-4">
@@ -165,8 +173,8 @@ export const BodyMap: React.FC<BodyMapProps & { readOnly?: boolean }> = ({ value
                                 const hasPain = regionSymptoms.some(s => s.type === 'pain');
                                 const otherSymptoms = regionSymptoms.filter(s => s.type !== 'pain');
 
-                                // Base Fill: Red if 'pain' is present, else Slate
-                                let baseFill = hasPain ? '#ef4444' : '#334155';
+                                // Base Fill: Red if 'pain' is present, else bodyFill
+                                let baseFill = hasPain ? '#ef4444' : bodyFill;
 
                                 // If NO pain but has others, use transparent base so patterns show clearly on dark bg?
                                 // Better: Use Slate base always, and overlay pain as red layer?
