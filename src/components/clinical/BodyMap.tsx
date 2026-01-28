@@ -15,20 +15,51 @@ type ViewMode = 'anterior' | 'posterior';
 export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as string[], painType: '' }, onChange }) => {
     const [view, setView] = useState<ViewMode>('anterior');
 
+    // Symptom types and colors
+    const SYMPTOM_TYPES = [
+        { id: 'pain', label: 'Dolor', color: '#ef4444', ring: 'ring-red-500', bg: 'bg-red-500' },
+        { id: 'tingling', label: 'Hormigueo', color: '#eab308', ring: 'ring-yellow-500', bg: 'bg-yellow-500' },
+        { id: 'numbness', label: 'Adormecimiento', color: '#3b82f6', ring: 'ring-blue-500', bg: 'bg-blue-500' },
+        { id: 'stiffness', label: 'Rigidez', color: '#22c55e', ring: 'ring-green-500', bg: 'bg-green-500' },
+    ];
+
+    const [selectedType, setSelectedType] = useState('pain');
+
+    // Helper to parse "RegionName" or "RegionName:type"
+    const getRegionData = (regionString: string) => {
+        const [id, type] = regionString.split(':');
+        return { id, type: type || 'pain' };
+    };
+
     const handleRegionClick = (_: string, regionKey: string) => {
-        // Look up the friendly name
-        const displayName = REGION_NAMES[regionKey] || regionKey;
+        // We use the friendly name as the ID to match existing data conventions if possible, 
+        // but for new granular paths we might want to be more specific. 
+        // Current convention seems to be storing the Display Name.
+        const regionName = REGION_NAMES[regionKey] || regionKey;
 
         const currentRegions = value.painRegions || [];
-        const isSelected = currentRegions.includes(displayName);
+        // Find if this region is already selected (checking both name and potential raw key for safety)
+        const existingIndex = currentRegions.findIndex(r => {
+            const data = getRegionData(r);
+            return data.id === regionName || data.id === regionKey;
+        });
 
-        let newRegions;
-        if (isSelected) {
-            newRegions = currentRegions.filter(r => r !== displayName);
+        let newRegions = [...currentRegions];
+
+        if (existingIndex >= 0) {
+            const existingData = getRegionData(currentRegions[existingIndex]);
+            if (existingData.type === selectedType) {
+                // Toggle OFF if clicking same region with same tool
+                newRegions.splice(existingIndex, 1);
+            } else {
+                // Update Type if clicking with different tool
+                newRegions[existingIndex] = `${regionName}:${selectedType}`;
+            }
         } else {
-            // Remove 'SIN DOLOR' if selecting a region
-            const tempRegions = currentRegions.filter(r => r !== 'SIN DOLOR');
-            newRegions = [...tempRegions, displayName];
+            // Add New
+            const cleanRegions = newRegions.filter(r => r !== 'SIN DOLOR');
+            cleanRegions.push(`${regionName}:${selectedType}`);
+            newRegions = cleanRegions;
         }
 
         onChange({
@@ -37,152 +68,111 @@ export const BodyMap: React.FC<BodyMapProps> = ({ value = { painRegions: [] as s
         });
     };
 
-    const isSelected = (regionKey: string) => {
-        const displayName = REGION_NAMES[regionKey] || regionKey;
-        return value.painRegions?.includes(displayName);
-    };
-
     // Choose which set of paths to render
     const activePaths = view === 'anterior' ? FRONT_PATHS : BACK_PATHS;
 
     return (
-        <div className="w-full max-w-5xl mx-auto md:p-6 bg-white md:rounded-2xl md:shadow-lg md:border border-gray-100">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-                <h3 className="text-xl font-serif font-bold text-gray-800">Mapa del Dolor</h3>
-
+        <div className="flex flex-col items-center w-full">
+            {/* Controls Header */}
+            <div className="w-full max-w-md mb-4 flex flex-col gap-4">
                 {/* View Toggle */}
-                <div className="flex bg-gray-100 p-1 rounded-lg mt-4 md:mt-0">
+                <div className="flex justify-center p-1 bg-slate-800/50 backdrop-blur rounded-xl border border-slate-700">
                     <button
                         onClick={() => setView('anterior')}
-                        className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${view === 'anterior' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${view === 'anterior'
+                                ? 'bg-slate-700 text-white shadow-lg'
+                                : 'text-slate-400 hover:text-white'
+                            }`}
                     >
                         Vista Anterior
                     </button>
                     <button
                         onClick={() => setView('posterior')}
-                        className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${view === 'posterior' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${view === 'posterior'
+                                ? 'bg-slate-700 text-white shadow-lg'
+                                : 'text-slate-400 hover:text-white'
+                            }`}
                     >
                         Vista Posterior
                     </button>
                 </div>
-            </div>
 
-            <div className="grid md:grid-cols-2 gap-12">
-
-                {/* Interactive SVG Area */}
-                <div className="relative bg-gray-50 md:rounded-3xl border-y md:border border-gray-200 py-8 flex flex-col items-center justify-center min-h-[600px] md:min-h-[700px]">
-
-                    {/* Orientation Labels */}
-                    <div className="absolute top-4 w-full flex justify-between px-8 text-xs font-bold text-gray-400 uppercase tracking-widest pointer-events-none">
-                        <span>{view === 'anterior' ? 'Derecha' : 'Izquierda'}</span>
-                        <span>{view === 'anterior' ? 'Izquierda' : 'Derecha'}</span>
-                    </div>
-
-                    <div className="relative w-full h-[700px] max-w-[400px]">
-                        <svg
-                            viewBox={SVG_CONFIG.viewBox}
-                            className="w-full h-full drop-shadow-xl filter"
-                            preserveAspectRatio="xMidYMid meet"
-                        >
-                            <AnimatePresence mode='wait'>
-                                <g key={view}>
-                                    {Object.entries(activePaths).map(([key, d]) => {
-                                        if (!d) return null; // Skip empty paths while user is filling them out
-
-                                        return (
-                                            <motion.path
-                                                key={key}
-                                                d={d}
-                                                id={key}
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-
-                                                // Style & Interaction
-                                                fill={isSelected(key) ? '#EC4899' : '#334155'} // Slate-700 for unselected
-                                                stroke={isSelected(key) ? '#BE185D' : '#475569'} // Slate-600 for stroke
-                                                strokeWidth={isSelected(key) ? "3" : "2"}
-
-                                                className="cursor-pointer transition-all duration-200 hover:filter hover:brightness-95"
-
-                                                onClick={() => handleRegionClick(key, key)}
-
-                                                whileHover={{ scale: 1.01 }}
-                                                whileTap={{ scale: 0.98 }}
-                                            />
-                                        );
-                                    })}
-                                    {/* Placeholder message if no paths are filled */}
-                                    {Object.values(activePaths).every(v => v === "") && (
-                                        <text x="50%" y="50%" textAnchor="middle" className="text-xs fill-gray-400">
-                                            Esperando datos SVG...
-                                        </text>
-                                    )}
-                                </g>
-                            </AnimatePresence>
-                        </svg>
-                    </div>
-
-                    {/* Quick Action: No Pain */}
-                    <div className="absolute bottom-6 w-full flex justify-center">
-                        <button
-                            type="button"
-                            onClick={() => onChange({ ...value, painRegions: ['SIN DOLOR'] })}
-                            className={`px-4 py-2 rounded-full text-sm font-bold shadow-sm transition-colors ${value.painRegions?.includes('SIN DOLOR') ? 'bg-green-500 text-white' : 'bg-white text-gray-500 border border-gray-200 hover:bg-green-50'}`}
-                        >
-                            ✨ No siento dolor
-                        </button>
+                {/* Symptom Selector Palette */}
+                <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                    <div className="flex flex-wrap justify-center gap-2">
+                        {SYMPTOM_TYPES.map((type) => (
+                            <button
+                                key={type.id}
+                                onClick={() => setSelectedType(type.id)}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 text-xs font-medium ${selectedType === type.id
+                                        ? `bg-slate-700 border-slate-500 text-white shadow-md ${type.ring} ring-1`
+                                        : 'bg-transparent border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                                    }`}
+                            >
+                                <span className={`w-2.5 h-2.5 rounded-full ${type.bg}`} />
+                                {type.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                {/* Details Side Panel */}
-                <div className="flex flex-col space-y-6">
-                    <div className="bg-brand-50/50 p-6 rounded-2xl border border-brand-100">
-                        <h4 className="font-bold text-brand-900 mb-4 flex items-center gap-2">
-                            <span className="w-2 h-2 bg-brand-500 rounded-full"></span>
-                            Zonas Seleccionadas
-                        </h4>
+                {/* Instructions */}
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 text-center">
+                    Selecciona un síntoma y toca el área afectada
+                </p>
+            </div>
 
-                        <div className="flex flex-wrap gap-2 min-h-[60px] content-start">
-                            {(!value.painRegions || value.painRegions.length === 0) && (
-                                <p className="text-gray-400 text-sm italic w-full text-center py-4">
-                                    Haz clic en el cuerpo para marcar zonas...
-                                </p>
-                            )}
+            {/* Body Map SVG Container */}
+            <div
+                className="relative w-full overflow-hidden bg-slate-800/30 rounded-3xl border border-slate-700/50 shadow-2xl flex items-center justify-center transition-all"
+                style={{ minHeight: '700px' }}
+            >
+                <div className="relative z-10 w-full flex justify-center items-center h-full p-4">
+                    <svg
+                        viewBox={SVG_CONFIG.viewBox}
+                        className="h-full w-full drop-shadow-2xl"
+                        style={{ height: '700px', maxWidth: '100%', filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.5))' }}
+                    >
+                        <g>
+                            {Object.entries(activePaths).map(([key, path]) => {
+                                const regionName = REGION_NAMES[key] || key;
+                                // Find data for this region
+                                const currentRegions = value.painRegions || [];
+                                const regionEntry = currentRegions.find(r => {
+                                    const data = getRegionData(r);
+                                    return data.id === regionName || data.id === key; // Match name or raw key
+                                });
 
-                            {value.painRegions?.map(region => (
-                                <span
-                                    key={region}
-                                    className={`px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 ${region === 'SIN DOLOR' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-white text-brand-700 border border-brand-100'}`}
-                                >
-                                    {region}
-                                    {region !== 'SIN DOLOR' && (
-                                        <button
-                                            // Find the key for this displayName to remove it correctly
-                                            onClick={(e: React.MouseEvent) => {
-                                                e.stopPropagation();
-                                                const keyToRemove = Object.keys(REGION_NAMES).find(key => REGION_NAMES[key] === region) || region;
-                                                handleRegionClick('', keyToRemove);
-                                            }}
-                                            className="hover:text-red-500 ml-1"
-                                        >×</button>
-                                    )}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
+                                const regionData = regionEntry ? getRegionData(regionEntry) : null;
+                                const isSelected = !!regionData;
 
-                    <div className="flex-grow">
-                        <label className="block text-sm font-bold text-gray-700 mb-2">
-                            Detalle del Dolor (Opcional)
-                        </label>
-                        <textarea
-                            value={value.painType || ''}
-                            onChange={(e) => onChange({ ...value, painType: e.target.value })}
-                            className="w-full h-40 p-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500/20 resize-none text-gray-600 placeholder-gray-400"
-                            placeholder="Describe qué sientes (ej: punzante, quemazón, hormigueo)..."
-                        />
-                    </div>
+                                // Determine color
+                                const symptomColor = regionData
+                                    ? SYMPTOM_TYPES.find(s => s.id === regionData.type)?.color
+                                    : null;
+
+                                const finalFill = isSelected && symptomColor ? symptomColor : '#334155'; // Dark Slate for empty
+                                const strokeColor = isSelected ? '#ffffff' : '#475569';
+
+                                return (
+                                    <path
+                                        key={key}
+                                        id={key}
+                                        d={path}
+                                        fill={finalFill}
+                                        stroke={strokeColor}
+                                        strokeWidth={isSelected ? 2 : 1}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRegionClick(e, key);
+                                        }}
+                                        className={`cursor-pointer transition-all duration-200 hover:opacity-80 ${isSelected ? 'filter drop-shadow-md' : ''
+                                            }`}
+                                    />
+                                );
+                            })}
+                        </g>
+                    </svg>
                 </div>
             </div>
         </div>
