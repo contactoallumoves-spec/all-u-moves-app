@@ -353,11 +353,11 @@ export default function PatientDetailPage() {
                                 };
                                 mapDate = latestEvalMap.date;
                                 mapSource = 'Evaluación';
-                            } else if (patient?.clinicalData?.bodyMap?.painRegions?.length > 0) {
+                            } else if (patient?.clinicalData?.bodyMap?.painRegions && patient.clinicalData.bodyMap.painRegions.length > 0) {
                                 // 2. Fallback: Check Patient Initial Data (Pre-Ingreso / Anamnesis)
                                 mapData = {
-                                    painRegions: patient.clinicalData.bodyMap.painRegions,
-                                    painType: patient.clinicalData.bodyMap.painType || ''
+                                    painRegions: patient.clinicalData?.bodyMap?.painRegions || [],
+                                    painType: patient.clinicalData?.bodyMap?.painType || ''
                                 };
                                 // Use patient creation date or today if unknown
                                 mapDate = patient.createdAt || new Date();
