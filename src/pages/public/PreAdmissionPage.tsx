@@ -3,7 +3,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
-Shield, Activity, Baby, ArrowRight, ArrowLeft, Check,
+import {
+    Shield, Activity, Baby, ArrowRight, ArrowLeft, Check,
     Heart, Star, Clock, Zap
 } from 'lucide-react';
 import { PatientService } from '../../services/patientService';
