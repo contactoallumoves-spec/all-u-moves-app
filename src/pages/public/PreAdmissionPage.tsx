@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ChevronRight, ChevronLeft, Shield, Activity, Baby,
+    Shield, Activity, Baby,
     ArrowRight, ArrowLeft, Check, Calendar, User, Heart, Star
 } from 'lucide-react';
 import { PatientService } from '../../services/patientService';
@@ -350,8 +350,8 @@ const PreAdmissionPage: React.FC = () => {
                                                     type="button"
                                                     onClick={() => toggleSelection('symptoms', symptom.id)}
                                                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 border ${isSelected
-                                                            ? 'bg-brand-100 text-brand-800 border-brand-200 pl-3 pr-4 shadow-sm'
-                                                            : 'bg-white text-gray-500 border-gray-200 hover:border-brand-200'
+                                                        ? 'bg-brand-100 text-brand-800 border-brand-200 pl-3 pr-4 shadow-sm'
+                                                        : 'bg-white text-gray-500 border-gray-200 hover:border-brand-200'
                                                         }`}
                                                 >
                                                     {isSelected && <Check className="w-3 h-3 text-brand-600" />}
@@ -577,8 +577,8 @@ const PreAdmissionPage: React.FC = () => {
                                                 key={flag.id}
                                                 onClick={() => toggleSelection('redFlags', flag.id)}
                                                 className={`relative cursor-pointer p-5 rounded-xl border-2 transition-all duration-200 ${isChecked
-                                                        ? 'border-red-500 bg-red-50 text-red-900'
-                                                        : 'border-gray-100 bg-white hover:bg-gray-50 hover:border-gray-300'
+                                                    ? 'border-red-500 bg-red-50 text-red-900'
+                                                    : 'border-gray-100 bg-white hover:bg-gray-50 hover:border-gray-300'
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-4">
