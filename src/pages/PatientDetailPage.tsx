@@ -330,8 +330,48 @@ export default function PatientDetailPage() {
             {activeTab === 'clinical' && (
                 <div className="grid md:grid-cols-3 gap-6">
 
+
                     {/* Left Column: Timeline & History */}
                     <div className="md:col-span-2 space-y-6">
+
+                        {/* [NEW] BodyMap Summary Card (Most Recent) */}
+                        {(() => {
+                            // Find latest evaluation with body map data
+                            const latestMap = history.find(h =>
+                                (h.type.includes('eval') && (h.raw?.details?.pelvic?.painRegions?.length > 0 || h.raw?.painMap))
+                            );
+
+                            if (!latestMap) return null;
+
+                            const mapData = {
+                                painRegions: latestMap.raw?.details?.pelvic?.painRegions || latestMap.raw?.painMap?.painRegions || [],
+                                painType: ''
+                            };
+
+                            return (
+                                <Card className="bg-white border-brand-100 overflow-hidden">
+                                    <CardHeader className="pb-2 bg-slate-50 border-b border-brand-50">
+                                        <CardTitle className="text-sm uppercase tracking-wider text-brand-800 flex items-center gap-2">
+                                            <Activity className="w-4 h-4 text-brand-500" /> Mapa Corporal Actual
+                                            <span className="ml-auto text-xs font-normal text-gray-400">
+                                                {new Date(latestMap.date).toLocaleDateString()}
+                                            </span>
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-0">
+                                        <div className="flex bg-slate-900/5 justify-center py-4 relative h-[400px] overflow-hidden">
+                                            <div className="scale-75 origin-top absolute top-4">
+                                                <BodyMap
+                                                    value={mapData}
+                                                    onChange={() => { }}
+                                                    readOnly={true}
+                                                />
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })()}
 
                         {/* Active Alerts / Next Session Checklist */}
                         <Card className="bg-orange-50/50 border-orange-100">
