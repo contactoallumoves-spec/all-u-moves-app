@@ -25,6 +25,7 @@ import { ProgressChart } from '../components/patient/ProgressChart';
 import { ProgressDetailModal } from '../components/patient/ProgressDetailModal';
 import { BodyMap } from '../components/clinical/BodyMap';
 import { BodyMapHistoryModal } from '../components/patient/BodyMapHistoryModal';
+import { BodyMapLegend } from '../components/clinical/BodyMapLegend';
 const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
     if (data === null || data === undefined) return null;
     if (typeof data !== 'object') return <span className="text-gray-800 ml-2 font-medium">{String(data)}</span>;
@@ -410,6 +411,10 @@ export default function PatientDetailPage() {
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-0">
+                                            {/* Legend */}
+                                            <div className="px-4 pt-4 pb-0">
+                                                <BodyMapLegend />
+                                            </div>
                                             {/* Adjusted height to show more body */}
                                             <div className="flex bg-slate-900/5 justify-center py-4 relative h-[500px] overflow-hidden">
                                                 <div className="scale-75 origin-top absolute top-4">

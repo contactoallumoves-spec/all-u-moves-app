@@ -1,5 +1,6 @@
 import React from 'react';
 import { BodyMap } from '../clinical/BodyMap';
+import { BodyMapLegend } from '../clinical/BodyMapLegend';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '../ui/Badge';
@@ -81,9 +82,16 @@ export const BodyMapHistoryModal: React.FC<BodyMapHistoryModalProps> = ({
                                     </div>
                                     <span className="text-xs text-brand-300 font-mono">#{maps.length - index}</span>
                                 </div>
+
+                                {/* Legend */}
+                                <div className="px-4 pt-4">
+                                    <BodyMapLegend />
+                                </div>
+
                                 <div className="flex justify-center bg-slate-900/5 py-8">
                                     {/* Wrapper to control scaling/sizing specifically for the history view */}
-                                    <div className="relative w-[300px] h-[550px] flex items-center justify-center pointer-events-none">
+                                    <div className="relative w-[300px] h-[550px] flex items-center justify-center">
+                                        {/* pointer-events-none REMOVED to allow view toggling */}
                                         <div className="transform scale-90 origin-center">
                                             <BodyMap
                                                 value={map.data}
