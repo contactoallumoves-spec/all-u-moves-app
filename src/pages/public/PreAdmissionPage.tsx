@@ -224,28 +224,28 @@ const PreAdmissionPage: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-brand-50/30 flex flex-col font-sans text-gray-800 overflow-hidden relative">
+        <div className="min-h-screen flex flex-col font-sans text-gray-800 overflow-hidden relative">
             {/* Dynamic Aurora Background - Framer Motion */}
-            <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden bg-brand-50/30">
+            <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden bg-brand-50/20">
                 <motion.div
-                    animate={{ x: [0, 50, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
-                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-[-10%] right-[-10%] w-[90vh] h-[90vh] rounded-full bg-indigo-300/40 blur-[100px] mix-blend-multiply"
+                    animate={{ x: [0, 80, 0], y: [0, -50, 0], scale: [1, 1.3, 1], rotate: [0, 45, 0] }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-[-10%] right-[-10%] w-[90vh] h-[90vh] rounded-full bg-indigo-400/60 blur-[120px] mix-blend-multiply"
                 />
                 <motion.div
-                    animate={{ x: [0, -40, 0], y: [0, 60, 0], scale: [1, 1.2, 1] }}
-                    transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-                    className="absolute bottom-[0%] left-[-20%] w-[80vh] h-[80vh] rounded-full bg-brand-300/50 blur-[100px] mix-blend-multiply"
+                    animate={{ x: [0, -60, 0], y: [0, 80, 0], scale: [1, 1.4, 1], rotate: [0, -45, 0] }}
+                    transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute bottom-[0%] left-[-20%] w-[80vh] h-[80vh] rounded-full bg-brand-400/60 blur-[120px] mix-blend-multiply"
                 />
                 <motion.div
-                    animate={{ x: [0, 60, 0], y: [0, 40, 0], scale: [1, 1.15, 1] }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-[30%] left-[20%] w-[60vh] h-[60vh] rounded-full bg-pink-200/40 blur-[80px] mix-blend-multiply"
+                    animate={{ x: [0, 90, 0], y: [0, 60, 0], scale: [1, 1.35, 1], rotate: [0, 30, 0] }}
+                    transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-[30%] left-[20%] w-[60vh] h-[60vh] rounded-full bg-pink-300/50 blur-[90px] mix-blend-multiply"
                 />
                 <motion.div
-                    animate={{ x: [0, -30, 0], y: [0, -50, 0], scale: [1, 1.05, 1] }}
-                    transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-                    className="absolute bottom-[20%] right-[10%] w-[50vh] h-[50vh] rounded-full bg-purple-200/40 blur-[120px] mix-blend-multiply"
+                    animate={{ x: [0, -50, 0], y: [0, -80, 0], scale: [1, 1.25, 1], rotate: [0, -30, 0] }}
+                    transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute bottom-[20%] right-[10%] w-[50vh] h-[50vh] rounded-full bg-purple-300/50 blur-[130px] mix-blend-multiply"
                 />
             </div>
 
