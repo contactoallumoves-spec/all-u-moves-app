@@ -17,8 +17,7 @@ import {
     Trash2,
     Maximize2,
     ArrowLeft,
-    Link as LinkIcon,
-    ClipboardList
+    Link as LinkIcon
 } from 'lucide-react';
 import { QuestionnaireResultViewer } from '../components/clinical/questionnaires/QuestionnaireResultViewer';
 import { cn } from '../lib/utils';
@@ -798,51 +797,11 @@ export default function PatientDetailPage() {
                                                     <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Actividades Específicas</h4>
                                                     <div className="grid gap-2">
                                                         {selectedItem.raw.customActivities.map((act: any, idx: number) => (
-                                                            <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-lg text-sm">
-                                                                <div className="flex items-center gap-2">
-                                                                    {/* ICON LOGIC */}
-                                                                    {item.type === 'session' ? (
-                                                                        <div className="bg-brand-100 p-2 rounded-full text-brand-600">
-                                                                            <Activity size={16} />
-                                                                        </div>
-                                                                    ) : item.type === 'questionnaire' || item.questionnaire ? (
-                                                                        <div className="bg-purple-100 p-2 rounded-full text-purple-600">
-                                                                            <FileText size={16} />
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="bg-blue-100 p-2 rounded-full text-blue-600">
-                                                                            <ClipboardList size={16} />
-                                                                        </div>
-                                                                    )}
-
-                                                                    <div>
-                                                                        <p className="font-bold text-gray-800">
-                                                                            {item.type === 'session' ? `Sesión Kinesiológica`
-                                                                                : (item.type === 'questionnaire' || item.questionnaire) ? `Cuestionario: ${item.questionnaire?.type === 'udi-6' ? 'UDI-6' : 'ICIQ-SF'}`
-                                                                                    : `Evaluación ${item.type === 'eval_fast' ? 'Rápida' : 'Completa'}`}
-                                                                        </p>
-                                                                        <p className="text-xs text-brand-400 font-medium">
-                                                                            {item.date instanceof Date ? item.date.toLocaleDateString() : 'Fecha desconocida'}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-4">
-                                                                    {/* RESULT PREVIEW */}
-                                                                    {(item.type === 'questionnaire' || item.questionnaire) && item.questionnaire?.score !== undefined && (
-                                                                        <span className={`text-xs font-bold px-2 py-1 rounded-md ${item.questionnaire.score > (item.questionnaire.type === 'udi-6' ? 50 : 12) ? 'bg-red-50 text-red-600'
-                                                                            : 'bg-green-50 text-green-600'
-                                                                            }`}>
-                                                                            {item.questionnaire.score} pts
-                                                                        </span>
-                                                                    )}
-
-                                                                    <button
-                                                                        onClick={() => setSelectedItem(item)}
-                                                                        className="p-2 hover:bg-gray-100 rounded-full text-gray-400 group-hover:text-brand-500 transition-colors"
-                                                                    >
-                                                                        <ChevronRight size={20} />
-                                                                    </button>
-                                                                </div>
+                                                            <div key={idx} className="flex justify-between items-center bg-brand-50 text-brand-700 px-3 py-2 rounded-md text-sm border border-brand-100 shadow-sm">
+                                                                <span className="font-medium">{act.description || act.name || "Actividad"}</span>
+                                                                <span className="text-xs font-mono bg-white px-2 py-0.5 rounded border border-brand-100">
+                                                                    {act.frequency || act.duration || '-'}
+                                                                </span>
                                                             </div>
                                                         ))}
                                                     </div>
