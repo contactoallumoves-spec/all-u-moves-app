@@ -99,16 +99,30 @@ export default function PublicSurveyPage() {
     }
 
     return (
-        <div className="min-h-screen bg-brand-50 py-8 px-4">
-            <div className="max-w-2xl mx-auto space-y-6">
-                <div className="text-center space-y-2">
-                    <h1 className="text-2xl font-serif font-bold text-brand-800">
-                        {type === 'iciq-sf' ? 'Cuestionario de Incontinencia (ICIQ-SF)' : 'Cuestionario UDI-6'}
-                    </h1>
+        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 animate-in fade-in duration-700">
+            <div className="sm:mx-auto sm:w-full sm:max-w-md">
+                {/* Branding Placeholder */}
+                <div className="mx-auto h-12 w-12 bg-brand-600 rounded-full flex items-center justify-center shadow-lg shadow-brand-200">
+                    <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h2 className="mt-6 text-center text-3xl font-serif font-extrabold text-brand-900 tracking-tight">
+                    {type === 'iciq-sf' ? 'Cuestionario de Síntomas' : 'Evaluación de Salud'}
+                </h2>
+                <p className="mt-2 text-center text-sm text-gray-600">
+                    {patientName ? `Hola, ${patientName.split(' ')[0]}.` : 'Cargando...'}
+                    <br />
+                    Por favor responde las siguientes preguntas.
+                </p>
+            </div>
+
+            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+                <div className="bg-white py-8 px-4 shadow-xl shadow-brand-100/50 sm:rounded-xl sm:px-10 border border-brand-50">
                     <p className="text-brand-600">Para: <span className="font-bold">{patientName}</span></p>
                 </div>
 
-                <Card>
+                <Card className="mt-4">
                     <CardContent className="p-6">
                         {type === 'iciq-sf' ? (
                             <ICIQForm
