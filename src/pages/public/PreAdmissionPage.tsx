@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Shield, Activity, Baby, ArrowRight, ArrowLeft, Check,
-    Heart, Star, Instagram, ExternalLink
+    Shield, Baby, ArrowRight, ArrowLeft, Check,
+    Heart, Instagram, ExternalLink
 } from 'lucide-react';
 import { PatientService } from '../../services/patientService';
 import { ADMIN_PHOTO } from '../../assets/adminPhoto';
@@ -414,7 +414,6 @@ const PreAdmissionPage: React.FC = () => {
                                                         <div className="grid grid-cols-3 gap-2">
                                                             {['Partos', 'Cesáreas', 'Pérdidas'].map((label, i) => {
                                                                 const field = i === 0 ? 'gynObs.births' : i === 1 ? 'gynObs.cesareans' : 'gynObs.abortions';
-                                                                const val = watch(field as any);
                                                                 return (
                                                                     <div key={label} className="bg-white/50 p-2 rounded-xl text-center">
                                                                         <label className="text-[10px] font-black uppercase opacity-50 block">{label}</label>
