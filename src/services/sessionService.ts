@@ -1,4 +1,5 @@
 import { db } from '../lib/firebase';
+import { removeUndefined } from '../lib/utils';
 import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc, updateDoc, getDoc, orderBy, limit } from 'firebase/firestore';
 
 export interface Session {
@@ -55,7 +56,7 @@ export const SessionService = {
     async create(session: Omit<Session, 'id'>) {
         try {
             const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-                ...session,
+                ...removeUndefined(session),
                 date: Timestamp.now()
             });
             return docRef.id;
@@ -113,7 +114,7 @@ export const SessionService = {
     async update(id: string, data: Partial<Session>) {
         try {
             const docRef = doc(db, COLLECTION_NAME, id);
-            await updateDoc(docRef, data);
+            await updateDoc(docRef, removeUndefined(data));
         } catch (error) {
             console.error("Error updating session: ", error);
             throw error;

@@ -422,6 +422,7 @@ export default function PatientDetailPage() {
                                                         value={latestMap.data}
                                                         onChange={() => { }}
                                                         readOnly={true}
+                                                        bodyFill="#D6C0B8"
                                                     />
                                                 </div>
                                             </div>

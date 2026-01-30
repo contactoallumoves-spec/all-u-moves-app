@@ -1,4 +1,5 @@
 import { db } from '../lib/firebase';
+import { removeUndefined } from '../lib/utils';
 import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, deleteDoc, doc, limit, DocumentData } from 'firebase/firestore';
 import { Patient } from '../types/patient';
 
@@ -70,7 +71,7 @@ export const PatientService = {
     async update(id: string, data: Partial<Patient>) {
         try {
             const docRef = doc(db, COLLECTION_NAME, id);
-            await updateDoc(docRef, data);
+            await updateDoc(docRef, removeUndefined(data));
         } catch (error) {
             console.error("Error updating patient: ", error);
             throw error;
@@ -110,7 +111,7 @@ export const PatientService = {
                 updates.prospectiveReason = data.reason; // Overwrite or append? Overwrite for now as "latest motive"
 
                 if (existing.id) {
-                    await this.update(existing.id, updates);
+                    await this.update(existing.id, removeUndefined(updates));
                     return { id: existing.id, status: 'updated' };
                 } else {
                     console.error("Found patient without ID, cannot update");
@@ -149,7 +150,7 @@ export const PatientService = {
                 };
 
                 const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-                    ...newPatient,
+                    ...removeUndefined(newPatient),
                     createdAt: Timestamp.now()
                 });
                 return { id: docRef.id, status: 'created' };
