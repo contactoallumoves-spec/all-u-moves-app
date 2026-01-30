@@ -833,148 +833,148 @@ export default function PatientDetailPage() {
                                             {(!selectedItem.raw.tasks || selectedItem.raw.tasks.length === 0) && (
                                                 <div className="mt-4 text-sm text-gray-400 italic">Sin lista de tareas.</div>
                                             )}
-                                        </>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* --- EVALUATION DETAILS --- */}
+                                {(selectedItem.type === 'eval_fast' || selectedItem.type === 'eval_complete') && (
+                                    <>
+                                        {/* Red Flags Alert */}
+                                        {selectedItem.raw.patientData?.redFlags?.length > 0 && (
+                                            <div className="bg-red-50 border border-red-200 p-4 rounded-xl">
+                                                <h3 className="text-red-800 font-bold flex items-center gap-2">
+                                                    <Activity className="w-5 h-5" /> Red Flags Detectadas
+                                                </h3>
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {selectedItem.raw.patientData.redFlags.map((flag: string, i: number) => (
+                                                        <span key={i} className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-100">
+                                                            {flag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Evaluation Summary */}
+                                        <div className="space-y-2">
+                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Resumen del Caso</h3>
+                                            <p className="text-gray-700 text-sm leading-relaxed">{selectedItem.summary}</p>
+                                        </div>
+
+                                        {/* [NEW] History Field Explicit Render */}
+                                        {selectedItem.raw.details?.anamnesis?.history && (
+                                            <div className="space-y-2">
+                                                <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Historia Clínica</h3>
+                                                <p className="text-gray-700 text-sm whitespace-pre-wrap bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                    {selectedItem.raw.details.anamnesis.history}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* [NEW] Body Map Visualization */}
+                                        {(selectedItem.raw.details?.pelvic?.painRegions?.length > 0 || selectedItem.raw.painMap) && (
+                                            <div className="space-y-2">
+                                                <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Mapa Corporal</h3>
+                                                <div className="border border-gray-200 rounded-xl overflow-hidden bg-slate-900/5 p-2">
+                                                    <div className="scale-75 origin-top -mb-[150px]"> {/* Scale down to fit nicely */}
+                                                        <BodyMap
+                                                            value={{
+                                                                painRegions: selectedItem.raw.details?.pelvic?.painRegions || selectedItem.raw.painMap?.painRegions || [],
+                                                                painType: ''
+                                                            }}
+                                                            onChange={() => { }}
+                                                            readOnly={true}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Detailed Physical Exam Data - FULL RENDERER */}
+                                        {selectedItem.raw.details && (
+                                            <div className="bg-gray-50 p-4 rounded-xl space-y-4">
+                                                <h3 className="font-bold text-gray-700 text-sm uppercase">Detalles Clínicos Completos</h3>
+                                                <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                                                    <DataRenderer data={selectedItem.raw.details} />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Active Clusters */}
+                                        {selectedItem.raw.clusters?.active?.length > 0 && (
+                                            <div className="space-y-2">
+                                                <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Hipótesis / Clusters Activos</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {selectedItem.raw.clusters.active.map((c: string, i: number) => (
+                                                        <span key={i} className="bg-brand-100 text-brand-800 px-3 py-1 rounded-full text-xs font-bold">
+                                                            {getLabel(c)}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Plan */}
+                                        <div className="space-y-2">
+                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Plan de Tratamiento</h3>
+
+                                            {selectedItem.raw.plan?.education?.length > 0 && (
+                                                <div className="mb-2">
+                                                    <span className="text-xs font-bold text-brand-400 block">EDUCACIÓN</span>
+                                                    <ul className="list-disc pl-5 text-sm text-gray-700">
+                                                        {selectedItem.raw.plan.education.map((e: string, i: number) => (
+                                                            <li key={i}>{getLabel(e)}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
                                             )}
 
-
-                                        {/* --- EVALUATION DETAILS --- */}
-                                        {(selectedItem.type === 'eval_fast' || selectedItem.type === 'eval_complete') && (
-                                            <>
-                                                {/* Red Flags Alert */}
-                                                {selectedItem.raw.patientData?.redFlags?.length > 0 && (
-                                                    <div className="bg-red-50 border border-red-200 p-4 rounded-xl">
-                                                        <h3 className="text-red-800 font-bold flex items-center gap-2">
-                                                            <Activity className="w-5 h-5" /> Red Flags Detectadas
-                                                        </h3>
-                                                        <div className="flex flex-wrap gap-2 mt-2">
-                                                            {selectedItem.raw.patientData.redFlags.map((flag: string, i: number) => (
-                                                                <span key={i} className="bg-white text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-100">
-                                                                    {flag}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Evaluation Summary */}
-                                                <div className="space-y-2">
-                                                    <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Resumen del Caso</h3>
-                                                    <p className="text-gray-700 text-sm leading-relaxed">{selectedItem.summary}</p>
+                                            {selectedItem.raw.plan?.tasks?.length > 0 && (
+                                                <div>
+                                                    <span className="text-xs font-bold text-brand-400 block">TAREAS / EJERCICIOS</span>
+                                                    <ul className="list-disc pl-5 text-sm text-gray-700">
+                                                        {selectedItem.raw.plan.tasks.map((t: string, i: number) => (
+                                                            <li key={i}>{getLabel(t)}</li>
+                                                        ))}
+                                                    </ul>
                                                 </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
 
-                                                {/* [NEW] History Field Explicit Render */}
-                                                {selectedItem.raw.details?.anamnesis?.history && (
-                                                    <div className="space-y-2">
-                                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Historia Clínica</h3>
-                                                        <p className="text-gray-700 text-sm whitespace-pre-wrap bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                            {selectedItem.raw.details.anamnesis.history}
-                                                        </p>
-                                                    </div>
-                                                )}
-
-                                                {/* [NEW] Body Map Visualization */}
-                                                {(selectedItem.raw.details?.pelvic?.painRegions?.length > 0 || selectedItem.raw.painMap) && (
-                                                    <div className="space-y-2">
-                                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Mapa Corporal</h3>
-                                                        <div className="border border-gray-200 rounded-xl overflow-hidden bg-slate-900/5 p-2">
-                                                            <div className="scale-75 origin-top -mb-[150px]"> {/* Scale down to fit nicely */}
-                                                                <BodyMap
-                                                                    value={{
-                                                                        painRegions: selectedItem.raw.details?.pelvic?.painRegions || selectedItem.raw.painMap?.painRegions || [],
-                                                                        painType: ''
-                                                                    }}
-                                                                    onChange={() => { }}
-                                                                    readOnly={true}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Detailed Physical Exam Data - FULL RENDERER */}
-                                                {selectedItem.raw.details && (
-                                                    <div className="bg-gray-50 p-4 rounded-xl space-y-4">
-                                                        <h3 className="font-bold text-gray-700 text-sm uppercase">Detalles Clínicos Completos</h3>
-                                                        <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-                                                            <DataRenderer data={selectedItem.raw.details} />
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Active Clusters */}
-                                                {selectedItem.raw.clusters?.active?.length > 0 && (
-                                                    <div className="space-y-2">
-                                                        <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Hipótesis / Clusters Activos</h3>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {selectedItem.raw.clusters.active.map((c: string, i: number) => (
-                                                                <span key={i} className="bg-brand-100 text-brand-800 px-3 py-1 rounded-full text-xs font-bold">
-                                                                    {getLabel(c)}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Plan */}
-                                                <div className="space-y-2">
-                                                    <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1">Plan de Tratamiento</h3>
-
-                                                    {selectedItem.raw.plan?.education?.length > 0 && (
-                                                        <div className="mb-2">
-                                                            <span className="text-xs font-bold text-brand-400 block">EDUCACIÓN</span>
-                                                            <ul className="list-disc pl-5 text-sm text-gray-700">
-                                                                {selectedItem.raw.plan.education.map((e: string, i: number) => (
-                                                                    <li key={i}>{getLabel(e)}</li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-
-                                                    {selectedItem.raw.plan?.tasks?.length > 0 && (
-                                                        <div>
-                                                            <span className="text-xs font-bold text-brand-400 block">TAREAS / EJERCICIOS</span>
-                                                            <ul className="list-disc pl-5 text-sm text-gray-700">
-                                                                {selectedItem.raw.plan.tasks.map((t: string, i: number) => (
-                                                                    <li key={i}>{getLabel(t)}</li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-
-                                <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
-                                    <Button variant="ghost" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(selectedItem)}>
-                                        <Trash2 className="w-4 h-4 mr-2" /> Eliminar Registro
+                            <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
+                                <Button variant="ghost" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(selectedItem)}>
+                                    <Trash2 className="w-4 h-4 mr-2" /> Eliminar Registro
+                                </Button>
+                                <div className="flex gap-2">
+                                    <Button variant="outline" onClick={() => setSelectedItem(null)}>
+                                        Cerrar
                                     </Button>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" onClick={() => setSelectedItem(null)}>
-                                            Cerrar
-                                        </Button>
-                                        <Button
-                                            onClick={() => {
-                                                if (!selectedItem) return;
-                                                if (selectedItem.type === 'session') {
-                                                    // Assume we create a route /users/:patientId/sessions/:sessionId/edit OR query param
-                                                    // Navigation to generic creator with edit param is easier for now
-                                                    navigate(`/users/${id}/sessions/new?editId=${selectedItem.id}`);
-                                                } else {
-                                                    const mode = selectedItem.type.includes('fast') ? 'fast' : 'complete';
-                                                    navigate(`/eval/${mode}/${id}?editId=${selectedItem.id}`);
-                                                }
-                                            }}
-                                            className="bg-brand-100 text-brand-700 hover:bg-brand-200"
-                                        >
-                                            Editar
-                                        </Button>
-                                    </div>
+                                    <Button
+                                        onClick={() => {
+                                            if (!selectedItem) return;
+                                            if (selectedItem.type === 'session') {
+                                                // Assume we create a route /users/:patientId/sessions/:sessionId/edit OR query param
+                                                // Navigation to generic creator with edit param is easier for now
+                                                navigate(`/users/${id}/sessions/new?editId=${selectedItem.id}`);
+                                            } else {
+                                                const mode = selectedItem.type.includes('fast') ? 'fast' : 'complete';
+                                                navigate(`/eval/${mode}/${id}?editId=${selectedItem.id}`);
+                                            }
+                                        }}
+                                        className="bg-brand-100 text-brand-700 hover:bg-brand-200"
+                                    >
+                                        Editar
+                                    </Button>
                                 </div>
                             </div>
-                                )}
                         </div>
                     )}
                 </div>
-            );
+            )}
+        </div>
+    );
 }
