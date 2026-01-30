@@ -172,13 +172,14 @@ export const ICIQForm = ({ onChange, initialData, readOnly }: ICIQFormProps) => 
                 </div>
             </div>
 
-            <div className="bg-brand-50 p-4 rounded-xl border border-brand-100 text-center">
-                <p className="text-xs text-brand-400 uppercase font-bold mb-1">Puntaje Actual</p>
-                <p className="text-3xl font-bold text-brand-700">
-                    {(answers['frequency'] || 0) + (answers['amount'] || 0) + (answers['impact'] || 0)}
-                    <span className="text-sm font-normal text-brand-400">/ 21</span>
-                </p>
-            </div>
+            {!readOnly && (
+                <div className="bg-brand-50 p-4 rounded-xl border border-brand-100 text-center">
+                    <p className="text-xs text-brand-400 uppercase font-bold mb-1">Puntaje Actual</p>
+                    <p className="text-3xl font-bold text-brand-700">
+                        {(answers['frequency'] || 0) + (answers['amount'] || 0) + (answers['impact'] || 0)}
+                        <span className="text-sm font-normal text-brand-400">/ 21</span>
+                    </p>
+                </div>
             )}
         </div>
     );
