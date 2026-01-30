@@ -31,14 +31,14 @@ const preAdmissionSchema = z.object({
     // 3. Clinical - GynObs
     isMother: z.boolean().default(false),
     gynObs: z.object({
-        gestations: z.number().nullable().optional(),
-        births: z.number().nullable().optional(),
-        cesareans: z.number().nullable().optional(),
-        abortions: z.number().nullable().optional(),
+        gestations: z.any().optional(),
+        births: z.any().optional(),
+        cesareans: z.any().optional(),
+        abortions: z.any().optional(),
 
         // Granular Maternity Details
         isPregnant: z.boolean().default(false),
-        pregnancyWeeks: z.number().nullable().optional(),
+        pregnancyWeeks: z.any().optional(),
         isPostPartum: z.boolean().default(false),
         postPartumTime: z.string().optional(),
 
@@ -152,7 +152,12 @@ const PreAdmissionPage: React.FC = () => {
     const nextStep = async () => {
         if (currentStepObj.fields) {
             const isValid = await trigger(currentStepObj.fields as any);
-            if (!isValid) return;
+            if (!isValid) {
+                // Determine if errors exist and alert user
+                const errors = !!Object.keys(control._formState.errors).length;
+                if (errors) alert("Por favor, revisa los campos requeridos.");
+                return;
+            }
         }
         if (step < steps.length - 1) setStep(s => s + 1);
         else handleSubmit(onSubmit)();
