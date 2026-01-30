@@ -25,6 +25,15 @@ export interface Session {
         sane?: number; // 0-100
     };
     customActivities?: { category: string; name: string; params: string }[]; // [NEW] Flexible activities
+    perfectScheme?: {
+        power: number; // 0-5 (Oxford) - Primary P
+        endurance: number; // 0-10+ seconds
+        repetitions: number; // 0-10+ count
+        fast: number; // 0-10+ count
+        elevation: boolean; // Lift presence
+        coContraction: boolean; // Transversus/Adductors
+        timing: boolean; // Involuntary reflex/Cough
+    };
     status: 'completed';
 }
 

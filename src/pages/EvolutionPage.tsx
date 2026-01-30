@@ -51,6 +51,14 @@ export default function EvolutionPage() {
     const [sane, setSane] = useState<number | ''>(''); // 0-100
     const [psfs, setPsfs] = useState<{ activity: string; score: number }[]>([]);
 
+    // [NEW] PERFECT Scheme State
+    const [perfectEndurance, setPerfectEndurance] = useState<number | ''>('');
+    const [perfectRepetitions, setPerfectRepetitions] = useState<number | ''>('');
+    const [perfectFast, setPerfectFast] = useState<number | ''>('');
+    const [perfectElevation, setPerfectElevation] = useState<boolean>(false);
+    const [perfectCoContraction, setPerfectCoContraction] = useState<boolean>(false);
+    const [perfectTiming, setPerfectTiming] = useState<boolean>(false);
+
     // Custom Activities [NEW]
     const [customActivities, setCustomActivities] = useState<{ category: string; name: string; params: string }[]>([]);
 
@@ -123,6 +131,15 @@ export default function EvolutionPage() {
                     if (s.proms) {
                         setGroc(s.proms.groc || 0);
                         setSane(s.proms.sane ?? '');
+                    }
+                    if (s.perfectScheme) {
+                        setOxford(s.perfectScheme.power);
+                        setPerfectEndurance(s.perfectScheme.endurance || '');
+                        setPerfectRepetitions(s.perfectScheme.repetitions || '');
+                        setPerfectFast(s.perfectScheme.fast || '');
+                        setPerfectElevation(s.perfectScheme.elevation || false);
+                        setPerfectCoContraction(s.perfectScheme.coContraction || false);
+                        setPerfectTiming(s.perfectScheme.timing || false);
                     }
                     if (s.tasks) {
                         // Map legacy tasks to new format if needed
@@ -199,6 +216,15 @@ export default function EvolutionPage() {
                 proms: { // [NEW]
                     groc,
                     sane: sane === '' ? undefined : Number(sane)
+                },
+                perfectScheme: {
+                    power: oxford || 0,
+                    endurance: Number(perfectEndurance) || 0,
+                    repetitions: Number(perfectRepetitions) || 0,
+                    fast: Number(perfectFast) || 0,
+                    elevation: perfectElevation,
+                    coContraction: perfectCoContraction,
+                    timing: perfectTiming
                 },
                 tasks,
                 status: 'completed'
@@ -435,11 +461,92 @@ export default function EvolutionPage() {
                             </select>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                    {/* PERFECT Scheme Section */}
+                    <div className="pt-4 border-t border-dashed mt-4">
+                        <h3 className="font-bold text-sm uppercase text-brand-600 mb-3">Evaluación PERFECT</h3>
+                        <div className="bg-brand-50/50 p-4 rounded-xl border border-brand-100 space-y-4">
+                            {/* P = Oxide (Already above, maybe link visually?) */}
+                            <div className="flex items-center justify-between text-xs text-brand-400 uppercase tracking-widest font-bold mb-2">
+                                <span>Esquema Completo</span>
+                                <span>P: {oxford || '-'} / 5</span>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                {/* Endurance */}
+                                <div>
+                                    <label className="text-xs font-bold text-brand-700 block mb-1">E (Resistencia)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number" min="0" max="99"
+                                            className="w-full p-2 pl-3 pr-8 text-sm border rounded-lg font-bold text-center"
+                                            value={perfectEndurance}
+                                            onChange={(e) => setPerfectEndurance(e.target.value === '' ? '' : Number(e.target.value))}
+                                        />
+                                        <span className="absolute right-2 top-2 text-xs text-gray-400">seg</span>
+                                    </div>
+                                </div>
+                                {/* Repetitions */}
+                                <div>
+                                    <label className="text-xs font-bold text-brand-700 block mb-1">R (Repeticiones)</label>
+                                    <input
+                                        type="number" min="0" max="99"
+                                        className="w-full p-2 text-sm border rounded-lg font-bold text-center"
+                                        value={perfectRepetitions}
+                                        onChange={(e) => setPerfectRepetitions(e.target.value === '' ? '' : Number(e.target.value))}
+                                    />
+                                </div>
+                                {/* Fast */}
+                                <div>
+                                    <label className="text-xs font-bold text-brand-700 block mb-1">F (Rápidas)</label>
+                                    <input
+                                        type="number" min="0" max="99"
+                                        className="w-full p-2 text-sm border rounded-lg font-bold text-center"
+                                        value={perfectFast}
+                                        onChange={(e) => setPerfectFast(e.target.value === '' ? '' : Number(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* ECT Switches */}
+                            <div className="flex justify-between gap-2 pt-2">
+                                {/* Elevation */}
+                                <button
+                                    onClick={() => setPerfectElevation(!perfectElevation)}
+                                    className={cn(
+                                        "flex-1 p-2 rounded-lg border text-xs font-bold transition-all",
+                                        perfectElevation ? "bg-green-100 border-green-300 text-green-800" : "bg-white border-gray-200 text-gray-400"
+                                    )}
+                                >
+                                    E (Elevación)
+                                </button>
+                                {/* Co-contraction */}
+                                <button
+                                    onClick={() => setPerfectCoContraction(!perfectCoContraction)}
+                                    className={cn(
+                                        "flex-1 p-2 rounded-lg border text-xs font-bold transition-all",
+                                        perfectCoContraction ? "bg-green-100 border-green-300 text-green-800" : "bg-white border-gray-200 text-gray-400"
+                                    )}
+                                >
+                                    C (Co-cont.)
+                                </button>
+                                {/* Timing */}
+                                <button
+                                    onClick={() => setPerfectTiming(!perfectTiming)}
+                                    className={cn(
+                                        "flex-1 p-2 rounded-lg border text-xs font-bold transition-all",
+                                        perfectTiming ? "bg-green-100 border-green-300 text-green-800" : "bg-white border-gray-200 text-gray-400"
+                                    )}
+                                >
+                                    T (Timing)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent >
+            </Card >
 
             {/* Objective / Interventions (The "Clicks") */}
-            <Card>
+            < Card >
                 <CardContent className="p-4 space-y-4">
                     <h3 className="font-bold text-sm uppercase text-brand-500">Intervenciones Realizadas (Objetivo)</h3>
                     <div className="space-y-3">
@@ -478,10 +585,10 @@ export default function EvolutionPage() {
                         })}
                     </div>
                 </CardContent>
-            </Card>
+            </Card >
 
             {/* [NEW] Custom Activities / Flexible Exercises */}
-            <Card>
+            < Card >
                 <CardContent className="p-4 space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-sm uppercase text-brand-500">Actividades Específicas (Libre)</h3>
@@ -544,10 +651,10 @@ export default function EvolutionPage() {
                         ))}
                     </div>
                 </CardContent>
-            </Card>
+            </Card >
 
             {/* Plan / Tasks Update */}
-            <Card>
+            < Card >
                 <CardContent className="p-4 space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-sm uppercase text-brand-500">Ajuste de Plan (Hogar)</h3>
@@ -585,7 +692,7 @@ export default function EvolutionPage() {
                         ))}
                     </div>
                 </CardContent>
-            </Card>
+            </Card >
 
         </div >
     );

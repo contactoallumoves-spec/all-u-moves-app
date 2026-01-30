@@ -12,7 +12,10 @@ interface ProgressChartProps {
 export function ProgressChart({ history, className }: ProgressChartProps) {
     const [visible, setVisible] = useState({
         eva: true,
-        oxford: true,
+        oxford: true, // P
+        endurance: true, // E
+        repetitions: true, // R
+        fast: true, // F
         sane: true,
         psfs: true
     });
@@ -28,8 +31,9 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
             const hasSane = item.raw?.proms?.sane !== undefined;
             const psfsList = item.raw?.reassessment?.psfs || item.raw?.proms?.psfs || [];
             const hasPsfs = psfsList.length > 0;
+            const hasPerfect = item.raw?.perfectScheme !== undefined;
 
-            return hasScore || hasOxford || hasSane || hasPsfs;
+            return hasScore || hasOxford || hasSane || hasPsfs || hasPerfect;
         })
         .map(item => {
             let dateObj = new Date();
@@ -49,7 +53,10 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                 date: dateObj,
                 dateLabel: format(dateObj, 'd MMM', { locale: es }),
                 eva: item.raw?.symptomsScore !== undefined ? Number(item.raw.symptomsScore) : null,
-                oxford: item.raw?.pelvic?.oxford || item.raw?.reassessment?.oxford || 0,
+                oxford: item.raw?.pelvic?.oxford || item.raw?.reassessment?.oxford || item.raw?.perfectScheme?.power || 0,
+                endurance: item.raw?.perfectScheme?.endurance || 0,
+                repetitions: item.raw?.perfectScheme?.repetitions || 0,
+                fast: item.raw?.perfectScheme?.fast || 0,
                 sane, // Normalized
                 saneRaw, // Original for tooltip
                 psfs: psfsAvg,
@@ -73,7 +80,16 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                     <div className="w-2 h-2 rounded-full bg-red-400 shadow-sm"></div> Dolor (EVA)
                 </button>
                 <button onClick={() => toggle('oxford')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.oxford ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
-                    <div className="w-2 h-2 rounded-full bg-indigo-400 shadow-sm"></div> Fuerza (Oxford)
+                    <div className="w-2 h-2 rounded-full bg-indigo-400 shadow-sm"></div> P (Oxford)
+                </button>
+                <button onClick={() => toggle('endurance')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.endurance ? 'bg-cyan-50 border-cyan-200 text-cyan-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
+                    <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm"></div> E (Resistencia)
+                </button>
+                <button onClick={() => toggle('repetitions')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.repetitions ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
+                    <div className="w-2 h-2 rounded-full bg-purple-400 shadow-sm"></div> R (Repeticiones)
+                </button>
+                <button onClick={() => toggle('fast')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.fast ? 'bg-pink-50 border-pink-200 text-pink-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
+                    <div className="w-2 h-2 rounded-full bg-pink-400 shadow-sm"></div> F (Rápidas)
                 </button>
                 <button onClick={() => toggle('sane')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.sane ? 'bg-green-50 border-green-200 text-green-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
                     <div className="w-2 h-2 rounded-full bg-green-400 shadow-sm"></div> SANE (/10)
@@ -101,6 +117,18 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                         <linearGradient id="colorPsfs" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#fbbf24" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="colorEndurance" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="colorRepetitions" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#c084fc" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#c084fc" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="colorFast" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#f472b6" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#f472b6" stopOpacity={0} />
                         </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -153,6 +181,45 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                         activeDot={{ r: 4, strokeWidth: 0 }}
                         connectNulls
                         hide={!visible.oxford}
+                    />
+                    {/* Endurance Area */}
+                    <Area
+                        type="monotone"
+                        dataKey="endurance"
+                        name="Resistencia"
+                        stroke="#22d3ee"
+                        fillOpacity={1}
+                        fill="url(#colorEndurance)"
+                        strokeWidth={2}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
+                        connectNulls
+                        hide={!visible.endurance}
+                    />
+                    {/* Repetitions Area */}
+                    <Area
+                        type="monotone"
+                        dataKey="repetitions"
+                        name="Repeticiones"
+                        stroke="#c084fc"
+                        fillOpacity={1}
+                        fill="url(#colorRepetitions)"
+                        strokeWidth={2}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
+                        connectNulls
+                        hide={!visible.repetitions}
+                    />
+                    {/* Fast Area */}
+                    <Area
+                        type="monotone"
+                        dataKey="fast"
+                        name="Rápidas"
+                        stroke="#f472b6"
+                        fillOpacity={1}
+                        fill="url(#colorFast)"
+                        strokeWidth={2}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
+                        connectNulls
+                        hide={!visible.fast}
                     />
                     {/* SANE Area */}
                     <Area
