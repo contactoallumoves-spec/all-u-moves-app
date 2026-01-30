@@ -22,6 +22,16 @@ export interface Evaluation {
     status: 'draft' | 'completed';
     details?: any; // To store full form data
     location?: string; // [NEW] e.g. "Consulta Kinesiológica", "Domicilio: Address", "Online"
+    questionnaire?: QuestionnaireResponse; // [NEW] For Questionnaire Type evaluations
+}
+
+// [NEW] Questionnaire Interface
+export interface QuestionnaireResponse {
+    type: 'iciq-sf' | 'udi-6';
+    answers: Record<string, string | number>;
+    score: number;
+    interpretation: string;
+    source: 'public_link' | 'internal_evaluation';
 }
 
 const COLLECTION_NAME = 'evaluations';

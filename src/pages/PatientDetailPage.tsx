@@ -13,10 +13,9 @@ import {
     FileText,
     Clock,
     PlayCircle,
-    Plus,
-    Trash2,
     Maximize2,
-    ArrowLeft
+    ArrowLeft,
+    Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getLabel } from '../data/catalog';
@@ -262,7 +261,30 @@ export default function PatientDetailPage() {
                     </Button>
                 </div>
             </div>
-            {/* TAB CONTENT */}
+
+            {/* [NEW] Quick Actions Bar */}
+            <div className="bg-white p-4 rounded-xl border border-brand-100 shadow-sm flex flex-wrap items-center gap-4 justify-between">
+                <div className="flex items-center gap-2 text-sm text-brand-600">
+                    <Activity className="w-4 h-4" />
+                    <span className="font-semibold">Accesos Rápidos:</span>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="text-brand-600 bg-brand-50 hover:bg-brand-100" onClick={() => {
+                        const url = `${window.location.origin}/surveys/${id}/iciq-sf`;
+                        navigator.clipboard.writeText(url);
+                        alert("Enlace ICIQ-SF copiado al portapapeles");
+                    }}>
+                        <LinkIcon className="w-3 h-3 mr-1" /> Copiar Link ICIQ-SF
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-brand-600 bg-brand-50 hover:bg-brand-100" onClick={() => {
+                        const url = `${window.location.origin}/surveys/${id}/udi-6`;
+                        navigator.clipboard.writeText(url);
+                        alert("Enlace UDI-6 copiado al portapapeles");
+                    }}>
+                        <LinkIcon className="w-3 h-3 mr-1" /> Copiar Link UDI-6
+                    </Button>
+                </div>
+            </div>
             {/* ANAMNESIS VIEW */}
             {activeTab === 'anamnesis' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

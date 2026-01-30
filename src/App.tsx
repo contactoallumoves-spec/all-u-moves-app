@@ -14,6 +14,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, User } from 'firebase/a
 import { Loader2 } from 'lucide-react';
 import PublicLayout from './components/layout/PublicLayout';
 import PreAdmissionPage from './pages/public/PreAdmissionPage';
+import PublicSurveyPage from './pages/public/PublicSurveyPage';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -110,6 +111,8 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<PublicLayout />}>
                     <Route path="pre-ingreso" element={<PreAdmissionPage />} />
+                    {/* [NEW] Public Survey Routes */}
+                    <Route path="surveys/:patientId/:type" element={<PublicSurveyPage />} />
                 </Route>
 
                 {/* Fallback */}
