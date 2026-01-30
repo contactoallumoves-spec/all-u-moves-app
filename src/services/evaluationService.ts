@@ -4,18 +4,18 @@ import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc, u
 export interface Evaluation {
     id?: string;
     patientId: string;
-    type: 'fast' | 'complete';
+    type: 'fast' | 'complete' | 'questionnaire';
     date: any; // Firestore Timestamp
     patientData: {
         stage: string;
         redFlags: string[];
     };
-    clusters: {
+    clusters?: { // Optional for questionnaire type
         active: string[];
         scores?: Record<string, number>;
     };
-    summary: string;
-    plan: {
+    summary?: string; // Optional for questionnaire type
+    plan?: { // Optional for questionnaire type
         education: string[];
         tasks: string[];
     };

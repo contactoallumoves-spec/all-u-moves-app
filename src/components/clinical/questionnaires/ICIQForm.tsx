@@ -26,34 +26,30 @@ export const ICIQForm = ({ onChange, initialData, readOnly }: ICIQFormProps) => 
     // 3. Afectación (0-10)
     // Sum = Score (0-21)
 
-    const calculateScore = (currentAnswers: Record<string, number>) => {
-        const freq = currentAnswers['frequency'] || 0;
-        const amount = currentAnswers['amount'] || 0;
-        const impact = currentAnswers['impact'] || 0;
-        return freq + amount + impact;
-    };
-
-    const getInterpretation = (score: number) => {
-        if (score === 0) return "Continencia";
-        if (score <= 5) return "Leve";
-        if (score <= 12) return "Moderada";
-        if (score <= 18) return "Severa";
-        return "Muy Severa";
-    };
-
     const handleChange = (key: string, value: any) => {
         if (readOnly) return;
 
-        const newAnswers = { ...answers, [key]: Number(value) };
+        // Remove 'form-' prefix if it exists in the key (legacy support)
+        const cleanKey = key.replace('form-', '');
+
+        const newAnswers = { ...answers, [cleanKey]: Number(value) };
         setAnswers(newAnswers);
 
-        const score = calculateScore(newAnswers);
-        const interpretation = getInterpretation(score);
+        // Calculate outside using the shared logic (simple sum for now in local state to show correct number)
+        // But better to use the utility if we imported it. 
+        // For now, let's keep the simple sum for display, but rely on parent for final logic if needed?
+        // No, let's replicate the simple sum here or import. 
+        // Since we are refactoring, let's keep it self-contained for display but consistent.
+
+        const freq = newAnswers['frequency'] || 0;
+        const amount = newAnswers['amount'] || 0;
+        const impact = newAnswers['impact'] || 0;
+        const score = freq + amount + impact;
 
         onChange({
             answers: newAnswers,
             score,
-            interpretation
+            interpretation: score === 0 ? "Continencia" : score <= 5 ? "Leve" : score <= 12 ? "Moderada" : score <= 18 ? "Severa" : "Muy Severa"
         });
     };
 
@@ -176,11 +172,13 @@ export const ICIQForm = ({ onChange, initialData, readOnly }: ICIQFormProps) => 
                 </div>
             </div>
 
-            {!readOnly && (
-                <div className="bg-brand-50 p-4 rounded-xl border border-brand-100 text-center">
-                    <p className="text-xs text-brand-400 uppercase font-bold mb-1">Puntaje Actual</p>
-                    <p className="text-3xl font-bold text-brand-700">{calculateScore(answers)} <span className="text-sm font-normal text-brand-400">/ 21</span></p>
-                </div>
+            <div className="bg-brand-50 p-4 rounded-xl border border-brand-100 text-center">
+                <p className="text-xs text-brand-400 uppercase font-bold mb-1">Puntaje Actual</p>
+                <p className="text-3xl font-bold text-brand-700">
+                    {(answers['frequency'] || 0) + (answers['amount'] || 0) + (answers['impact'] || 0)}
+                    <span className="text-sm font-normal text-brand-400">/ 21</span>
+                </p>
+            </div>
             )}
         </div>
     );
