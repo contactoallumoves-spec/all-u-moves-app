@@ -13,6 +13,8 @@ import {
     FileText,
     Clock,
     PlayCircle,
+    Plus,
+    Trash2,
     Maximize2,
     ArrowLeft,
     Link as LinkIcon

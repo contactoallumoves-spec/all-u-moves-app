@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface UDI6Data {
     answers: Record<string, number>;
@@ -96,8 +96,8 @@ export const UDI6Form = ({ onChange, initialData, readOnly }: UDI6FormProps) => 
                                 onClick={() => handleChange(q.id, opt.value)}
                                 disabled={readOnly}
                                 className={`flex-1 py-2 px-3 rounded-lg text-sm border transition-all ${answers[q.id] === opt.value
-                                        ? 'bg-brand-100 border-brand-300 text-brand-800 font-bold shadow-sm'
-                                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                    ? 'bg-brand-100 border-brand-300 text-brand-800 font-bold shadow-sm'
+                                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                                     }`}
                             >
                                 {opt.label}

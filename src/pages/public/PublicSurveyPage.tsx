@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { PatientService } from '../../services/patientService';
 import { EvaluationService } from '../../services/evaluationService';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Card, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 
@@ -12,7 +12,7 @@ import { UDI6Form } from '../../components/clinical/questionnaires/UDI6Form';
 
 export default function PublicSurveyPage() {
     const { patientId, type } = useParams();
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const [patientName, setPatientName] = useState('');
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
