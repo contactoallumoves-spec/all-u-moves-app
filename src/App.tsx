@@ -16,6 +16,9 @@ import { Loader2 } from 'lucide-react';
 import PublicLayout from './components/layout/PublicLayout';
 import PreAdmissionPage from './pages/public/PreAdmissionPage';
 import PublicSurveyPage from './pages/public/PublicSurveyPage';
+import { PortalLayout } from './components/portal/PortalLayout'; // [NEW]
+import { PortalGuard } from './pages/portal/PortalGuard'; // [NEW]
+import PortalDashboard from './pages/portal/PortalDashboard'; // [NEW]
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -117,6 +120,14 @@ function App() {
                     <Route path="pre-ingreso" element={<PreAdmissionPage />} />
                     {/* [NEW] Public Survey Routes */}
                     <Route path="surveys/:patientId/:type" element={<PublicSurveyPage />} />
+                </Route>
+
+                {/* [NEW] Patient Portal Routes (Magic Link) */}
+                <Route path="/portal" element={<PortalLayout />}>
+                    <Route path=":token" element={<PortalGuard />}>
+                        <Route index element={<Navigate to="home" replace />} />
+                        <Route path="home" element={<PortalDashboard />} />
+                    </Route>
                 </Route>
 
                 {/* Fallback */}

@@ -51,6 +51,7 @@ export interface Patient {
     }[];
     activeTasks?: Task[];
     activePlan?: PrescribedPlan; // [NEW] Structured Weekly Plan
+    magicLinkToken?: string; // [NEW] For Public Portal Access
 }
 
 export interface PrescribedPlan {

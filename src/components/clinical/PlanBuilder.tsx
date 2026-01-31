@@ -4,7 +4,7 @@ import { Exercise } from '../../types/exercise';
 import { ExerciseService } from '../../services/exerciseService';
 import { PatientService } from '../../services/patientService';
 import { Button } from '../ui/Button';
-import { Search, Plus, Save, Calendar } from 'lucide-react';
+import { Search, Plus, Save, Calendar, Link as LinkIcon, Copy } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Timestamp } from 'firebase/firestore';
 
@@ -38,6 +38,15 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
     });
 
     const [isSaving, setIsSaving] = useState(false);
+    const [magicLink, setMagicLink] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (patient.magicLinkToken) {
+            // Reconstruct link if token exists
+            const baseUrl = window.location.origin;
+            setMagicLink(`${baseUrl}/portal/${patient.magicLinkToken}`);
+        }
+    }, [patient.magicLinkToken]);
 
     useEffect(() => {
         loadData();
@@ -108,6 +117,20 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
             alert("Error al guardar el plan");
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleGenerateMockLink = async () => {
+        try {
+            const token = await PatientService.generateMagicToken(patient.id!);
+            const baseUrl = window.location.origin;
+            const fullLink = `${baseUrl}/portal/${token}`;
+            setMagicLink(fullLink);
+            await navigator.clipboard.writeText(fullLink);
+            alert("Enlace mágico copiado al portapapeles: " + fullLink);
+        } catch (error) {
+            console.error("Error generating token", error);
+            alert("Error al generar el enlace");
         }
     };
 
@@ -195,6 +218,10 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                         <Button onClick={handleSavePlan} disabled={isSaving} size="sm">
                             <Save className="w-4 h-4 mr-2" />
                             {isSaving ? 'Guardando...' : 'Guardar Plan'}
+                        </Button>
+                        <Button onClick={handleGenerateMockLink} variant="outline" size="sm" title="Generar/Copiar Enlace para Paciente">
+                            {magicLink ? <Copy className="w-4 h-4 mr-2" /> : <LinkIcon className="w-4 h-4 mr-2" />}
+                            {magicLink ? "Copiar Link" : "Generar Link"}
                         </Button>
                     </div>
                 </div>

@@ -168,5 +168,31 @@ export const PatientService = {
             console.error("Error deleting patient: ", error);
             throw error;
         }
+    },
+
+    // [NEW] Magic Link Logic
+    async generateMagicToken(patientId: string): Promise<string> {
+        // Simple random token logic
+        const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        try {
+            await this.update(patientId, { magicLinkToken: token });
+            return token;
+        } catch (error) {
+            console.error("Error generating token", error);
+            throw error;
+        }
+    },
+
+    async validateMagicToken(token: string): Promise<Patient | null> {
+        try {
+            const q = query(collection(db, COLLECTION_NAME), where('magicLinkToken', '==', token));
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) return null;
+            const doc = snapshot.docs[0];
+            return { id: doc.id, ...doc.data() } as Patient;
+        } catch (error) {
+            console.error("Error validating token", error);
+            return null;
+        }
     }
 };
