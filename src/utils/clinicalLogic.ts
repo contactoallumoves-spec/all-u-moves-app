@@ -128,24 +128,64 @@ export const clinicalLogic = {
             };
         },
 
-        getRecommendations: (analysis: any) => {
+        getRecommendations: (score: number, answers: Record<string, any>) => {
             const recs = [];
-            const { subscales } = analysis;
 
-            if (subscales.stress >= 2) { // Threshold arbitrary for now
-                recs.push("Protocolo de fuerza y coordinación abdomino-pélvica.");
-                recs.push("Educación sobre maniobra de contra-bloqueo.");
+            // Analyze Subtypes based on questions
+            const irritative = (Number(answers['q1'] || 0) + Number(answers['q2'] || 0)); // Urgency
+            const stress = (Number(answers['q3'] || 0) + Number(answers['q4'] || 0)); // Stress
+            const obstructive = (Number(answers['q5'] || 0) + Number(answers['q6'] || 0)); // Pain/Obstructive
+
+            if (irritative > 2) {
+                recs.push("Manejo conductual para síntomas de urgencia (Irritativo).");
+                recs.push("Protocolo de Reentrenamiento Vesical.");
             }
-            if (subscales.irritative >= 2) {
-                recs.push("Reeducación conductual y diario de ingesta.");
+
+            if (stress > 2) {
+                recs.push("Entrenamiento muscular intensivo (Fuerza/Coordinación).");
+                recs.push("Manejo de presión intra-abdominal (Knack).");
+            }
+
+            if (obstructive > 2) {
+                recs.push("Evaluación de vaciamiento incompleto (Residuo miccional).");
+                recs.push("Técnicas de relajación de piso pélvico (Down-training).");
+            }
+
+            if (score > 33 && recs.length === 0) {
+                recs.push("Evaluación kinesiológica completa de piso pélvico.");
+            }
+
+            return { recommendations: recs, tasks: [] };
+        },
+
+        getQuestionText: (key: string) => {
+            const map: Record<string, string> = {
+                q1: "Micción frecuente",
+                q2: "Urgencia miccional",
+                q3: "Escape al esfuerzo físico",
+                q4: "Pequeños escapes (gotas)",
+                q5: "Dificultad de vaciado",
+                q6: "Dolor abdominal/genital"
+            };
+            return map[key] || key;
+        },
+
+        getAnswerText: (key: string, value: any) => {
+            const val = Number(value);
+            if (val === 0) return "No";
+            if (val === 1) return "Un poco";
+            if (val === 2) return "Moderadamente";
+            if (val === 3) return "Mucho";
+            return value;
+        }
                 recs.push("Neuromodulación del tibial posterior (Sugerencia clínica).");
-            }
-            if (subscales.obstructive >= 2) {
-                recs.push("Evaluación de prolapso (POP-Q simplificado).");
-                recs.push("Técnicas de vaciado vesical (doble micción).");
+    }
+            if(subscales.obstructive >= 2) {
+        recs.push("Evaluación de prolapso (POP-Q simplificado).");
+recs.push("Técnicas de vaciado vesical (doble micción).");
             }
 
-            return recs;
+return recs;
         }
     }
 };

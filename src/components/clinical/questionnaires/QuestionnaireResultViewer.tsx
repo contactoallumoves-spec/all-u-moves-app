@@ -1,13 +1,3 @@
-import { X, ExternalLink, FileText, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
-import { Button } from '../../ui/Button';
-import { QuestionnaireResponse } from '../../../services/evaluationService';
-
-interface ViewerProps {
-    data: QuestionnaireResponse;
-    patientName: string;
-    onClose: () => void;
-}
-
 import { X, ExternalLink, FileText, CheckCircle, AlertTriangle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { QuestionnaireResponse } from '../../../services/evaluationService';
