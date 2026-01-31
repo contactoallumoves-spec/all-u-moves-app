@@ -92,8 +92,19 @@ export interface PlanExercise {
     name: string; // snapshot of name
     // params: string; // DEPRECATED: usage of simple string
     details?: ExerciseParameters; // [NEW] Structured params
+    block?: string; // [NEW] Session Block (e.g. "Preparación", "Fuerza")
     completed?: boolean;
 }
+
+export const SESSION_BLOCKS = {
+    PREPARATION: 'Preparación',
+    CORE_PELVIC: 'Núcleo / Core & Pélvico',
+    MAIN: 'Principal',
+    METABOLIC: 'Metabólico',
+    RECOVERY: 'Regenerativo'
+} as const;
+
+export type SessionBlockType = typeof SESSION_BLOCKS[keyof typeof SESSION_BLOCKS];
 
 export interface SessionFeedback {
     rpe?: number; // 0-10

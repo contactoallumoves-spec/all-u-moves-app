@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Patient, PrescribedPlan, PlanExercise } from '../../types/patient';
+import React, { useState, useEffect } from 'react';
+import { Patient, PrescribedPlan, PlanExercise, SESSION_BLOCKS } from '../../types/patient';
 import { Exercise } from '../../types/exercise';
 import { ExerciseService } from '../../services/exerciseService';
 import { PatientService } from '../../services/patientService';
 import { Button } from '../ui/Button';
-import { Dialog } from '../ui/Dialog'; // [NEW]
-import { Search, Plus, Save, Calendar, Link as LinkIcon, Copy } from 'lucide-react';
+import { Dialog } from '../ui/Dialog';
+import { ExerciseCreatorModal } from './ExerciseCreatorModal'; // [NEW]
+import { Search, Plus, Save, Calendar, Link as LinkIcon, Copy, Play, Info as InfoIcon, X as XIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Timestamp } from 'firebase/firestore';
 
@@ -41,9 +42,29 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [magicLink, setMagicLink] = useState<string | null>(null);
 
+    // Quick Create State
+    const [isCreating, setIsCreating] = useState(false);
+
+    const handleCreateClick = () => {
+        setIsCreating(true);
+    };
+
+    // NEW: We don't need 'newExercise' state here anymore, handled by modal
+    const handleSaveNewExercise = async (exerciseData: Omit<Exercise, 'id'>) => {
+        try {
+            const id = await ExerciseService.create(exerciseData);
+            const created = { id, ...exerciseData } as Exercise;
+            setExercises(prev => [...prev, created]);
+            setSearchTerm(exerciseData.name);
+            setIsCreating(false);
+        } catch (e) {
+            console.error("Error creating exercise", e);
+            throw e;
+        }
+    };
+
     useEffect(() => {
         if (patient.magicLinkToken) {
-            // Reconstruct link if token exists
             const baseUrl = window.location.origin;
             setMagicLink(`${baseUrl}/portal/${patient.magicLinkToken}`);
         }
@@ -60,14 +81,11 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
 
         if (patient.activePlan) {
             setPlan(patient.activePlan);
-        } else if (patient.activeTasks && patient.activeTasks.length > 0) {
-            // OPTIONAL: Convert legacy tasks to Monday or daily?
-            // For now, start fresh or keep empty
         }
         setLoading(false);
     };
 
-    const handleAddExercise = (dayKey: keyof typeof plan.schedule, exercise: Exercise) => {
+    const handleAddExercise = (dayKey: keyof typeof plan.schedule, exercise: Exercise, block: string = SESSION_BLOCKS.MAIN) => {
         const defaultSets = exercise.defaultParams?.sets || '3';
         const defaultReps = exercise.defaultParams?.reps || '10';
 
@@ -75,7 +93,6 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
             exerciseId: exercise.id!,
             name: exercise.name,
-            // Initialize with structured details
             details: {
                 sets: defaultSets,
                 reps: defaultReps,
@@ -85,6 +102,7 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                 tempo: '',
                 side: 'bilateral'
             },
+            block: block, // [NEW] Assign to block
             completed: false
         };
 
@@ -93,6 +111,18 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
             schedule: {
                 ...prev.schedule,
                 [dayKey]: [...prev.schedule[dayKey], newItem]
+            }
+        }));
+    };
+
+    const handleMoveBlock = (dayKey: keyof typeof plan.schedule, instanceId: string, newBlock: string) => {
+        setPlan(prev => ({
+            ...prev,
+            schedule: {
+                ...prev.schedule,
+                [dayKey]: prev.schedule[dayKey].map(i =>
+                    i.id === instanceId ? { ...i, block: newBlock } : i
+                )
             }
         }));
     };
@@ -241,39 +271,67 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                     {loading ? <p className="text-center text-xs text-brand-400">Cargando...</p> :
-                        filteredExercises.map(ex => (
-                            <div key={ex.id} className="p-3 bg-brand-50/50 rounded-lg border border-brand-100 hover:border-brand-300 transition-all hover:shadow-md group">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-sm font-semibold text-brand-800">{ex.name}</p>
-                                        <p className="text-[10px] text-brand-500 uppercase tracking-wide">{ex.category}</p>
-                                    </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div className="relative group/add">
-                                            <button className="p-1.5 bg-brand-100 rounded-full text-brand-600 hover:bg-brand-600 hover:text-white transition-colors">
-                                                <Plus className="w-4 h-4" />
-                                            </button>
-                                            <div className="absolute right-0 top-8 w-34 bg-white shadow-xl rounded-lg border border-brand-100 p-1.5 hidden group-hover/add:grid grid-cols-4 gap-1 z-50">
-                                                {DAYS.map(d => (
-                                                    <button
-                                                        key={d.key}
-                                                        onClick={() => handleAddExercise(d.key as any, ex)}
-                                                        className="aspect-square flex items-center justify-center text-[10px] font-bold bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white rounded transition-colors"
-                                                        title={`Agregar a ${d.label}`}
-                                                    >
-                                                        {d.label.substr(0, 1)}
-                                                    </button>
-                                                ))}
+                        filteredExercises.length > 0 ? (
+                            filteredExercises.map(ex => (
+                                <div key={ex.id} className="p-3 bg-brand-50/50 rounded-lg border border-brand-100 hover:border-brand-300 transition-all hover:shadow-md group">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-sm font-semibold text-brand-800">{ex.name}</p>
+                                            <p className="text-[10px] text-brand-500 uppercase tracking-wide">{ex.category} {ex.system ? `• ${ex.system}` : ''}</p>
+                                        </div>
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="relative group/add">
+                                                <button className="p-1.5 bg-brand-100 rounded-full text-brand-600 hover:bg-brand-600 hover:text-white transition-colors">
+                                                    <Plus className="w-4 h-4" />
+                                                </button>
+                                                <div className="absolute right-0 top-8 w-40 bg-white shadow-xl rounded-lg border border-brand-100 p-2 hidden group-hover/add:block z-50">
+                                                    <p className="text-[10px] font-bold text-center text-brand-400 mb-1">Agregar a...</p>
+                                                    <div className="grid grid-cols-4 gap-1">
+                                                        {DAYS.map(d => (
+                                                            <button
+                                                                key={d.key}
+                                                                onClick={() => handleAddExercise(d.key as any, ex, SESSION_BLOCKS.MAIN)}
+                                                                className="aspect-square flex items-center justify-center text-[10px] font-bold bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white rounded transition-colors"
+                                                                title={`Agregar a ${d.label} (Principal)`}
+                                                            >
+                                                                {d.label.substr(0, 1)}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+                                <p className="text-sm text-brand-400">No se encontraron ejercicios.</p>
+                                {searchTerm && (
+                                    <Button
+                                        onClick={handleCreateClick}
+                                        variant="outline"
+                                        className="text-brand-600 border-brand-200 hover:bg-brand-50"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Crear "{searchTerm}"
+                                    </Button>
+                                )}
                             </div>
-                        ))}
+                        )
+                    }
                 </div>
             </div>
 
-            {/* Right: Weekly Schedule */}
+            {/* NEW: Exercise Creator Modal */}
+            <ExerciseCreatorModal
+                isOpen={isCreating}
+                onClose={() => setIsCreating(false)}
+                initialName={searchTerm}
+                onSave={handleSaveNewExercise}
+            />
+
+            {/* Right: Weekly Schedule (Block Based) */}
             <div className="lg:col-span-8 flex flex-col overflow-hidden bg-brand-50/30 rounded-xl border border-brand-100">
                 <div className="p-4 bg-white border-b border-brand-100 flex justify-between items-center shadow-sm z-10">
                     <h3 className="font-bold text-brand-900 flex items-center gap-2">
@@ -292,50 +350,87 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                 </div>
 
                 <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 bg-gray-50/50">
-                    <div className="grid grid-cols-7 gap-4 min-w-[1000px] h-full">
+                    <div className="grid grid-cols-7 gap-4 min-w-[1200px] h-full">
                         {DAYS.map(day => (
-                            <div key={day.key} className="flex flex-col h-full bg-white rounded-xl border border-brand-100/50 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="p-3 border-b border-brand-50 bg-brand-50/30 rounded-t-xl text-center">
+                            <div key={day.key} className="flex flex-col h-full bg-white rounded-xl border border-brand-100/50 shadow-sm hover:shadow-md transition-shadow relative">
+                                <div className="p-3 border-b border-brand-50 bg-brand-50/30 rounded-t-xl text-center sticky top-0 z-10 backdrop-blur-sm">
                                     <span className="text-xs font-bold text-brand-800 uppercase tracking-widest">{day.label}</span>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-                                    {plan.schedule[day.key as keyof typeof plan.schedule]?.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            onClick={() => handleEditClick(day.key as any, item)}
-                                            className="relative p-3 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
-                                        >
-                                            <div className="flex justify-between items-start mb-1">
-                                                <p className="text-xs font-bold text-brand-900 leading-tight line-clamp-2">{item.name}</p>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleRemoveExercise(day.key as any, item.id);
-                                                    }}
-                                                    className="p-0.5 text-zinc-300 hover:text-red-500 transition-colors"
-                                                >
-                                                    <XIcon className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
+                                <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar">
+                                    {/* Iterating through Blocks */}
+                                    {Object.values(SESSION_BLOCKS).map(blockName => {
+                                        const blockExercises = plan.schedule[day.key as keyof typeof plan.schedule].filter((i: PlanExercise) =>
+                                            (i.block === blockName) ||
+                                            (!i.block && blockName === SESSION_BLOCKS.MAIN) // Legacy/Default items go to Main
+                                        );
 
-                                            {/* Summary Badges */}
-                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                {item.details?.sets && item.details?.reps && (
-                                                    <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-[10px] font-medium rounded border border-brand-100">
-                                                        {item.details.sets}x{item.details.reps}
-                                                    </span>
-                                                )}
-                                                {item.details?.load && (
-                                                    <span className="px-1.5 py-0.5 bg-orange-50 text-orange-700 text-[10px] font-medium rounded border border-orange-100">
-                                                        {item.details.load}
-                                                    </span>
-                                                )}
-                                            </div>
+                                        if (blockExercises.length === 0) return null;
 
-                                            {/* Hover Edit Hint */}
-                                            <div className="absolute inset-x-0 bottom-0 h-1 bg-brand-400 opacity-0 group-hover:opacity-100 transition-opacity rounded-b-lg" />
-                                        </div>
-                                    ))}
+                                        return (
+                                            <div key={blockName} className="space-y-2">
+                                                <div className="flex items-center gap-2 px-1">
+                                                    <div className="h-px bg-brand-100 flex-1" />
+                                                    <span className="text-[9px] font-bold text-brand-400 uppercase tracking-wider whitespace-nowrap">{blockName}</span>
+                                                    <div className="h-px bg-brand-100 flex-1" />
+                                                </div>
+
+                                                {blockExercises.map((item: PlanExercise) => (
+                                                    <div
+                                                        key={item.id}
+                                                        onClick={() => handleEditClick(day.key as any, item)}
+                                                        className="relative p-2.5 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
+                                                    >
+                                                        <div className="flex justify-between items-start mb-1 gap-2">
+                                                            <p className="text-xs font-bold text-brand-900 leading-tight line-clamp-2">{item.name}</p>
+
+                                                            {/* Context Menu for Block Movement */}
+                                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-1 flex gap-1 bg-white/90 rounded p-0.5">
+                                                                <button
+                                                                    onClick={(e: React.MouseEvent) => {
+                                                                        e.stopPropagation();
+                                                                        // Cycle block logic or dropdown could go here. 
+                                                                        // For now just remove
+                                                                        handleRemoveExercise(day.key as any, item.id);
+                                                                    }}
+                                                                    className="p-1 text-zinc-300 hover:text-red-500 transition-colors"
+                                                                >
+                                                                    <XIcon className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Summary Badges */}
+                                                        <div className="flex flex-wrap gap-1 mt-1.5">
+                                                            {item.details?.sets && item.details?.reps && (
+                                                                <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-[9px] font-medium rounded border border-brand-100">
+                                                                    {item.details.sets}x{item.details.reps}
+                                                                </span>
+                                                            )}
+                                                            {item.details?.load && (
+                                                                <span className="px-1.5 py-0.5 bg-orange-50 text-orange-700 text-[9px] font-medium rounded border border-orange-100">
+                                                                    {item.details.load}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Block Changer (Mini dropdown) */}
+                                                        <select
+                                                            className="mt-2 w-full text-[9px] p-0.5 bg-gray-50 border-none text-gray-400 focus:ring-0 cursor-pointer hover:bg-gray-100 rounded items-end text-right opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            value={item.block || SESSION_BLOCKS.MAIN}
+                                                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleMoveBlock(day.key as any, item.id, e.target.value)}
+                                                        >
+                                                            {Object.values(SESSION_BLOCKS).map(b => (
+                                                                <option key={b} value={b}>{b}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Empty State */}
                                     {plan.schedule[day.key as keyof typeof plan.schedule]?.length === 0 && (
                                         <div className="h-full flex items-center justify-center opacity-40">
                                             <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center">
@@ -395,6 +490,13 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                                     <p className="opacity-80 leading-relaxed">{(editingExercise as Exercise).instructions}</p>
                                 </div>
                             )}
+
+                            {/* Taxonomy Badges */}
+                            <div className="flex flex-wrap gap-1">
+                                {(editingExercise as Exercise)?.pattern && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full border border-blue-100">{(editingExercise as Exercise).pattern}</span>}
+                                {(editingExercise as Exercise)?.clean_region && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full border border-purple-100">{(editingExercise as Exercise).clean_region}</span>}
+                                {(editingExercise as Exercise)?.function && <span className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] rounded-full border border-green-100">{(editingExercise as Exercise).function}</span>}
+                            </div>
                         </div>
 
                         {/* Column 2: Parameters Form */}
@@ -472,7 +574,7 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                                                     type="checkbox"
                                                     id="unilateral-check"
                                                     className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
-                                                    checked={editForm.unilateral}
+                                                    checked={!!editForm.unilateral}
                                                     onChange={e => setEditForm({ ...editForm, unilateral: e.target.checked })}
                                                 />
                                                 <label htmlFor="unilateral-check" className="text-sm font-medium text-zinc-700">Unilateral</label>
@@ -555,7 +657,7 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                                                 className="w-full flex-1 p-3 bg-yellow-50/30 border border-yellow-200/50 rounded-lg text-sm focus:border-yellow-400 outline-none resize-none"
                                                 placeholder="Instrucciones específicas para el paciente (ej: 'No arquear la espalda', 'Respirar al subir')..."
                                                 value={editForm.notes}
-                                                onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
+                                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditForm({ ...editForm, notes: e.target.value })}
                                             />
                                         </div>
                                     </div>
