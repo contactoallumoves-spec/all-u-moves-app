@@ -1,4 +1,4 @@
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Patient } from '../../types/patient';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -7,6 +7,7 @@ import { cn } from '../../lib/utils'; // Assuming cn utility is available or jus
 
 export default function PortalDashboard() {
     const { patient } = useOutletContext<{ patient: Patient }>();
+    const navigate = useNavigate();
 
     // Mock "Today's Session" logic (replace with real Plan filtering later)
     const today = new Date().toLocaleDateString('es-CL', { weekday: 'long' });
