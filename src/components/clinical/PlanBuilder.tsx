@@ -36,6 +36,9 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
         startDate: Timestamp.now(),
         schedule: {
             monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+        },
+        activeBlocks: {
+            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
         }
     });
 
@@ -80,7 +83,31 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
         setExercises(exList);
 
         if (patient.activePlan) {
-            setPlan(patient.activePlan);
+            let activeBlocks = patient.activePlan.activeBlocks;
+
+            // Backward Compatibility: Derive blocks if missing
+            if (!activeBlocks) {
+                activeBlocks = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
+
+                // Helper to safely iterate schedule
+                const schedule = patient.activePlan.schedule || {};
+                Object.entries(schedule).forEach(([day, exercises]) => {
+                    if (Array.isArray(exercises)) {
+                        const uniqueBlocks = new Set<string>();
+                        exercises.forEach(ex => {
+                            uniqueBlocks.add(ex.block || SESSION_BLOCKS.MAIN);
+                        });
+                        if (activeBlocks) {
+                            (activeBlocks as any)[day] = Array.from(uniqueBlocks);
+                        }
+                    }
+                });
+            }
+
+            setPlan({
+                ...patient.activePlan,
+                activeBlocks
+            });
         }
         setLoading(false);
     };
@@ -135,6 +162,34 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                 [dayKey]: prev.schedule[dayKey].filter(i => i.id !== instanceId)
             }
         }));
+    };
+
+    const handleAddBlock = (dayKey: keyof typeof plan.schedule, blockName: string) => {
+        setPlan(prev => {
+            const currentBlocks = prev.activeBlocks?.[dayKey] || [];
+            if (currentBlocks.includes(blockName)) return prev;
+
+            return {
+                ...prev,
+                activeBlocks: {
+                    ...prev.activeBlocks,
+                    [dayKey]: [...currentBlocks, blockName]
+                }
+            };
+        });
+    };
+
+    const handleRemoveBlock = (dayKey: keyof typeof plan.schedule, blockName: string) => {
+        setPlan(prev => {
+            const currentBlocks = prev.activeBlocks?.[dayKey] || [];
+            return {
+                ...prev,
+                activeBlocks: {
+                    ...prev.activeBlocks,
+                    [dayKey]: currentBlocks.filter(b => b !== blockName)
+                }
+            };
+        });
     };
 
 
@@ -370,119 +425,110 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
 
                 <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 bg-gray-50/50">
                     <div className="grid grid-cols-7 gap-4 min-w-[1200px] h-full">
-                        {DAYS.map(day => (
-                            <div key={day.key} className="flex flex-col h-full bg-white rounded-xl border border-brand-100/50 shadow-sm hover:shadow-md transition-shadow relative">
-                                <div className="p-3 border-b border-brand-50 bg-brand-50/30 rounded-t-xl text-center sticky top-0 z-10 backdrop-blur-sm">
-                                    <span className="text-xs font-bold text-brand-800 uppercase tracking-widest">{day.label}</span>
-                                </div>
-                                <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar">
-                                    {/* Iterating through Blocks */}
-                                    {Object.values(SESSION_BLOCKS).map(blockName => {
-                                        const blockExercises = plan.schedule[day.key as keyof typeof plan.schedule].filter((i: PlanExercise) =>
-                                            (i.block === blockName) ||
-                                            (!i.block && blockName === SESSION_BLOCKS.MAIN) // Legacy/Default items go to Main
-                                        );
+                        {DAYS.map(day => {
+                            // Logic: Render blocks present in `activeBlocks[day]`
+                            // Fallback: If no blocks activ, show "Add Block" button or check if legacy exercises exist.
+                            const activeBlockList = plan.activeBlocks?.[day.key as keyof typeof plan.activeBlocks] || [];
+                            const dayExercises = plan.schedule[day.key as keyof typeof plan.schedule];
 
-                                        // Always render block header
-                                        return (
-                                            <div key={blockName} className="space-y-2">
-                                                <div className="flex items-center gap-2 px-1 group/header">
-                                                    <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
-                                                    <span className={cn(
-                                                        "text-[9px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors select-none",
-                                                        blockExercises.length > 0 ? "text-brand-400" : "text-gray-300 group-hover/header:text-brand-300"
-                                                    )}>
-                                                        {blockName}
-                                                    </span>
-                                                    <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
-                                                </div>
+                            return (
+                                <div key={day.key} className="flex flex-col h-full bg-white rounded-xl border border-brand-100/50 shadow-sm hover:shadow-md transition-shadow relative group/day">
+                                    <div className="p-3 border-b border-brand-50 bg-brand-50/30 rounded-t-xl text-center sticky top-0 z-10 backdrop-blur-sm">
+                                        <span className="text-xs font-bold text-brand-800 uppercase tracking-widest">{day.label}</span>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar relative">
 
-                                                {blockExercises.length > 0 ? (
-                                                    blockExercises.map((item: PlanExercise) => (
-                                                        <div
-                                                            key={item.id}
-                                                            onClick={() => handleEditClick(day.key as any, item)}
-                                                            className="relative p-2.5 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
-                                                        >
-                                                            <div className="flex items-center gap-2 px-1">
-                                                                <div className="h-px bg-brand-100 flex-1" />
-                                                                <span className="text-[9px] font-bold text-brand-400 uppercase tracking-wider whitespace-nowrap">{blockName}</span>
-                                                                <div className="h-px bg-brand-100 flex-1" />
-                                                            </div>
+                                        {/* Render Active Blocks */}
+                                        {activeBlockList.map(blockName => {
+                                            const blockExercises = dayExercises.filter((i: PlanExercise) => i.block === blockName);
 
-                                                            {blockExercises.map((item: PlanExercise) => (
-                                                                <div
-                                                                    key={item.id}
-                                                                    onClick={() => handleEditClick(day.key as any, item)}
-                                                                    className="relative p-2.5 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
-                                                                >
-                                                                    <div className="flex justify-between items-start mb-1 gap-2">
-                                                                        <p className="text-xs font-bold text-brand-900 leading-tight line-clamp-2">{item.name}</p>
+                                            return (
+                                                <div key={blockName} className="space-y-2 group/block">
+                                                    <div className="flex items-center gap-2 px-1 justify-between group/header cursor-default">
+                                                        <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
+                                                        <span className="text-[9px] font-bold uppercase tracking-wider whitespace-nowrap text-brand-400 group-hover/header:text-brand-600">
+                                                            {blockName}
+                                                        </span>
+                                                        <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
 
-                                                                        {/* Context Menu for Block Movement */}
-                                                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-1 flex gap-1 bg-white/90 rounded p-0.5">
-                                                                            <button
-                                                                                onClick={(e: React.MouseEvent) => {
-                                                                                    e.stopPropagation();
-                                                                                    // Cycle block logic or dropdown could go here. 
-                                                                                    // For now just remove
-                                                                                    handleRemoveExercise(day.key as any, item.id);
-                                                                                }}
-                                                                                className="p-1 text-zinc-300 hover:text-red-500 transition-colors"
-                                                                            >
-                                                                                <XIcon className="w-3 h-3" />
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
+                                                        {/* Remove Block Button (Only if empty) */}
+                                                        {blockExercises.length === 0 && (
+                                                            <button
+                                                                onClick={() => handleRemoveBlock(day.key as any, blockName)}
+                                                                className="opacity-0 group-hover/header:opacity-100 text-gray-300 hover:text-red-400 transition-all p-0.5"
+                                                                title="Eliminar bloque vacío"
+                                                            >
+                                                                <XIcon className="w-3 h-3" />
+                                                            </button>
+                                                        )}
+                                                    </div>
 
-                                                                    {/* Summary Badges */}
-                                                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                                                        {item.details?.sets && item.details?.reps && (
-                                                                            <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-[9px] font-medium rounded border border-brand-100">
-                                                                                {item.details.sets}x{item.details.reps}
-                                                                            </span>
-                                                                        )}
-                                                                        {item.details?.load && (
-                                                                            <span className="px-1.5 py-0.5 bg-orange-50 text-orange-700 text-[9px] font-medium rounded border border-orange-100">
-                                                                                {item.details.load}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
+                                                    <div className="space-y-2 min-h-[20px]">
+                                                        {blockExercises.map((item: PlanExercise) => (
+                                                            <div
+                                                                key={item.id}
+                                                                onClick={() => handleEditClick(day.key as any, item)}
+                                                                className="relative p-2.5 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
+                                                            >
+                                                                <div className="flex justify-between items-start mb-1 gap-2">
+                                                                    <p className="text-xs font-bold text-brand-900 leading-tight line-clamp-2">{item.name}</p>
 
-                                                                    {/* Block Changer (Mini dropdown) */}
-                                                                    <select
-                                                                        className="mt-2 w-full text-[9px] p-0.5 bg-gray-50 border-none text-gray-400 focus:ring-0 cursor-pointer hover:bg-gray-100 rounded items-end text-right opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                        value={item.block || SESSION_BLOCKS.MAIN}
-                                                                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                                                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleMoveBlock(day.key as any, item.id, e.target.value)}
+                                                                    <button
+                                                                        onClick={(e: React.MouseEvent) => {
+                                                                            e.stopPropagation();
+                                                                            handleRemoveExercise(day.key as any, item.id);
+                                                                        }}
+                                                                        className="opacity-0 group-hover:opacity-100 text-zinc-300 hover:text-red-500 transition-colors absolute top-1 right-1 p-1 bg-white/90 rounded"
                                                                     >
-                                                                        {Object.values(SESSION_BLOCKS).map(b => (
-                                                                            <option key={b} value={b}>{b}</option>
-                                                                        ))}
-                                                                    </select>
+                                                                        <XIcon className="w-3 h-3" />
+                                                                    </button>
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    // Empty Block Placeholder (Drop Zone Visual)
-                                                    <div className="h-2 w-full rounded-full border border-dashed border-gray-100 group-hover/header:border-brand-200 transition-colors" />
-                                                )}
-                                            </div>
-                                        );
-                                    })}
 
-                                    {/* Empty State */}
-                                    {plan.schedule[day.key as keyof typeof plan.schedule]?.length === 0 && (
-                                        <div className="h-full flex items-center justify-center opacity-40">
-                                            <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center">
-                                                <Plus className="w-4 h-4 text-brand-300" />
+                                                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                    {item.details?.sets && item.details?.reps && (
+                                                                        <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-[9px] font-medium rounded border border-brand-100">
+                                                                            {item.details.sets}x{item.details.reps}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+
+                                                        {/* Drop Placeholder if empty */}
+                                                        {blockExercises.length === 0 && (
+                                                            <div className="h-6 w-full rounded border border-dashed border-gray-100 flex items-center justify-center text-[9px] text-gray-300">
+                                                                Arrastra o agrega aquí
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* "Add Block" Button at bottom */}
+                                        <div className="pt-2 opacity-0 group-hover/day:opacity-100 transition-opacity flex justify-center">
+                                            <div className="relative group/add-block">
+                                                <button className="flex items-center gap-1 px-2 py-1 bg-brand-50 hover:bg-brand-100 text-brand-600 text-[10px] font-bold rounded-full transition-colors border border-brand-100">
+                                                    <Plus className="w-3 h-3" /> Agregar Sección
+                                                </button>
+                                                {/* Block Dropdown */}
+                                                <div className="absolute left-1/2 -translate-x-1/2 bottom-8 w-48 bg-white shadow-xl rounded-lg border border-brand-100 p-1 hidden group-hover/add-block:block z-50 max-h-60 overflow-y-auto">
+                                                    {Object.values(SESSION_BLOCKS).map(b => (
+                                                        <button
+                                                            key={b}
+                                                            onClick={() => handleAddBlock(day.key as any, b)}
+                                                            className="w-full text-left px-3 py-1.5 text-[10px] text-brand-700 hover:bg-brand-50 rounded transition-colors truncate"
+                                                        >
+                                                            {b}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>

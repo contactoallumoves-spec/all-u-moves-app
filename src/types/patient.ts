@@ -67,6 +67,16 @@ export interface PrescribedPlan {
         saturday: PlanExercise[];
         sunday: PlanExercise[];
     };
+    // [NEW] Persisted structure for Manual Block Selection
+    activeBlocks?: {
+        monday: string[];
+        tuesday: string[];
+        wednesday: string[];
+        thursday: string[];
+        friday: string[];
+        saturday: string[];
+        sunday: string[];
+    };
 }
 
 export interface ExerciseParameters {
@@ -96,12 +106,22 @@ export interface PlanExercise {
     completed?: boolean;
 }
 
+// [NEW] Expanded "High Performance" Taxonomy
 export const SESSION_BLOCKS = {
-    PREPARATION: 'Preparación',
-    CORE_PELVIC: 'Núcleo / Core & Pélvico',
-    MAIN: 'Principal',
-    METABOLIC: 'Metabólico',
-    RECOVERY: 'Regenerativo'
+    PREHAB: 'Pre-Habilitación',
+    WARMUP: 'Calentamiento (General)',
+    MOBILITY: 'Movilidad & Rango',
+    ACTIVATION: 'Activación / Correctivos',
+    SKILLS: 'Técnica / Habilidades',
+    POWER: 'Potencia / Pliometría',
+    MAIN: 'Trabajo Principal',
+    STRENGTH_MAX: 'Fuerza Máxima',
+    STRENGTH_HYPERTROPHY: 'Fuerza / Hipertrofia',
+    METABOLIC: 'Metabólico (ESD)',
+    CORE: 'Núcleo / Pillar',
+    PELVIC: 'Suelo Pélvico',
+    RECOVERY: 'Regenerativo',
+    EDUCATION: 'Educación / Tareas'
 } as const;
 
 export type SessionBlockType = typeof SESSION_BLOCKS[keyof typeof SESSION_BLOCKS];

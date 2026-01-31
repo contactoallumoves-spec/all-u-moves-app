@@ -254,6 +254,11 @@ export default function SessionPlayer() {
                 {/* Info Area */}
                 <div className="p-6 space-y-6">
                     <div className="space-y-1">
+                        {currentItem?.block && (
+                            <span className="inline-block bg-brand-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider mb-2">
+                                {currentItem.block}
+                            </span>
+                        )}
                         <h1 className="text-2xl font-bold">{currentItem?.name}</h1>
                         <div className="flex flex-wrap gap-3 text-sm text-zinc-400">
                             {currentItem?.details ? (
