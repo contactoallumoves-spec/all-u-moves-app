@@ -113,8 +113,8 @@ export const QuestionnaireResultViewer = ({ data, patientName, onClose }: Viewer
                                 <>
                                     La usuaria presenta un cuadro compatible con <strong>{data.interpretation}</strong>.
                                     El puntaje de <strong>{data.score}/21</strong> indica un impacto {data.score > 12 ? 'significativo' : data.score > 5 ? 'moderado' : 'leve'} en la calidad de vida.
-                                    {data.answers['amount'] > 4 && " Se observa una pérdida de orina de volumen considerable."}
-                                    {data.answers['sit_urgency'] === 1 && " Existe un componente de urgencia importante."}
+                                    {Number(data.answers['amount']) > 4 && " Se observa una pérdida de orina de volumen considerable."}
+                                    {Number(data.answers['sit_urgency']) === 1 && " Existe un componente de urgencia importante."}
                                 </>
                             ) : (
                                 <>

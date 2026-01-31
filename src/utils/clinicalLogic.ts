@@ -170,7 +170,7 @@ export const clinicalLogic = {
             return map[key] || key;
         },
 
-        getAnswerText: (key: string, value: any) => {
+        getAnswerText: (_key: string, value: any) => {
             const val = Number(value);
             if (val === 0) return "No";
             if (val === 1) return "Un poco";
