@@ -19,6 +19,7 @@ import PublicSurveyPage from './pages/public/PublicSurveyPage';
 import { PortalLayout } from './components/portal/PortalLayout'; // [NEW]
 import { PortalGuard } from './pages/portal/PortalGuard'; // [NEW]
 import PortalDashboard from './pages/portal/PortalDashboard'; // [NEW]
+import SessionPlayer from './pages/portal/SessionPlayer'; // [NEW]
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -127,6 +128,7 @@ function App() {
                     <Route path=":token" element={<PortalGuard />}>
                         <Route index element={<Navigate to="home" replace />} />
                         <Route path="home" element={<PortalDashboard />} />
+                        <Route path="play/:date" element={<SessionPlayer />} /> {/* [NEW] */}
                     </Route>
                 </Route>
 

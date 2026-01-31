@@ -52,7 +52,11 @@ export default function PortalDashboard() {
                             <div className="flex items-center gap-2 text-xs text-brand-500 font-medium bg-brand-50 p-2 rounded-lg w-fit">
                                 <Clock className="w-3 h-3" /> ~25 Minutos
                             </div>
-                            <Button className="w-full bg-brand-800 hover:bg-brand-900 text-white shadow-lg shadow-brand-200/50" size="lg">
+                            <Button
+                                className="w-full bg-brand-800 hover:bg-brand-900 text-white shadow-lg shadow-brand-200/50"
+                                size="lg"
+                                onClick={() => navigate('../play/today')}
+                            >
                                 Iniciar Ahora
                             </Button>
                         </div>
