@@ -330,6 +330,9 @@ const PreAdmissionPage: React.FC = () => {
                         {/* WELCOME */}
                         {steps[step].id === 'welcome' && (
                             <div className="text-center space-y-6 mt-10">
+                                <div className="flex justify-center mb-6">
+                                    <img src="/allumoves-logo.png" alt="All U Moves" className="h-24 w-auto object-contain" />
+                                </div>
                                 <h1 className="text-6xl font-black font-serif text-[#8C7063] tracking-tight">Hola.</h1>
                                 <p className="text-xl text-[#8C7063]/80 max-w-xs mx-auto leading-relaxed">
                                     Vamos a personalizar tu experiencia clínica en pocos pasos.

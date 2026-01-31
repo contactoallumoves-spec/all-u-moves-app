@@ -101,11 +101,9 @@ export default function PublicSurveyPage() {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 animate-in fade-in duration-700">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                {/* Branding Placeholder */}
-                <div className="mx-auto h-12 w-12 bg-brand-600 rounded-full flex items-center justify-center shadow-lg shadow-brand-200">
-                    <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                {/* Branding */}
+                <div className="flex justify-center mb-4">
+                    <img src="/allumoves-logo.png" alt="All U Moves" className="h-20 w-auto object-contain" />
                 </div>
                 <h2 className="mt-6 text-center text-3xl font-serif font-extrabold text-brand-900 tracking-tight">
                     {type === 'iciq-sf' ? 'Cuestionario de Síntomas' : 'Evaluación de Salud'}

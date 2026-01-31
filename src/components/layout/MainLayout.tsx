@@ -12,7 +12,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <main className="flex-1 overflow-auto relative w-full">
                 <header className="md:hidden h-16 bg-white border-b border-brand-100 flex items-center px-4">
                     {/* Mobile Header placeholder */}
-                    <span className="font-bold text-brand-800">All U Moves</span>
+                    <img src="/allumoves-logo.png" alt="All U Moves" className="h-8 w-auto" />
                 </header>
                 <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto w-full">
                     {children}

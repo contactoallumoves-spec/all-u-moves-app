@@ -24,7 +24,7 @@ export function Sidebar() {
     return (
         <aside className="w-72 bg-white border-r border-brand-100 hidden md:flex flex-col h-full shadow-[2px_0_24px_-12px_rgba(0,0,0,0.1)] z-10">
             <div className="p-8 pb-4">
-                <h2 className="text-2xl font-serif font-bold text-brand-800 tracking-tight">All U Moves</h2>
+                <img src="/allumoves-logo.png" alt="All U Moves" className="h-8 w-auto mb-2" />
                 <p className="text-xs text-brand-400 font-medium tracking-widest uppercase mt-1">Matriz Maestra</p>
             </div>
 

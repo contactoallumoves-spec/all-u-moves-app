@@ -40,7 +40,9 @@ const Login = () => {
         <div className="flex items-center justify-center min-h-screen bg-brand-50 p-4">
             <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-brand-100 text-center space-y-6">
                 <div className="space-y-2">
-                    <h1 className="text-3xl font-serif font-bold text-brand-800">All U Moves</h1>
+                    <div className="flex justify-center mb-4">
+                        <img src="/allumoves-logo.png" alt="All U Moves" className="h-16 w-auto" />
+                    </div>
                     <p className="text-brand-500">Matriz Maestra de Evaluación Integral</p>
                 </div>
 

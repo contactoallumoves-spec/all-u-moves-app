@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
+import { REPORT_ASSETS } from '../assets/reportAssets';
 
 export const generateProgressReport = async (
     patientName: string,
@@ -30,12 +31,18 @@ export const generateProgressReport = async (
         };
 
         // 1. Header Minimalista
-        // Logo (Text based for now, clean)
-        setFont('bold', 18, colors.primary);
-        doc.text('All U Moves', 14, 20);
+        // Logo
+        try {
+            doc.addImage(REPORT_ASSETS.logo, 'PNG', 14, 10, 25, 25);
+        } catch (e) {
+            console.error('Error adding logo to PDF', e);
+            // Fallback
+            setFont('bold', 18, colors.primary);
+            doc.text('All U Moves', 14, 20);
+        }
 
         setFont('normal', 10, colors.secondary);
-        doc.text('Kinesiología Pélvica Integral', 14, 26);
+        doc.text('Kinesiología Pélvica Integral', 14, 40); // Adjusted Y to clear logo
 
         // Date (Right aligned)
         const dateStr = new Date().toLocaleDateString('es-CL', {
@@ -46,7 +53,7 @@ export const generateProgressReport = async (
         // Divider
         doc.setDrawColor(colors.line[0], colors.line[1], colors.line[2]);
         doc.setLineWidth(0.5);
-        doc.line(14, 32, pageWidth - 14, 32);
+        doc.line(14, 45, pageWidth - 14, 45); // Adjusted Y line
 
         // 2. Report Title & Patient
         let nextY = 50;
