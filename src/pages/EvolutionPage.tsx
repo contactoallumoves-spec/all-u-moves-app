@@ -246,12 +246,12 @@ export default function EvolutionPage() {
         }
     };
 
-    const handleCopyLastSession = async () => {
+    const handleCopyHomePlan = async () => {
         if (!patientId) return;
         try {
             const sessions = await SessionService.getByPatientId(patientId);
             if (sessions.length === 0) {
-                alert("No hay sesiones anteriores para copiar.");
+                alert("No hay sesiones anteriores para copiar el plan.");
                 return;
             }
             // Sort to find latest
@@ -262,47 +262,24 @@ export default function EvolutionPage() {
             });
             const last = sorted[0];
 
-            // Copy Interventions
-            setInterventions(last.interventions || []);
-            setInterventionDetails(last.interventionDetails || {});
-
-            // Copy Custom Activities
-            setCustomActivities(last.customActivities || []);
-
-            // Copy Location
-            if (last.location) {
-                if (['Consulta Kinesiológica', 'Online'].includes(last.location)) {
-                    setLocation(last.location);
-                } else if (last.location.startsWith('Domicilio')) {
-                    setLocation('Domicilio');
-                    const detail = last.location.includes(':') ? last.location.split(':')[1]?.trim() : '';
-                    setManualLocation(detail || '');
-                } else {
-                    setLocation('manual');
-                    setManualLocation(last.location);
-                }
+            if (last.tasks && last.tasks.length > 0) {
+                const formattedTasks = last.tasks.map((t: any) => ({
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5), // New IDs to avoid conflict
+                    description: t.description || t.label || '',
+                    frequency: t.frequency || '',
+                    completed: false
+                }));
+                setTasks(formattedTasks);
+                alert(`✅ Plan de hogar copiado (${formattedTasks.length} tareas)`);
+            } else {
+                alert("La última sesión no tenía tareas de hogar asignadas.");
             }
-
-            // Copy PERFECT Scheme
-            if (last.perfectScheme) {
-                setOxford(last.perfectScheme.power);
-                setPerfectEndurance(last.perfectScheme.endurance || '');
-                setPerfectRepetitions(last.perfectScheme.repetitions || '');
-                setPerfectFast(last.perfectScheme.fast || '');
-                setPerfectElevation(last.perfectScheme.elevation || false);
-                setPerfectCoContraction(last.perfectScheme.coContraction || false);
-                setPerfectTiming(last.perfectScheme.timing || false);
-            }
-
-            alert(`✅ Datos cargados de la sesión del ${last.date instanceof Date ? last.date.toLocaleDateString() : 'fecha desconocida'}`);
 
         } catch (error) {
             console.error(error);
-            alert("Error al copiar sesión anterior");
+            alert("Error al copiar plan de hogar");
         }
     };
-
-    if (loading) return <div className="p-10 text-center">Cargando...</div>;
 
     return (
         <div className="max-w-3xl mx-auto space-y-6 pb-20 animate-in slide-in-from-bottom-4">
@@ -317,7 +294,7 @@ export default function EvolutionPage() {
 
                     {/* Quick Action: Copy Last Session */}
                     {!editId && (
-                        <div className="flex justify-center mt-2">
+                        <div className="flex justify-center mt-2 gap-2">
                             <button
                                 onClick={handleCopyLastSession}
                                 className="flex items-center gap-1 text-[10px] bg-brand-50 text-brand-600 px-2 py-1 rounded-full border border-brand-100 hover:bg-brand-100 transition-colors"
@@ -726,9 +703,21 @@ export default function EvolutionPage() {
                 <CardContent className="p-4 space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-sm uppercase text-brand-500">Ajuste de Plan (Hogar)</h3>
-                        <Button variant="ghost" size="sm" className="text-brand-600 text-xs" onClick={handleAddTask}>
-                            <Plus className="w-3 h-3 mr-1" /> Añadir Tarea
-                        </Button>
+                        <div className="flex gap-2">
+                            {/* Copy Home Plan Button */}
+                            {!editId && (
+                                <button
+                                    onClick={handleCopyHomePlan}
+                                    className="px-2 py-1 text-[10px] bg-brand-50 text-brand-600 rounded-full border border-brand-100 hover:bg-brand-100 transition-colors flex items-center gap-1"
+                                    title="Copiar tareas de hogar de la última sesión"
+                                >
+                                    <Copy className="w-3 h-3" /> Repetir Último Plan
+                                </button>
+                            )}
+                            <Button variant="ghost" size="sm" className="text-brand-600 text-xs" onClick={handleAddTask}>
+                                <Plus className="w-3 h-3 mr-1" /> Añadir Tarea
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="space-y-3">
