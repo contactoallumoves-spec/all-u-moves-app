@@ -5,7 +5,7 @@ import { SessionService } from '../services/sessionService'; // [NEW]
 import { EvaluationService } from '../services/evaluationService'; // [NEW]
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { ArrowLeft, Save, Plus, Trash2, CheckSquare } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, CheckSquare, Copy } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Patient, Task } from '../types/patient';
 
@@ -246,6 +246,62 @@ export default function EvolutionPage() {
         }
     };
 
+    const handleCopyLastSession = async () => {
+        if (!patientId) return;
+        try {
+            const sessions = await SessionService.getByPatientId(patientId);
+            if (sessions.length === 0) {
+                alert("No hay sesiones anteriores para copiar.");
+                return;
+            }
+            // Sort to find latest
+            const sorted = sessions.sort((a, b) => {
+                const dateA = a.date instanceof Date ? a.date : new Date(a.date.seconds * 1000);
+                const dateB = b.date instanceof Date ? b.date : new Date(b.date.seconds * 1000);
+                return dateB.getTime() - dateA.getTime();
+            });
+            const last = sorted[0];
+
+            // Copy Interventions
+            setInterventions(last.interventions || []);
+            setInterventionDetails(last.interventionDetails || {});
+
+            // Copy Custom Activities
+            setCustomActivities(last.customActivities || []);
+
+            // Copy Location
+            if (last.location) {
+                if (['Consulta Kinesiológica', 'Online'].includes(last.location)) {
+                    setLocation(last.location);
+                } else if (last.location.startsWith('Domicilio')) {
+                    setLocation('Domicilio');
+                    const detail = last.location.includes(':') ? last.location.split(':')[1]?.trim() : '';
+                    setManualLocation(detail || '');
+                } else {
+                    setLocation('manual');
+                    setManualLocation(last.location);
+                }
+            }
+
+            // Copy PERFECT Scheme
+            if (last.perfectScheme) {
+                setOxford(last.perfectScheme.power);
+                setPerfectEndurance(last.perfectScheme.endurance || '');
+                setPerfectRepetitions(last.perfectScheme.repetitions || '');
+                setPerfectFast(last.perfectScheme.fast || '');
+                setPerfectElevation(last.perfectScheme.elevation || false);
+                setPerfectCoContraction(last.perfectScheme.coContraction || false);
+                setPerfectTiming(last.perfectScheme.timing || false);
+            }
+
+            alert(`✅ Datos cargados de la sesión del ${last.date instanceof Date ? last.date.toLocaleDateString() : 'fecha desconocida'}`);
+
+        } catch (error) {
+            console.error(error);
+            alert("Error al copiar sesión anterior");
+        }
+    };
+
     if (loading) return <div className="p-10 text-center">Cargando...</div>;
 
     return (
@@ -258,6 +314,18 @@ export default function EvolutionPage() {
                 <div>
                     <h1 className="text-xl font-serif font-bold text-brand-900 text-center">Nueva Evolución</h1>
                     <p className="text-xs text-brand-500 text-center">{patient?.firstName} {patient?.lastName}</p>
+
+                    {/* Quick Action: Copy Last Session */}
+                    {!editId && (
+                        <div className="flex justify-center mt-2">
+                            <button
+                                onClick={handleCopyLastSession}
+                                className="flex items-center gap-1 text-[10px] bg-brand-50 text-brand-600 px-2 py-1 rounded-full border border-brand-100 hover:bg-brand-100 transition-colors"
+                            >
+                                <Copy className="w-3 h-3" /> Repetir Última Sesión
+                            </button>
+                        </div>
+                    )}
 
                     {/* Location Selector */}
                     <div className="flex justify-center gap-2 mt-2">
