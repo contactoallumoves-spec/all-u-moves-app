@@ -4,7 +4,7 @@ import { Exercise } from '../../types/exercise';
 import { ExerciseService } from '../../services/exerciseService';
 import { PatientService } from '../../services/patientService';
 import { Button } from '../ui/Button';
-import { Search, Plus, Save, Calendar, Copy, Check } from 'lucide-react';
+import { Search, Plus, Save, Calendar } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Timestamp } from 'firebase/firestore';
 
@@ -207,7 +207,7 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                                     <span className="text-xs font-bold text-brand-700 uppercase tracking-wider">{day.label}</span>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                                    {plan.schedule[day.key as keyof typeof plan.schedule]?.map((item, idx) => (
+                                    {plan.schedule[day.key as keyof typeof plan.schedule]?.map((item) => (
                                         <div key={item.id} className="relative p-2 bg-white border border-brand-100 rounded-md shadow-sm group hover:border-brand-300 transition-all">
                                             <p className="text-xs font-medium text-brand-800 leading-tight">{item.name}</p>
                                             <input

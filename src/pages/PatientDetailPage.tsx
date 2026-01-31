@@ -252,6 +252,9 @@ export default function PatientDetailPage() {
                     <Button variant={activeTab === 'anamnesis' ? 'primary' : 'outline'} onClick={() => setActiveTab('anamnesis')}>
                         Anamnesis Remota
                     </Button>
+                    <Button variant={activeTab === 'planning' ? 'primary' : 'outline'} onClick={() => setActiveTab('planning')}>
+                        Planificación
+                    </Button>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => pdfService.generateFullHistoryReport(patient!, history)}>
@@ -292,6 +295,13 @@ export default function PatientDetailPage() {
                     </Button>
                 </div>
             </div>
+            {/* PLANNING VIEW */}
+            {activeTab === 'planning' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <PlanBuilder patient={patient} onSave={() => loadData(id!)} />
+                </div>
+            )}
+
             {/* ANAMNESIS VIEW */}
             {activeTab === 'anamnesis' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
