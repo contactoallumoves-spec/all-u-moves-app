@@ -10,10 +10,40 @@ export const clinicalLogic = {
 
         interpret: (score: number) => {
             if (score === 0) return { level: 'Normal', text: "Continencia. No se reportan pérdidas significativas.", color: 'bg-green-100 text-green-800' };
-            if (score <= 5) return { level: 'Leve', text: "Incontinencia Leve. Impacto bajo en calidad de vida.", color: 'bg-yellow-100 text-yellow-800' };
-            if (score <= 12) return { level: 'Moderada', text: "Incontinencia Moderada. Se recomienda intervención conservadora.", color: 'bg-orange-100 text-orange-800' };
-            if (score <= 18) return { level: 'Severa', text: "Incontinencia Severa. Impacto significativo. Requiere tratamiento prioritario.", color: 'bg-red-100 text-red-800' };
-            return { level: 'Muy Severa', text: "Incontinencia Muy Severa. Afectación crítica de calidad de vida.", color: 'bg-red-200 text-red-900 border-red-300' };
+            if (score <= 5) return { level: 'Leve', text: "Incontinencia Urinaria Leve. Impacto bajo en calidad de vida.", color: 'bg-yellow-100 text-yellow-800' };
+            if (score <= 12) return { level: 'Moderada', text: "Incontinencia Urinaria Moderada. Se recomienda intervención conservadora.", color: 'bg-orange-100 text-orange-800' };
+            if (score <= 18) return { level: 'Severa', text: "Incontinencia Urinaria Severa. Impacto significativo. Requiere tratamiento prioritario.", color: 'bg-red-100 text-red-800' };
+            return { level: 'Muy Severa', text: "Incontinencia Urinaria Muy Severa. Afectación crítica de calidad de vida.", color: 'bg-red-200 text-red-900 border-red-300' };
+        },
+
+        getQuestionText: (key: string) => {
+            const map: Record<string, string> = {
+                frequency: "1. ¿Con qué frecuencia pierde orina?",
+                amount: "2. Cantidad de orina que pierde",
+                impact: "3. Afectación en vida diaria (0-10)",
+                sit_urgency: "Pérdida antes de llegar al baño",
+                sit_cough: "Pérdida al toser/estornudar",
+                sit_sleep: "Pérdida mientras duerme",
+                sit_exercise: "Pérdida al realizar esfuerzo físico",
+                sit_after: "Pérdida al terminar de orinar",
+                sit_unknown: "Pérdida sin motivo evidente",
+                sit_constant: "Pérdida continua"
+            };
+            return map[key] || key;
+        },
+
+        getAnswerText: (key: string, value: any) => {
+            if (key === 'frequency') {
+                const map: Record<number, string> = { 0: 'Nunca', 1: '1 vez/semana o menos', 2: '2-3 veces/semana', 3: '1 vez al día', 4: 'Varias veces al día', 5: 'Continuamente' };
+                return map[Number(value)] || value;
+            }
+            if (key === 'amount') {
+                const map: Record<number, string> = { 0: 'Nada', 2: 'Muy poca', 4: 'Moderada', 6: 'Mucha' };
+                return map[Number(value)] || value;
+            }
+            if (key === 'impact') return `${value} / 10`;
+            if (key.startsWith('sit_')) return value ? 'Sí' : 'No';
+            return value;
         },
 
         getRecommendations: (score: number, answers: Record<string, any>) => {
