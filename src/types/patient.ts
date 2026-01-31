@@ -50,6 +50,29 @@ export interface Patient {
         checked: boolean;
     }[];
     activeTasks?: Task[];
+    activePlan?: PrescribedPlan; // [NEW] Structured Weekly Plan
+}
+
+export interface PrescribedPlan {
+    startDate: any; // Timestamp
+    endDate?: any;
+    schedule: {
+        monday: PlanExercise[];
+        tuesday: PlanExercise[];
+        wednesday: PlanExercise[];
+        thursday: PlanExercise[];
+        friday: PlanExercise[];
+        saturday: PlanExercise[];
+        sunday: PlanExercise[];
+    };
+}
+
+export interface PlanExercise {
+    id: string; // unique instance ID
+    exerciseId: string; // ref to Exercise Library
+    name: string; // snapshot of name
+    params: string; // specific params e.g. "3x10"
+    completed?: boolean;
 }
 
 export interface Task {

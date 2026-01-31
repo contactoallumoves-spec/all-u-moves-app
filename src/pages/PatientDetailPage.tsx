@@ -28,6 +28,7 @@ import { ProgressDetailModal } from '../components/patient/ProgressDetailModal';
 import { BodyMap } from '../components/clinical/BodyMap';
 import { BodyMapHistoryModal } from '../components/patient/BodyMapHistoryModal';
 import { BodyMapLegend } from '../components/clinical/BodyMapLegend';
+import { PlanBuilder } from '../components/clinical/PlanBuilder'; // [NEW]
 const DataRenderer = ({ data, level = 0 }: { data: any, level?: number }) => {
     if (data === null || data === undefined) return null;
     if (typeof data !== 'object') return <span className="text-gray-800 ml-2 font-medium">{String(data)}</span>;
@@ -126,7 +127,7 @@ export default function PatientDetailPage() {
     const [patient, setPatient] = useState<Patient | null>(null);
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'clinical' | 'anamnesis'>('clinical');
+    const [activeTab, setActiveTab] = useState<'clinical' | 'anamnesis' | 'planning'>('clinical'); // [NEW]
 
     // Modal States
     const [selectedItem, setSelectedItem] = useState<any>(null);
