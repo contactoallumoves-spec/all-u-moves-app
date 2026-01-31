@@ -48,27 +48,7 @@ export default function SessionPlayer() {
         }
     };
 
-    const handleFinishSession = async () => {
-        setIsSubmitting(true);
-        try {
-            await SessionLogService.create({
-                patientId: patient.id!,
-                date: Timestamp.now(),
-                exercises: planExercises.map(item => ({
-                    exerciseId: item.exerciseId,
-                    name: item.name,
-                    completed: !!completedMap[item.id],
-                }))
-            });
-            alert("¡Sesión completada y guardada!");
-            navigate('../home');
-        } catch (error) {
-            console.error(error);
-            alert("Error al guardar la sesión");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+
 
 
     // Feedback State
@@ -195,8 +175,8 @@ export default function SessionPlayer() {
                                     key={sym}
                                     onClick={() => toggleSymptom(sym)}
                                     className={`px-3 py-1 rounded-full text-xs border transition-colors ${feedback.symptoms.includes(sym)
-                                            ? "bg-red-500/20 border-red-500 text-red-200"
-                                            : "bg-zinc-800 border-zinc-700 text-zinc-400"
+                                        ? "bg-red-500/20 border-red-500 text-red-200"
+                                        : "bg-zinc-800 border-zinc-700 text-zinc-400"
                                         }`}
                                 >
                                     {sym}
