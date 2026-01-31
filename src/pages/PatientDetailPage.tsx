@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
 import { SessionService } from '../services/sessionService';
+import { SessionLogService } from '../services/sessionLogService';
 import { Patient } from '../types/patient';
 import { pdfService } from '../services/pdfService';
 import { Button } from '../components/ui/Button';
@@ -157,10 +158,11 @@ export default function PatientDetailPage() {
                 ]);
             }
 
-            // Fetch Evaluations and Sessions
-            const [evals, sessions] = await Promise.all([
+            // Fetch Evaluations, Clinical Sessions, and Patient Home Sessions
+            const [evals, sessions, sessionLogs] = await Promise.all([
                 EvaluationService.getByPatientId(patientId),
-                SessionService.getByPatientId(patientId)
+                SessionService.getByPatientId(patientId),
+                SessionLogService.getByPatientId(patientId) // [NEW] Fetch patient logs
             ]);
 
             // Normalize and Merge
@@ -189,7 +191,19 @@ export default function PatientDetailPage() {
                 timestamp: s.date instanceof Date ? s.date.getTime() : 0
             }));
 
-            const combinedHistory = [...normalizedEvals, ...normalizedSessions].sort((a, b) => b.timestamp - a.timestamp);
+            // [NEW] Normalize Patient Session Logs
+            const normalizedLogs = sessionLogs.map(log => ({
+                id: log.id,
+                type: 'patient_session',
+                date: log.date,
+                title: 'Sesión Realizada (Casa)',
+                summary: `RPE: ${log.feedback?.rpe ?? '-'} | Dolor: ${log.feedback?.pain ?? '-'}`,
+                findings: log.exercises.filter(e => e.completed).map(e => e.name), // Show completed exercises as "findings" tag
+                raw: log,
+                timestamp: log.date instanceof Date ? log.date.getTime() : (log.date as any)?.toDate ? (log.date as any).toDate().getTime() : 0
+            }));
+
+            const combinedHistory = [...normalizedEvals, ...normalizedSessions, ...normalizedLogs].sort((a, b) => b.timestamp - a.timestamp);
             setHistory(combinedHistory);
 
         } catch (error) {
@@ -213,6 +227,8 @@ export default function PatientDetailPage() {
         try {
             if (item.type === 'session') {
                 await SessionService.delete(item.id);
+            } else if (item.type === 'patient_session') {
+                await SessionLogService.delete(item.id);
             } else {
                 await EvaluationService.delete(item.id);
             }
@@ -530,7 +546,7 @@ export default function PatientDetailPage() {
                                         {/* Dot */}
                                         <div className={cn(
                                             "absolute -left-[41px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110",
-                                            item.type.includes('eval') ? "bg-purple-500" : "bg-brand-500"
+                                            item.type.includes('eval') ? "bg-purple-500" : (item.type === 'patient_session' ? "bg-green-500" : "bg-brand-500")
                                         )} />
 
                                         <div className="bg-white p-4 rounded-xl border border-brand-100 shadow-sm hover:shadow-md transition-all group-hover:border-brand-300">
@@ -848,6 +864,87 @@ export default function PatientDetailPage() {
                                                 <div className="mt-4 text-sm text-gray-400 italic">Sin lista de tareas.</div>
                                             )}
                                         </div>
+                                    </>
+                                )}
+
+                                {/* --- PATIENT HOME SESSION LOG DETAILS --- */}
+                                {selectedItem.type === 'patient_session' && (
+                                    <>
+                                        {/* Summary Stats */}
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="bg-brand-50 p-4 rounded-xl text-center">
+                                                <span className="text-xs font-bold text-brand-400 uppercase block mb-1">RPE (Esfuerzo)</span>
+                                                <span className="text-3xl font-bold text-brand-700">{selectedItem.raw.feedback?.rpe ?? '-'}/10</span>
+                                            </div>
+                                            <div className="bg-red-50 p-4 rounded-xl text-center">
+                                                <span className="text-xs font-bold text-red-400 uppercase block mb-1">Dolor</span>
+                                                <span className="text-3xl font-bold text-red-700">{selectedItem.raw.feedback?.pain ?? '-'}/10</span>
+                                            </div>
+                                            <div className="bg-blue-50 p-4 rounded-xl text-center">
+                                                <span className="text-xs font-bold text-blue-400 uppercase block mb-1">Fatiga</span>
+                                                <span className="text-3xl font-bold text-blue-700">{selectedItem.raw.feedback?.fatigue ?? '-'}/10</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Exercises List */}
+                                        <div className="space-y-3">
+                                            <h3 className="font-bold text-brand-800 text-sm uppercase border-b border-gray-100 pb-1 flex justify-between items-center">
+                                                <span>Ejercicios Realizados</span>
+                                                <span className="text-xs text-brand-400 font-normal">
+                                                    {selectedItem.raw.exercises?.filter((e: any) => e.completed).length || 0} / {selectedItem.raw.exercises?.length || 0} Completados
+                                                </span>
+                                            </h3>
+
+                                            <div className="space-y-2">
+                                                {selectedItem.raw.exercises?.map((ex: any, idx: number) => (
+                                                    <div key={idx} className={cn(
+                                                        "flex items-start justify-between p-3 rounded-lg border",
+                                                        ex.completed ? "bg-green-50 border-green-100" : "bg-gray-50 border-gray-100 opacity-60"
+                                                    )}>
+                                                        <div>
+                                                            <div className="font-medium text-gray-800 text-sm">{ex.name}</div>
+                                                            {(ex.sets || ex.reps || ex.load) && (
+                                                                <div className="text-xs text-gray-500 mt-0.5">
+                                                                    {ex.sets ? `${ex.sets} series ` : ''}
+                                                                    {ex.reps ? `x ${ex.reps} reps ` : ''}
+                                                                    {ex.load ? `@ ${ex.load}` : ''}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {ex.rpe && (
+                                                            <span className="text-xs font-mono bg-white px-2 py-0.5 rounded border border-gray-200 text-gray-600">
+                                                                RPE: {ex.rpe}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Symptoms & Notes */}
+                                        {(selectedItem.raw.feedback?.symptoms?.length > 0 || selectedItem.raw.feedback?.notes) && (
+                                            <div className="space-y-3 pt-2">
+                                                {selectedItem.raw.feedback?.symptoms?.length > 0 && (
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Síntomas Reportados</h4>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {selectedItem.raw.feedback.symptoms.map((sym: string, i: number) => (
+                                                                <span key={i} className="px-2 py-1 bg-red-100 text-red-700 rounded-md text-xs font-medium">
+                                                                    {sym}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {selectedItem.raw.feedback?.notes && (
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-gray-400 uppercase mb-1">Comentarios</h4>
+                                                        <p className="text-sm text-gray-700 italic bg-gray-50 p-3 rounded-lg">"{selectedItem.raw.feedback.notes}"</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </>
                                 )}
 

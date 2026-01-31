@@ -142,37 +142,19 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
         }));
     };
 
-    const handleMoveBlock = (dayKey: keyof typeof plan.schedule, instanceId: string, newBlock: string) => {
-        setPlan(prev => ({
-            ...prev,
-            schedule: {
-                ...prev.schedule,
-                [dayKey]: prev.schedule[dayKey].map(i =>
-                    i.id === instanceId ? { ...i, block: newBlock } : i
-                )
-            }
-        }));
-    };
-
-    const handleRemoveExercise = (dayKey: keyof typeof plan.schedule, instanceId: string) => {
-        setPlan(prev => ({
-            ...prev,
-            schedule: {
-                ...prev.schedule,
-                [dayKey]: prev.schedule[dayKey].filter(i => i.id !== instanceId)
-            }
-        }));
-    };
-
     const handleAddBlock = (dayKey: keyof typeof plan.schedule, blockName: string) => {
         setPlan(prev => {
             const currentBlocks = prev.activeBlocks?.[dayKey] || [];
             if (currentBlocks.includes(blockName)) return prev;
 
+            const existingBlocks = prev.activeBlocks || {
+                monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+            };
+
             return {
                 ...prev,
                 activeBlocks: {
-                    ...prev.activeBlocks,
+                    ...existingBlocks,
                     [dayKey]: [...currentBlocks, blockName]
                 }
             };
@@ -182,16 +164,29 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
     const handleRemoveBlock = (dayKey: keyof typeof plan.schedule, blockName: string) => {
         setPlan(prev => {
             const currentBlocks = prev.activeBlocks?.[dayKey] || [];
+            const existingBlocks = prev.activeBlocks || {
+                monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+            };
+
             return {
                 ...prev,
                 activeBlocks: {
-                    ...prev.activeBlocks,
+                    ...existingBlocks,
                     [dayKey]: currentBlocks.filter(b => b !== blockName)
                 }
             };
         });
     };
 
+    const handleRemoveExercise = (dayKey: keyof typeof plan.schedule, exerciseId: string) => {
+        setPlan(prev => ({
+            ...prev,
+            schedule: {
+                ...prev.schedule,
+                [dayKey]: prev.schedule[dayKey].filter(ex => ex.id !== exerciseId)
+            }
+        }));
+    };
 
 
     const handleSavePlan = async () => {

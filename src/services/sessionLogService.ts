@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 
 export interface SessionLog {
     id?: string;
@@ -44,9 +44,28 @@ export const SessionLogService = {
         }
     },
 
+    async getByPatientId(patientId: string) {
+        try {
+            const q = query(
+                collection(db, COLLECTION_NAME),
+                where('patientId', '==', patientId),
+                orderBy('date', 'desc')
+            );
+
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SessionLog));
+        } catch (error) {
+            console.error("Error getting session logs", error);
+            // Fallback for missing index or other errors
+            return [];
+        }
+    },
+
+    async delete(id: string) {
+        await deleteDoc(doc(db, COLLECTION_NAME, id));
+    },
+
     async getByPatientAndDate(patientId: string, date: Date) {
-        // This is a bit tricky with timestamps, usually better to query by range or string YYYY-MM-DD
-        // For simplicity, we might just fetch recent logs
         try {
             const startOfDay = new Date(date);
             startOfDay.setHours(0, 0, 0, 0);
@@ -63,7 +82,7 @@ export const SessionLogService = {
             const snapshot = await getDocs(q);
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SessionLog));
         } catch (error) {
-            console.error("Error getting session logs", error);
+            console.error("Error getting session logs by date", error);
             return [];
         }
     }
