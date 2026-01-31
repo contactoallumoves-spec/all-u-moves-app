@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { clinicalLogic } from '../../../utils/clinicalLogic';
 
 interface UDI6Data {
     answers: Record<string, number>;
@@ -25,29 +26,6 @@ export const UDI6Form = ({ onChange, initialData, readOnly }: UDI6FormProps) => 
         { id: 'q6', label: '¿Dolor o incomodidad en el área abdominal baja o genital?' }
     ];
 
-    const calculateScore = (currentAnswers: Record<string, number>) => {
-        let sum = 0;
-        let count = 0;
-
-        questions.forEach(q => {
-            if (currentAnswers[q.id] !== undefined) {
-                sum += currentAnswers[q.id];
-                count++;
-            }
-        });
-
-        if (count === 0) return 0;
-        // Scale 0-3 * 6 items = 18 max. (sum / 18) * 100
-        return Math.round((sum / 18) * 100);
-    };
-
-    const getInterpretation = (score: number) => {
-        if (score === 0) return "Sin síntomas de distrés";
-        if (score <= 33) return "Distrés Leve";
-        if (score <= 66) return "Distrés Moderado";
-        return "Distrés Severo";
-    };
-
     const handleChange = (key: string, value: any) => {
         if (readOnly) return;
 
@@ -57,14 +35,19 @@ export const UDI6Form = ({ onChange, initialData, readOnly }: UDI6FormProps) => 
         const newAnswers = { ...answers, [cleanKey]: Number(value) };
         setAnswers(newAnswers);
 
-        const score = calculateScore(newAnswers);
+        const score = clinicalLogic.udi6.calculateScore(newAnswers);
+        const { text } = clinicalLogic.udi6.interpret(score, newAnswers);
 
         onChange({
             answers: newAnswers,
             score,
-            interpretation: score < 33 ? "Leve / Baja Afectación" : score < 66 ? "Moderada" : "Severa / Alta Afectación"
+            interpretation: text
         });
     };
+
+    // Helper for display
+    const currentScore = clinicalLogic.udi6.calculateScore(answers);
+    const { text: currentInterpretation } = clinicalLogic.udi6.interpret(currentScore, answers);
 
     return (
         <div className="space-y-6 text-brand-900">
@@ -104,10 +87,10 @@ export const UDI6Form = ({ onChange, initialData, readOnly }: UDI6FormProps) => 
                 <div className="bg-brand-50 p-4 rounded-xl border border-brand-100 text-center mt-6">
                     <p className="text-xs text-brand-400 uppercase font-bold mb-1">Puntaje UDI-6</p>
                     <div className="flex items-baseline justify-center gap-2">
-                        <span className="text-3xl font-bold text-brand-700">{calculateScore(answers)}</span>
+                        <span className="text-3xl font-bold text-brand-700">{currentScore}</span>
                         <span className="text-sm text-brand-500">/ 100</span>
                     </div>
-                    <p className="text-xs text-brand-400 mt-1">{getInterpretation(calculateScore(answers))}</p>
+                    <p className="text-xs text-brand-400 mt-1">{currentInterpretation}</p>
                 </div>
             )}
         </div>

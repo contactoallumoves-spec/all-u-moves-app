@@ -12,12 +12,14 @@ interface ProgressChartProps {
 export function ProgressChart({ history, className }: ProgressChartProps) {
     const [visible, setVisible] = useState({
         eva: true,
-        oxford: true, // P
-        endurance: true, // E
-        repetitions: true, // R
-        fast: true, // F
+        oxford: true,
+        endurance: true,
+        repetitions: true,
+        fast: true,
         sane: true,
-        psfs: true
+        psfs: true,
+        iciq: true,
+        udi6: true
     });
 
     // 1. Filter sessions/evals that have chartable data
@@ -32,8 +34,9 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
             const psfsList = item.raw?.reassessment?.psfs || item.raw?.proms?.psfs || [];
             const hasPsfs = psfsList.length > 0;
             const hasPerfect = item.raw?.perfectScheme !== undefined;
+            const isQuestionnaire = item.type === 'questionnaire';
 
-            return hasScore || hasOxford || hasSane || hasPsfs || hasPerfect;
+            return hasScore || hasOxford || hasSane || hasPsfs || hasPerfect || isQuestionnaire;
         })
         .map(item => {
             let dateObj = new Date();
@@ -49,6 +52,18 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                 ? psfsList.reduce((acc: number, curr: any) => acc + (Number(curr.score) || 0), 0) / psfsList.length
                 : null;
 
+            // Questionnaire Logic
+            let iciqRaw = null;
+            let udi6Raw = null;
+
+            if (item.type === 'questionnaire') {
+                if (item.questionnaire?.type === 'iciq-sf') {
+                    iciqRaw = item.questionnaire.score;
+                } else if (item.questionnaire?.type === 'udi-6') {
+                    udi6Raw = item.questionnaire.score;
+                }
+            }
+
             return {
                 date: dateObj,
                 dateLabel: format(dateObj, 'd MMM', { locale: es }),
@@ -60,7 +75,11 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                 sane, // Normalized
                 saneRaw, // Original for tooltip
                 psfs: psfsAvg,
-                psfsRaw: psfsAvg !== null ? psfsAvg.toFixed(1) : null
+                psfsRaw: psfsAvg !== null ? psfsAvg.toFixed(1) : null,
+                iciq: iciqRaw !== null ? (iciqRaw / 2.1) : null, // Normalize 0-21 -> 0-10
+                iciqRaw,
+                udi6: udi6Raw !== null ? (udi6Raw / 10) : null, // Normalize 0-100 -> 0-10
+                udi6Raw
             };
         })
         .sort((a, b) => a.date.getTime() - b.date.getTime()); // Chronological order
@@ -82,20 +101,26 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                 <button onClick={() => toggle('oxford')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.oxford ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
                     <div className="w-2 h-2 rounded-full bg-indigo-400 shadow-sm"></div> P (Oxford)
                 </button>
+                <button onClick={() => toggle('iciq')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.iciq ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
+                    <div className="w-2 h-2 rounded-full bg-teal-400 shadow-sm"></div> ICIQ-SF
+                </button>
+                <button onClick={() => toggle('udi6')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.udi6 ? 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
+                    <div className="w-2 h-2 rounded-full bg-fuchsia-400 shadow-sm"></div> UDI-6
+                </button>
                 <button onClick={() => toggle('endurance')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.endurance ? 'bg-cyan-50 border-cyan-200 text-cyan-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
-                    <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm"></div> E (Resistencia)
+                    <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm"></div> E (Resist.)
                 </button>
                 <button onClick={() => toggle('repetitions')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.repetitions ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
-                    <div className="w-2 h-2 rounded-full bg-purple-400 shadow-sm"></div> R (Repeticiones)
+                    <div className="w-2 h-2 rounded-full bg-purple-400 shadow-sm"></div> R (Reps)
                 </button>
                 <button onClick={() => toggle('fast')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.fast ? 'bg-pink-50 border-pink-200 text-pink-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
                     <div className="w-2 h-2 rounded-full bg-pink-400 shadow-sm"></div> F (Rápidas)
                 </button>
                 <button onClick={() => toggle('sane')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.sane ? 'bg-green-50 border-green-200 text-green-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
-                    <div className="w-2 h-2 rounded-full bg-green-400 shadow-sm"></div> SANE (/10)
+                    <div className="w-2 h-2 rounded-full bg-green-400 shadow-sm"></div> SANE
                 </button>
                 <button onClick={() => toggle('psfs')} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] border transition-all ${visible.psfs ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-transparent border-transparent text-gray-300 opacity-50'}`}>
-                    <div className="w-2 h-2 rounded-full bg-orange-400 shadow-sm"></div> PSFS (Avg)
+                    <div className="w-2 h-2 rounded-full bg-orange-400 shadow-sm"></div> PSFS
                 </button>
             </div>
 
@@ -130,6 +155,14 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                             <stop offset="5%" stopColor="#f472b6" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#f472b6" stopOpacity={0} />
                         </linearGradient>
+                        <linearGradient id="colorIciq" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#2dd4bf" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="colorUdi6" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#e879f9" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="#e879f9" stopOpacity={0} />
+                        </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                     <XAxis
@@ -153,6 +186,8 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                         formatter={(value: any, name: any, props: any) => {
                             if (name === 'SANE' && visible.sane) return [`${props.payload.saneRaw}%`, name];
                             if (name === 'PSFS' && visible.psfs) return [props.payload.psfsRaw, name];
+                            if (name === 'ICIQ-SF' && visible.iciq) return [`${props.payload.iciqRaw}/21`, name];
+                            if (name === 'UDI-6' && visible.udi6) return [`${props.payload.udi6Raw}/100`, name];
                             return [value, name];
                         }}
                     />
@@ -168,6 +203,32 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                         activeDot={{ r: 4, strokeWidth: 0 }}
                         connectNulls
                         hide={!visible.eva}
+                    />
+                    {/* ICIQ Area */}
+                    <Area
+                        type="monotone"
+                        dataKey="iciq"
+                        name="ICIQ-SF"
+                        stroke="#2dd4bf"
+                        fillOpacity={1}
+                        fill="url(#colorIciq)"
+                        strokeWidth={2}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
+                        connectNulls
+                        hide={!visible.iciq}
+                    />
+                    {/* UDI-6 Area */}
+                    <Area
+                        type="monotone"
+                        dataKey="udi6"
+                        name="UDI-6"
+                        stroke="#e879f9"
+                        fillOpacity={1}
+                        fill="url(#colorUdi6)"
+                        strokeWidth={2}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
+                        connectNulls
+                        hide={!visible.udi6}
                     />
                     {/* Oxford (Strength) Area */}
                     <Area
