@@ -70,6 +70,56 @@ export default function SessionPlayer() {
         }
     };
 
+
+    // Feedback State
+    const [showFeedback, setShowFeedback] = useState(false);
+    const [feedback, setFeedback] = useState({
+        rpe: 5,
+        pain: 0,
+        fatigue: 0,
+        symptoms: [] as string[],
+        notes: ''
+    });
+
+    const toggleSymptom = (symptom: string) => {
+        setFeedback(prev => ({
+            ...prev,
+            symptoms: prev.symptoms.includes(symptom)
+                ? prev.symptoms.filter(s => s !== symptom)
+                : [...prev.symptoms, symptom]
+        }));
+    };
+
+    const handleFinishSession = async () => {
+        setIsSubmitting(true);
+        try {
+            await SessionLogService.create({
+                patientId: patient.id!,
+                date: Timestamp.now(),
+                exercises: planExercises.map(item => ({
+                    exerciseId: item.exerciseId,
+                    name: item.name,
+                    completed: !!completedMap[item.id],
+                    // We can add actual values inputs later
+                })),
+                feedback: {
+                    rpe: feedback.rpe,
+                    pain: feedback.pain,
+                    fatigue: feedback.fatigue,
+                    symptoms: feedback.symptoms,
+                    notes: feedback.notes
+                }
+            });
+            alert("¡Sesión guardada con éxito!");
+            navigate('../home');
+        } catch (error) {
+            console.error(error);
+            alert("Error al guardar la sesión");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     if (loading) return <div className="p-8 text-center bg-zinc-900 text-white h-screen">Cargando ejercicios...</div>;
 
     if (planExercises.length === 0) {
@@ -77,6 +127,103 @@ export default function SessionPlayer() {
             <div className="p-4 text-center space-y-4 bg-zinc-900 text-white h-screen flex flex-col items-center justify-center">
                 <p>No tienes ejercicios programados para hoy.</p>
                 <Button onClick={() => navigate('../home')}>Volver al inicio</Button>
+            </div>
+        );
+    }
+
+    // Feedback View
+    if (showFeedback) {
+        return (
+            <div className="flex flex-col h-screen bg-black text-white p-6 overflow-y-auto">
+                <h1 className="text-2xl font-bold mb-6">Resumen de Sesión</h1>
+
+                <div className="space-y-6">
+                    {/* RPE Scale */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-300">Esfuerzo Global (0-10)</label>
+                        <input
+                            type="range" min="0" max="10" step="1"
+                            value={feedback.rpe}
+                            onChange={(e) => setFeedback({ ...feedback, rpe: parseInt(e.target.value) })}
+                            className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                        />
+                        <div className="flex justify-between text-xs text-zinc-500">
+                            <span>Nada</span>
+                            <span>Máximo</span>
+                        </div>
+                        <p className="text-center font-bold text-xl">{feedback.rpe}</p>
+                    </div>
+
+                    {/* Pain Scale */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-300">Nivel de Dolor (0-10)</label>
+                        <input
+                            type="range" min="0" max="10" step="1"
+                            value={feedback.pain}
+                            onChange={(e) => setFeedback({ ...feedback, pain: parseInt(e.target.value) })}
+                            className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+                        />
+                        <div className="flex justify-between text-xs text-zinc-500">
+                            <span>Sin dolor</span>
+                            <span>Incoportable</span>
+                        </div>
+                        <p className="text-center font-bold text-xl text-red-400">{feedback.pain}</p>
+                    </div>
+
+                    {/* Fatigue Scale */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-300">Fatiga / Cansancio (0-10)</label>
+                        <input
+                            type="range" min="0" max="10" step="1"
+                            value={feedback.fatigue}
+                            onChange={(e) => setFeedback({ ...feedback, fatigue: parseInt(e.target.value) })}
+                            className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                        />
+                        <div className="flex justify-between text-xs text-zinc-500">
+                            <span>Fresco</span>
+                            <span>Exhausto</span>
+                        </div>
+                        <p className="text-center font-bold text-xl text-yellow-400">{feedback.fatigue}</p>
+                    </div>
+
+                    {/* Symptoms */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-300">¿Sentiste algo particular?</label>
+                        <div className="flex flex-wrap gap-2">
+                            {["Pesadez Pélvica", "Escape de orina", "Dolor Articular", "Mareo", "Falta de aire", "Calambre"].map(sym => (
+                                <button
+                                    key={sym}
+                                    onClick={() => toggleSymptom(sym)}
+                                    className={`px-3 py-1 rounded-full text-xs border transition-colors ${feedback.symptoms.includes(sym)
+                                            ? "bg-red-500/20 border-red-500 text-red-200"
+                                            : "bg-zinc-800 border-zinc-700 text-zinc-400"
+                                        }`}
+                                >
+                                    {sym}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-300">Comentarios (Opcional)</label>
+                        <textarea
+                            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-sm focus:border-brand-500 outline-none"
+                            rows={3}
+                            placeholder="¿Cómo te sentiste?"
+                            value={feedback.notes}
+                            onChange={(e) => setFeedback({ ...feedback, notes: e.target.value })}
+                        />
+                    </div>
+                </div>
+
+                <div className="mt-8 flex gap-4">
+                    <Button variant="outline" className="flex-1" onClick={() => setShowFeedback(false)}>Volver</Button>
+                    <Button className="flex-[2] bg-brand-600 hover:bg-brand-500 text-white" onClick={handleFinishSession} disabled={isSubmitting}>
+                        {isSubmitting ? "Guardando..." : "Finalizar"}
+                    </Button>
+                </div>
             </div>
         );
     }
@@ -128,9 +275,22 @@ export default function SessionPlayer() {
                 <div className="p-6 space-y-6">
                     <div className="space-y-1">
                         <h1 className="text-2xl font-bold">{currentItem?.name}</h1>
-                        <p className="text-zinc-400 text-sm">
-                            {currentItem?.params || (currentDetails?.defaultParams && `${currentDetails.defaultParams.sets}x${currentDetails.defaultParams.reps}`)}
-                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-zinc-400">
+                            {currentItem?.details ? (
+                                <>
+                                    {currentItem.details.sets && <span className="bg-zinc-800 px-2 py-1 rounded">{currentItem.details.sets} series</span>}
+                                    {currentItem.details.reps && <span className="bg-zinc-800 px-2 py-1 rounded">{currentItem.details.reps} reps</span>}
+                                    {currentItem.details.load && <span className="bg-zinc-800 px-2 py-1 rounded text-orange-300 font-bold">{currentItem.details.load}</span>}
+                                    {currentItem.details.rpe && <span className="bg-zinc-800 px-2 py-1 rounded text-purple-300">RPE: {currentItem.details.rpe}</span>}
+                                    {/* Additional detailed params render */}
+                                    {currentItem.details.unilateral && <span className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded font-xs">Unilateral</span>}
+                                    {currentItem.details.holdTime && <span className="bg-zinc-800 px-2 py-1 rounded">Mantención: {currentItem.details.holdTime}</span>}
+                                </>
+                            ) : (
+                                <span>{currentDetails?.defaultParams && `${currentDetails.defaultParams.sets}x${currentDetails.defaultParams.reps}`}</span>
+                            )}
+                        </div>
+                        {currentItem?.details?.side && <p className="text-xs text-brand-400 uppercase font-bold tracking-wider">{currentItem.details.side === 'bilateral' ? 'Ambos lados' : (currentItem.details.side === 'alternating' ? 'Alternado' : `Lado ${currentItem.details.side === 'left' ? 'Izquierdo' : 'Derecho'}`)}</p>}
                     </div>
 
                     {/* Description/Instructions */}
@@ -159,10 +319,10 @@ export default function SessionPlayer() {
                 {activeIndex === planExercises.length - 1 ? (
                     <Button
                         className="flex-[2] bg-brand-600 hover:bg-brand-500 text-white font-bold"
-                        onClick={handleFinishSession}
+                        onClick={() => setShowFeedback(true)}
                         disabled={isSubmitting}
                     >
-                        {isSubmitting ? "Guardando..." : "Terminar Sesión"}
+                        Terminar
                     </Button>
                 ) : (
                     <Button

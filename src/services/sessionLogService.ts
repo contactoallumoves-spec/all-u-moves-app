@@ -9,16 +9,20 @@ export interface SessionLog {
         exerciseId: string;
         name: string;
         completed: boolean;
+        // Performed values
         sets?: string;
         reps?: string;
         load?: string;
-        rpe?: number; // 0-10
-        pain?: number; // 0-10
-        comment?: string;
+        rpe?: number; // Per exercise RPE
+        notes?: string;
     }[];
     feedback?: {
-        globalPain: number; // 0-10
-        tiresomeness: number; // 0-10
+        rpe: number; // Session RPE (0-10)
+        pain: number; // 0-10 (Global or Max)
+        fatigue: number; // 0-10
+        energyLevel?: number; // 1-5
+        sleepQuality?: number; // 1-5
+        symptoms?: string[]; // List of specific symptoms
         notes?: string;
     };
     createdAt: any;

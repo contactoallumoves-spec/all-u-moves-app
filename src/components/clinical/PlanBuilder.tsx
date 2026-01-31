@@ -67,11 +67,23 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
     };
 
     const handleAddExercise = (dayKey: keyof typeof plan.schedule, exercise: Exercise) => {
+        const defaultSets = exercise.defaultParams?.sets || '3';
+        const defaultReps = exercise.defaultParams?.reps || '10';
+
         const newItem: PlanExercise = {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
             exerciseId: exercise.id!,
             name: exercise.name,
-            params: exercise.defaultParams ? `${exercise.defaultParams.sets || ''}x${exercise.defaultParams.reps || ''}` : '',
+            // Initialize with structured details
+            details: {
+                sets: defaultSets,
+                reps: defaultReps,
+                load: '',
+                rpe: '',
+                rest: '',
+                tempo: '',
+                side: 'bilateral'
+            },
             completed: false
         };
 
@@ -94,12 +106,15 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
         }));
     };
 
-    const handleUpdateParams = (dayKey: keyof typeof plan.schedule, instanceId: string, newParams: string) => {
+    // Update specific field in details
+    const handleUpdateDetail = (dayKey: keyof typeof plan.schedule, instanceId: string, field: string, value: any) => {
         setPlan(prev => ({
             ...prev,
             schedule: {
                 ...prev.schedule,
-                [dayKey]: prev.schedule[dayKey].map(i => i.id === instanceId ? { ...i, params: newParams } : i)
+                [dayKey]: prev.schedule[dayKey].map(i =>
+                    i.id === instanceId ? { ...i, details: { ...i.details, [field]: value } } : i
+                )
             }
         }));
     };
@@ -236,13 +251,40 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                                 <div className="flex-1 overflow-y-auto p-2 space-y-2">
                                     {plan.schedule[day.key as keyof typeof plan.schedule]?.map((item) => (
                                         <div key={item.id} className="relative p-2 bg-white border border-brand-100 rounded-md shadow-sm group hover:border-brand-300 transition-all">
-                                            <p className="text-xs font-medium text-brand-800 leading-tight">{item.name}</p>
-                                            <input
-                                                className="mt-1 w-full text-[10px] border-b border-dotted border-brand-300 outline-none text-brand-500 bg-transparent"
-                                                value={item.params}
-                                                onChange={(e) => handleUpdateParams(day.key as any, item.id, e.target.value)}
-                                                placeholder="Params..."
-                                            />
+                                            <p className="text-xs font-medium text-brand-800 leading-tight mb-1">{item.name}</p>
+
+                                            {/* Compact Params Editor */}
+                                            <div className="grid grid-cols-2 gap-1 mb-1">
+                                                <input
+                                                    className="w-full text-[10px] bg-brand-50/50 border border-brand-100 rounded px-1"
+                                                    placeholder="Sets"
+                                                    value={item.details?.sets || ''}
+                                                    onChange={e => handleUpdateDetail(day.key as any, item.id, 'sets', e.target.value)}
+                                                    title="Series"
+                                                />
+                                                <input
+                                                    className="w-full text-[10px] bg-brand-50/50 border border-brand-100 rounded px-1"
+                                                    placeholder="Reps"
+                                                    value={item.details?.reps || ''}
+                                                    onChange={e => handleUpdateDetail(day.key as any, item.id, 'reps', e.target.value)}
+                                                    title="Repeticiones"
+                                                />
+                                                <input
+                                                    className="w-full text-[10px] bg-brand-50/50 border border-brand-100 rounded px-1"
+                                                    placeholder="Carga (kg)"
+                                                    value={item.details?.load || ''}
+                                                    onChange={e => handleUpdateDetail(day.key as any, item.id, 'load', e.target.value)}
+                                                    title="Carga"
+                                                />
+                                                <input
+                                                    className="w-full text-[10px] bg-brand-50/50 border border-brand-100 rounded px-1"
+                                                    placeholder="RPE target"
+                                                    value={item.details?.rpe || ''}
+                                                    onChange={e => handleUpdateDetail(day.key as any, item.id, 'rpe', e.target.value)}
+                                                    title="RPE Objetivo"
+                                                />
+                                            </div>
+
                                             <button
                                                 onClick={() => handleRemoveExercise(day.key as any, item.id)}
                                                 className="absolute -top-1 -right-1 p-0.5 bg-red-50 text-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"

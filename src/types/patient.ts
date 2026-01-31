@@ -54,6 +54,7 @@ export interface Patient {
     magicLinkToken?: string; // [NEW] For Public Portal Access
 }
 
+
 export interface PrescribedPlan {
     startDate: any; // Timestamp
     endDate?: any;
@@ -68,12 +69,33 @@ export interface PrescribedPlan {
     };
 }
 
+export interface ExerciseParameters {
+    sets?: string;
+    reps?: string;
+    load?: string; // e.g. "10kg"
+    rpe?: string; // Target RPE
+    rest?: string; // e.g. "90s"
+    tempo?: string; // e.g. "3010"
+    holdTime?: string; // e.g. "5s" (Isometrics/Pelvic)
+    unilateral?: boolean;
+    side?: 'left' | 'right' | 'alternating' | 'bilateral';
+}
+
 export interface PlanExercise {
     id: string; // unique instance ID
     exerciseId: string; // ref to Exercise Library
     name: string; // snapshot of name
-    params: string; // specific params e.g. "3x10"
+    // params: string; // DEPRECATED: usage of simple string
+    details?: ExerciseParameters; // [NEW] Structured params
     completed?: boolean;
+}
+
+export interface SessionFeedback {
+    rpe?: number; // 0-10
+    pain?: number; // 0-10
+    fatigue?: number; // 0-10
+    symptoms?: string[]; // e.g. ["Pérdida de orina", "Dolor lumbar"]
+    comments?: string;
 }
 
 export interface Task {
