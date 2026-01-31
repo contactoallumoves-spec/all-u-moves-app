@@ -3,7 +3,7 @@ import { ExerciseService } from '../services/exerciseService';
 import { Exercise, EXERCISE_CATEGORIES, ExerciseCategory } from '../types/exercise';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
-import { Plus, Search, Filter, Youtube, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Search, Youtube, Edit, Trash2, X } from 'lucide-react';
 
 export default function ExercisesPage() {
     const [exercises, setExercises] = useState<Exercise[]>([]);

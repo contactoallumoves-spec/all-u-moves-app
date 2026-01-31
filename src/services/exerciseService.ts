@@ -11,7 +11,7 @@ import {
     where,
     Timestamp
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db } from '../lib/firebase';
 import { Exercise } from '../types/exercise';
 
 const COLLECTION_NAME = 'exercises';
