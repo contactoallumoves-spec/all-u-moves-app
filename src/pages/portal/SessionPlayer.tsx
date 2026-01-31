@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Patient, PlanExercise } from '../../types/patient';
 import { ExerciseService } from '../../services/exerciseService';
 import { SessionLogService } from '../../services/sessionLogService';
@@ -11,7 +11,7 @@ import { Timestamp } from 'firebase/firestore';
 export default function SessionPlayer() {
     const { patient } = useOutletContext<{ patient: Patient }>();
     const navigate = useNavigate();
-    const { date } = useParams(); // URL param
+
 
     // For now, let's assume we play "Today's" session
     const todayKey = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
