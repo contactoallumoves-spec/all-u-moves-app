@@ -277,7 +277,26 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-sm font-semibold text-brand-800">{ex.name}</p>
-                                            <p className="text-[10px] text-brand-500 uppercase tracking-wide">{ex.category} {ex.system ? `• ${ex.system}` : ''}</p>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                <span className="text-[9px] px-1.5 py-0.5 bg-brand-50 text-brand-600 rounded border border-brand-100 uppercase tracking-tight font-medium">
+                                                    {ex.category}
+                                                </span>
+                                                {ex.system && (
+                                                    <span className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 uppercase tracking-tight">
+                                                        {ex.system}
+                                                    </span>
+                                                )}
+                                                {ex.pattern && (
+                                                    <span className="text-[9px] px-1.5 py-0.5 bg-purple-50 text-purple-600 rounded border border-purple-100 uppercase tracking-tight">
+                                                        {ex.pattern}
+                                                    </span>
+                                                )}
+                                                {ex.equipment && ex.equipment.length > 0 && (
+                                                    <span className="text-[9px] px-1.5 py-0.5 bg-gray-50 text-gray-600 rounded border border-gray-100 uppercase tracking-tight">
+                                                        {ex.equipment[0]} {ex.equipment.length > 1 ? '+' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                             <div className="relative group/add">
@@ -364,68 +383,91 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                                             (!i.block && blockName === SESSION_BLOCKS.MAIN) // Legacy/Default items go to Main
                                         );
 
-                                        if (blockExercises.length === 0) return null;
-
+                                        // Always render block header
                                         return (
                                             <div key={blockName} className="space-y-2">
-                                                <div className="flex items-center gap-2 px-1">
-                                                    <div className="h-px bg-brand-100 flex-1" />
-                                                    <span className="text-[9px] font-bold text-brand-400 uppercase tracking-wider whitespace-nowrap">{blockName}</span>
-                                                    <div className="h-px bg-brand-100 flex-1" />
+                                                <div className="flex items-center gap-2 px-1 group/header">
+                                                    <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
+                                                    <span className={cn(
+                                                        "text-[9px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors select-none",
+                                                        blockExercises.length > 0 ? "text-brand-400" : "text-gray-300 group-hover/header:text-brand-300"
+                                                    )}>
+                                                        {blockName}
+                                                    </span>
+                                                    <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
                                                 </div>
 
-                                                {blockExercises.map((item: PlanExercise) => (
-                                                    <div
-                                                        key={item.id}
-                                                        onClick={() => handleEditClick(day.key as any, item)}
-                                                        className="relative p-2.5 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
-                                                    >
-                                                        <div className="flex justify-between items-start mb-1 gap-2">
-                                                            <p className="text-xs font-bold text-brand-900 leading-tight line-clamp-2">{item.name}</p>
-
-                                                            {/* Context Menu for Block Movement */}
-                                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-1 flex gap-1 bg-white/90 rounded p-0.5">
-                                                                <button
-                                                                    onClick={(e: React.MouseEvent) => {
-                                                                        e.stopPropagation();
-                                                                        // Cycle block logic or dropdown could go here. 
-                                                                        // For now just remove
-                                                                        handleRemoveExercise(day.key as any, item.id);
-                                                                    }}
-                                                                    className="p-1 text-zinc-300 hover:text-red-500 transition-colors"
-                                                                >
-                                                                    <XIcon className="w-3 h-3" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Summary Badges */}
-                                                        <div className="flex flex-wrap gap-1 mt-1.5">
-                                                            {item.details?.sets && item.details?.reps && (
-                                                                <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-[9px] font-medium rounded border border-brand-100">
-                                                                    {item.details.sets}x{item.details.reps}
-                                                                </span>
-                                                            )}
-                                                            {item.details?.load && (
-                                                                <span className="px-1.5 py-0.5 bg-orange-50 text-orange-700 text-[9px] font-medium rounded border border-orange-100">
-                                                                    {item.details.load}
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Block Changer (Mini dropdown) */}
-                                                        <select
-                                                            className="mt-2 w-full text-[9px] p-0.5 bg-gray-50 border-none text-gray-400 focus:ring-0 cursor-pointer hover:bg-gray-100 rounded items-end text-right opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            value={item.block || SESSION_BLOCKS.MAIN}
-                                                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleMoveBlock(day.key as any, item.id, e.target.value)}
+                                                {blockExercises.length > 0 ? (
+                                                    blockExercises.map((item: PlanExercise) => (
+                                                        <div
+                                                            key={item.id}
+                                                            onClick={() => handleEditClick(day.key as any, item)}
+                                                            className="relative p-2.5 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
                                                         >
-                                                            {Object.values(SESSION_BLOCKS).map(b => (
-                                                                <option key={b} value={b}>{b}</option>
+                                                            <div className="flex items-center gap-2 px-1">
+                                                                <div className="h-px bg-brand-100 flex-1" />
+                                                                <span className="text-[9px] font-bold text-brand-400 uppercase tracking-wider whitespace-nowrap">{blockName}</span>
+                                                                <div className="h-px bg-brand-100 flex-1" />
+                                                            </div>
+
+                                                            {blockExercises.map((item: PlanExercise) => (
+                                                                <div
+                                                                    key={item.id}
+                                                                    onClick={() => handleEditClick(day.key as any, item)}
+                                                                    className="relative p-2.5 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-1 gap-2">
+                                                                        <p className="text-xs font-bold text-brand-900 leading-tight line-clamp-2">{item.name}</p>
+
+                                                                        {/* Context Menu for Block Movement */}
+                                                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-1 flex gap-1 bg-white/90 rounded p-0.5">
+                                                                            <button
+                                                                                onClick={(e: React.MouseEvent) => {
+                                                                                    e.stopPropagation();
+                                                                                    // Cycle block logic or dropdown could go here. 
+                                                                                    // For now just remove
+                                                                                    handleRemoveExercise(day.key as any, item.id);
+                                                                                }}
+                                                                                className="p-1 text-zinc-300 hover:text-red-500 transition-colors"
+                                                                            >
+                                                                                <XIcon className="w-3 h-3" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Summary Badges */}
+                                                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                        {item.details?.sets && item.details?.reps && (
+                                                                            <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-[9px] font-medium rounded border border-brand-100">
+                                                                                {item.details.sets}x{item.details.reps}
+                                                                            </span>
+                                                                        )}
+                                                                        {item.details?.load && (
+                                                                            <span className="px-1.5 py-0.5 bg-orange-50 text-orange-700 text-[9px] font-medium rounded border border-orange-100">
+                                                                                {item.details.load}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Block Changer (Mini dropdown) */}
+                                                                    <select
+                                                                        className="mt-2 w-full text-[9px] p-0.5 bg-gray-50 border-none text-gray-400 focus:ring-0 cursor-pointer hover:bg-gray-100 rounded items-end text-right opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        value={item.block || SESSION_BLOCKS.MAIN}
+                                                                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleMoveBlock(day.key as any, item.id, e.target.value)}
+                                                                    >
+                                                                        {Object.values(SESSION_BLOCKS).map(b => (
+                                                                            <option key={b} value={b}>{b}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
                                                             ))}
-                                                        </select>
-                                                    </div>
-                                                ))}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    // Empty Block Placeholder (Drop Zone Visual)
+                                                    <div className="h-2 w-full rounded-full border border-dashed border-gray-100 group-hover/header:border-brand-200 transition-colors" />
+                                                )}
                                             </div>
                                         );
                                     })}
