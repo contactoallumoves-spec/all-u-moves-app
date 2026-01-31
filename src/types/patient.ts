@@ -79,6 +79,7 @@ export interface ExerciseParameters {
     holdTime?: string; // e.g. "5s" (Isometrics/Pelvic)
     unilateral?: boolean;
     side?: 'left' | 'right' | 'alternating' | 'bilateral';
+    notes?: string; // [NEW] Specific instructions per exercise instance
 }
 
 export interface PlanExercise {

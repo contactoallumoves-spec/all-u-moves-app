@@ -4,6 +4,7 @@ import { Exercise } from '../../types/exercise';
 import { ExerciseService } from '../../services/exerciseService';
 import { PatientService } from '../../services/patientService';
 import { Button } from '../ui/Button';
+import { Dialog } from '../ui/Dialog'; // [NEW]
 import { Search, Plus, Save, Calendar, Link as LinkIcon, Copy } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Timestamp } from 'firebase/firestore';
@@ -149,6 +150,51 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
         }
     };
 
+    // Modal State
+    const [editingItem, setEditingItem] = useState<{ day: keyof typeof plan.schedule, instanceId: string } | null>(null);
+    const [editForm, setEditForm] = useState<any>(null);
+
+    const handleEditClick = (dayKey: keyof typeof plan.schedule, item: PlanExercise) => {
+        setEditingItem({ day: dayKey, instanceId: item.id });
+        // Deep copy details to avoid direct mutation
+        setEditForm({
+            sets: item.details?.sets || '',
+            reps: item.details?.reps || '',
+            load: item.details?.load || '',
+            rpe: item.details?.rpe || '',
+            rest: item.details?.rest || '',
+            tempo: item.details?.tempo || '',
+            holdTime: item.details?.holdTime || '',
+            unilateral: item.details?.unilateral || false,
+            side: item.details?.side || 'bilateral',
+            notes: item.details?.notes || ''
+        });
+    };
+
+    const handleSaveEdit = () => {
+        if (!editingItem || !editForm) return;
+
+        setPlan(prev => ({
+            ...prev,
+            schedule: {
+                ...prev.schedule,
+                [editingItem.day]: prev.schedule[editingItem.day].map(i =>
+                    i.id === editingItem.instanceId ? { ...i, details: { ...editForm } } : i
+                )
+            }
+        }));
+        setEditingItem(null);
+        setEditForm(null);
+    };
+
+    // Helper to get exercise name for modal title
+    const getEditingExerciseName = () => {
+        if (!editingItem) return '';
+        const dayList = plan.schedule[editingItem.day];
+        const item = dayList.find(i => i.id === editingItem.instanceId);
+        return item ? item.name : '';
+    };
+
     const filteredExercises = exercises.filter(ex =>
         (selectedCategory === 'All' || ex.category === selectedCategory) &&
         ex.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -165,7 +211,7 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                         <Search className="w-4 h-4" /> Biblioteca
                     </h3>
                     <input
-                        className="w-full text-sm px-3 py-2 bg-brand-50 rounded-lg outline-none"
+                        className="w-full text-sm px-3 py-2 bg-brand-50 rounded-lg outline-none focus:ring-2 focus:ring-brand-200"
                         placeholder="Buscar ejercicio..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
@@ -173,7 +219,7 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                     <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                         <button
                             onClick={() => setSelectedCategory('All')}
-                            className={cn("px-2 py-1 text-[10px] rounded-full whitespace-nowrap", selectedCategory === 'All' ? "bg-brand-600 text-white" : "bg-brand-50 text-brand-600")}
+                            className={cn("px-2 py-1 text-[10px] rounded-full whitespace-nowrap transition-colors", selectedCategory === 'All' ? "bg-brand-600 text-white" : "bg-brand-50 text-brand-600 hover:bg-brand-100")}
                         >
                             Todos
                         </button>
@@ -181,7 +227,7 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
-                                className={cn("px-2 py-1 text-[10px] rounded-full whitespace-nowrap", selectedCategory === cat ? "bg-brand-600 text-white" : "bg-brand-50 text-brand-600")}
+                                className={cn("px-2 py-1 text-[10px] rounded-full whitespace-nowrap transition-colors", selectedCategory === cat ? "bg-brand-600 text-white" : "bg-brand-50 text-brand-600 hover:bg-brand-100")}
                             >
                                 {cat}
                             </button>
@@ -189,26 +235,26 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                     {loading ? <p className="text-center text-xs text-brand-400">Cargando...</p> :
                         filteredExercises.map(ex => (
-                            <div key={ex.id} className="p-3 bg-brand-50/50 rounded-lg border border-brand-100 hover:border-brand-300 transition-colors group">
+                            <div key={ex.id} className="p-3 bg-brand-50/50 rounded-lg border border-brand-100 hover:border-brand-300 transition-all hover:shadow-md group">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="text-sm font-semibold text-brand-800">{ex.name}</p>
-                                        <p className="text-[10px] text-brand-500 uppercase">{ex.category}</p>
+                                        <p className="text-[10px] text-brand-500 uppercase tracking-wide">{ex.category}</p>
                                     </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                         <div className="relative group/add">
-                                            <button className="p-1 bg-brand-100 rounded-full text-brand-600 hover:bg-brand-200">
+                                            <button className="p-1.5 bg-brand-100 rounded-full text-brand-600 hover:bg-brand-600 hover:text-white transition-colors">
                                                 <Plus className="w-4 h-4" />
                                             </button>
-                                            <div className="absolute right-0 top-6 w-32 bg-white shadow-xl rounded-lg border border-brand-100 p-1 hidden group-hover/add:grid grid-cols-4 gap-1 z-50">
+                                            <div className="absolute right-0 top-8 w-34 bg-white shadow-xl rounded-lg border border-brand-100 p-1.5 hidden group-hover/add:grid grid-cols-4 gap-1 z-50">
                                                 {DAYS.map(d => (
                                                     <button
                                                         key={d.key}
                                                         onClick={() => handleAddExercise(d.key as any, ex)}
-                                                        className="aspect-square flex items-center justify-center text-[10px] font-bold bg-brand-50 hover:bg-brand-500 hover:text-white rounded"
+                                                        className="aspect-square flex items-center justify-center text-[10px] font-bold bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white rounded transition-colors"
                                                         title={`Agregar a ${d.label}`}
                                                     >
                                                         {d.label.substr(0, 1)}
@@ -225,77 +271,73 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
 
             {/* Right: Weekly Schedule */}
             <div className="lg:col-span-8 flex flex-col overflow-hidden bg-brand-50/30 rounded-xl border border-brand-100">
-                <div className="p-4 bg-white border-b border-brand-100 flex justify-between items-center">
+                <div className="p-4 bg-white border-b border-brand-100 flex justify-between items-center shadow-sm z-10">
                     <h3 className="font-bold text-brand-900 flex items-center gap-2">
-                        <Calendar className="w-5 h-5" /> Plan Semanal
+                        <Calendar className="w-5 h-5 text-brand-600" /> Plan Semanal
                     </h3>
                     <div className="flex gap-2">
-                        <Button onClick={handleSavePlan} disabled={isSaving} size="sm">
+                        <Button onClick={handleSavePlan} disabled={isSaving} size="sm" className="bg-brand-700 hover:bg-brand-800 text-white shadow-brand-200/50 shadow-lg">
                             <Save className="w-4 h-4 mr-2" />
                             {isSaving ? 'Guardando...' : 'Guardar Plan'}
                         </Button>
-                        <Button onClick={handleGenerateMockLink} variant="outline" size="sm" title="Generar/Copiar Enlace para Paciente">
+                        <Button onClick={handleGenerateMockLink} variant="outline" size="sm" title="Generar/Copiar Enlace para Paciente" className="border-brand-200 text-brand-700 hover:bg-brand-50">
                             {magicLink ? <Copy className="w-4 h-4 mr-2" /> : <LinkIcon className="w-4 h-4 mr-2" />}
                             {magicLink ? "Copiar Link" : "Generar Link"}
                         </Button>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
-                    <div className="grid grid-cols-7 gap-3 min-w-[800px] h-full">
+                <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 bg-gray-50/50">
+                    <div className="grid grid-cols-7 gap-4 min-w-[1000px] h-full">
+                        {/* Improved min-width for comfort */}
                         {DAYS.map(day => (
-                            <div key={day.key} className="flex flex-col h-full bg-white rounded-lg border border-brand-200 shadow-sm">
-                                <div className="p-2 border-b border-brand-100 bg-brand-50/50 rounded-t-lg text-center">
-                                    <span className="text-xs font-bold text-brand-700 uppercase tracking-wider">{day.label}</span>
+                            <div key={day.key} className="flex flex-col h-full bg-white rounded-xl border border-brand-100/50 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="p-3 border-b border-brand-50 bg-brand-50/30 rounded-t-xl text-center">
+                                    <span className="text-xs font-bold text-brand-800 uppercase tracking-widest">{day.label}</span>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                                <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                                     {plan.schedule[day.key as keyof typeof plan.schedule]?.map((item) => (
-                                        <div key={item.id} className="relative p-2 bg-white border border-brand-100 rounded-md shadow-sm group hover:border-brand-300 transition-all">
-                                            <p className="text-xs font-medium text-brand-800 leading-tight mb-1">{item.name}</p>
-
-                                            {/* Compact Params Editor */}
-                                            <div className="grid grid-cols-2 gap-1 mb-1">
-                                                <input
-                                                    className="w-full text-[10px] bg-brand-50/50 border border-brand-100 rounded px-1"
-                                                    placeholder="Sets"
-                                                    value={item.details?.sets || ''}
-                                                    onChange={e => handleUpdateDetail(day.key as any, item.id, 'sets', e.target.value)}
-                                                    title="Series"
-                                                />
-                                                <input
-                                                    className="w-full text-[10px] bg-brand-50/50 border border-brand-100 rounded px-1"
-                                                    placeholder="Reps"
-                                                    value={item.details?.reps || ''}
-                                                    onChange={e => handleUpdateDetail(day.key as any, item.id, 'reps', e.target.value)}
-                                                    title="Repeticiones"
-                                                />
-                                                <input
-                                                    className="w-full text-[10px] bg-brand-50/50 border border-brand-100 rounded px-1"
-                                                    placeholder="Carga (kg)"
-                                                    value={item.details?.load || ''}
-                                                    onChange={e => handleUpdateDetail(day.key as any, item.id, 'load', e.target.value)}
-                                                    title="Carga"
-                                                />
-                                                <input
-                                                    className="w-full text-[10px] bg-brand-50/50 border border-brand-100 rounded px-1"
-                                                    placeholder="RPE target"
-                                                    value={item.details?.rpe || ''}
-                                                    onChange={e => handleUpdateDetail(day.key as any, item.id, 'rpe', e.target.value)}
-                                                    title="RPE Objetivo"
-                                                />
+                                        <div
+                                            key={item.id}
+                                            onClick={() => handleEditClick(day.key as any, item)}
+                                            className="relative p-3 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
+                                        >
+                                            <div className="flex justify-between items-start mb-1">
+                                                <p className="text-xs font-bold text-brand-900 leading-tight line-clamp-2">{item.name}</p>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleRemoveExercise(day.key as any, item.id);
+                                                    }}
+                                                    className="p-0.5 text-zinc-300 hover:text-red-500 transition-colors"
+                                                >
+                                                    <XIcon className="w-3.5 h-3.5" />
+                                                </button>
                                             </div>
 
-                                            <button
-                                                onClick={() => handleRemoveExercise(day.key as any, item.id)}
-                                                className="absolute -top-1 -right-1 p-0.5 bg-red-50 text-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                <XIcon className="w-3 h-3" />
-                                            </button>
+                                            {/* Summary Badges */}
+                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                {item.details?.sets && item.details?.reps && (
+                                                    <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-[10px] font-medium rounded border border-brand-100">
+                                                        {item.details.sets}x{item.details.reps}
+                                                    </span>
+                                                )}
+                                                {item.details?.load && (
+                                                    <span className="px-1.5 py-0.5 bg-orange-50 text-orange-700 text-[10px] font-medium rounded border border-orange-100">
+                                                        {item.details.load}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Hover Edit Hint */}
+                                            <div className="absolute inset-x-0 bottom-0 h-1 bg-brand-400 opacity-0 group-hover:opacity-100 transition-opacity rounded-b-lg" />
                                         </div>
                                     ))}
                                     {plan.schedule[day.key as keyof typeof plan.schedule]?.length === 0 && (
-                                        <div className="h-full flex items-center justify-center opacity-30">
-                                            <Plus className="w-6 h-6 text-brand-200" />
+                                        <div className="h-full flex items-center justify-center opacity-40">
+                                            <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center">
+                                                <Plus className="w-4 h-4 text-brand-300" />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -304,6 +346,150 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Editing Modal */}
+            <Dialog
+                isOpen={!!editingItem}
+                onClose={() => setEditingItem(null)}
+                title={getEditingExerciseName()}
+                className="max-w-xl"
+                footer={(
+                    <Button onClick={handleSaveEdit} className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto">
+                        Guardar Cambios
+                    </Button>
+                )}
+            >
+                {editForm && (
+                    <div className="space-y-6">
+                        {/* Primary Stats */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-bold text-brand-800 uppercase tracking-wider border-b border-brand-100 pb-1">Parámetros Básicos</h4>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-zinc-500">Series</label>
+                                    <input
+                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
+                                        placeholder="3"
+                                        value={editForm.sets}
+                                        onChange={e => setEditForm({ ...editForm, sets: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-zinc-500">Reps/Tiempo</label>
+                                    <input
+                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
+                                        placeholder="10"
+                                        value={editForm.reps}
+                                        onChange={e => setEditForm({ ...editForm, reps: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-zinc-500">Carga</label>
+                                    <input
+                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
+                                        placeholder="-- kg"
+                                        value={editForm.load}
+                                        onChange={e => setEditForm({ ...editForm, load: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-zinc-500">RPE (1-10)</label>
+                                    <input
+                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
+                                        placeholder="--"
+                                        value={editForm.rpe}
+                                        onChange={e => setEditForm({ ...editForm, rpe: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Advanced Stats */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-bold text-brand-800 uppercase tracking-wider border-b border-brand-100 pb-1">Detalles Técnicos</h4>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-zinc-500">Descanso</label>
+                                    <input
+                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
+                                        placeholder="90s"
+                                        value={editForm.rest}
+                                        onChange={e => setEditForm({ ...editForm, rest: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-zinc-500">Tempo</label>
+                                    <input
+                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
+                                        placeholder="3010"
+                                        value={editForm.tempo}
+                                        onChange={e => setEditForm({ ...editForm, tempo: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-zinc-500">Mantención</label>
+                                    <input
+                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
+                                        placeholder="5s"
+                                        value={editForm.holdTime}
+                                        onChange={e => setEditForm({ ...editForm, holdTime: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Unilateral Config */}
+                        <div className="p-3 bg-brand-50/50 rounded-lg border border-brand-100 space-y-3">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="unilateral-check"
+                                    className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                                    checked={editForm.unilateral}
+                                    onChange={e => setEditForm({ ...editForm, unilateral: e.target.checked })}
+                                />
+                                <label htmlFor="unilateral-check" className="text-sm font-medium text-brand-900">Ejercicio Unilateral (Por lado)</label>
+                            </div>
+
+                            {editForm.unilateral && (
+                                <div className="flex gap-2">
+                                    {[
+                                        { id: 'left', label: 'Izquierda' },
+                                        { id: 'right', label: 'Derecha' },
+                                        { id: 'alternating', label: 'Alternado' },
+                                        { id: 'bilateral', label: 'Ambos' } // Maybe redundant but ok
+                                    ].map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => setEditForm({ ...editForm, side: opt.id })}
+                                            className={cn(
+                                                "flex-1 py-1.5 text-xs rounded border transition-colors",
+                                                editForm.side === opt.id
+                                                    ? "bg-brand-600 text-white border-brand-600"
+                                                    : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
+                                            )}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Notes */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-medium text-zinc-500">Notas / Instrucciones Específicas</label>
+                            <textarea
+                                className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none min-h-[80px]"
+                                placeholder="Ej: Enfocarse en la respiración..."
+                                value={editForm.notes}
+                                onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
+                            />
+                        </div>
+
+                    </div>
+                )}
+            </Dialog>
         </div>
     );
 }
