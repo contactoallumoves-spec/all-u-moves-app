@@ -178,14 +178,5 @@ export const clinicalLogic = {
             if (val === 3) return "Mucho";
             return value;
         }
-                recs.push("Neuromodulación del tibial posterior (Sugerencia clínica).");
-    }
-            if(subscales.obstructive >= 2) {
-        recs.push("Evaluación de prolapso (POP-Q simplificado).");
-recs.push("Técnicas de vaciado vesical (doble micción).");
-            }
-
-return recs;
-        }
     }
 };
