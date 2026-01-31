@@ -246,6 +246,62 @@ export default function EvolutionPage() {
         }
     };
 
+    const handleCopyLastSession = async () => {
+        if (!patientId) return;
+        try {
+            const sessions = await SessionService.getByPatientId(patientId);
+            if (sessions.length === 0) {
+                alert("No hay sesiones anteriores para copiar.");
+                return;
+            }
+            // Sort to find latest
+            const sorted = sessions.sort((a, b) => {
+                const dateA = a.date instanceof Date ? a.date : new Date(a.date.seconds * 1000);
+                const dateB = b.date instanceof Date ? b.date : new Date(b.date.seconds * 1000);
+                return dateB.getTime() - dateA.getTime();
+            });
+            const last = sorted[0];
+
+            // Copy Interventions
+            setInterventions(last.interventions || []);
+            setInterventionDetails(last.interventionDetails || {});
+
+            // Copy Custom Activities
+            setCustomActivities(last.customActivities || []);
+
+            // Copy Location
+            if (last.location) {
+                if (['Consulta Kinesiológica', 'Online'].includes(last.location)) {
+                    setLocation(last.location);
+                } else if (last.location.startsWith('Domicilio')) {
+                    setLocation('Domicilio');
+                    const detail = last.location.includes(':') ? last.location.split(':')[1]?.trim() : '';
+                    setManualLocation(detail || '');
+                } else {
+                    setLocation('manual');
+                    setManualLocation(last.location);
+                }
+            }
+
+            // Copy PERFECT Scheme
+            if (last.perfectScheme) {
+                setOxford(last.perfectScheme.power);
+                setPerfectEndurance(last.perfectScheme.endurance || '');
+                setPerfectRepetitions(last.perfectScheme.repetitions || '');
+                setPerfectFast(last.perfectScheme.fast || '');
+                setPerfectElevation(last.perfectScheme.elevation || false);
+                setPerfectCoContraction(last.perfectScheme.coContraction || false);
+                setPerfectTiming(last.perfectScheme.timing || false);
+            }
+
+            alert(`✅ Datos cargados de la sesión del ${last.date instanceof Date ? last.date.toLocaleDateString() : 'fecha desconocida'}`);
+
+        } catch (error) {
+            console.error(error);
+            alert("Error al copiar sesión anterior");
+        }
+    };
+
     const handleCopyHomePlan = async () => {
         if (!patientId) return;
         try {
@@ -280,6 +336,8 @@ export default function EvolutionPage() {
             alert("Error al copiar plan de hogar");
         }
     };
+
+    if (loading) return <div className="p-10 text-center">Cargando...</div>;
 
     return (
         <div className="max-w-3xl mx-auto space-y-6 pb-20 animate-in slide-in-from-bottom-4">
