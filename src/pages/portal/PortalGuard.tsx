@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Outlet } from 'react-router-dom';
+import { useParams, Outlet } from 'react-router-dom';
 import { PatientService } from '../../services/patientService';
 import { Patient } from '../../types/patient';
 import { Loader2 } from 'lucide-react';
 
 export function PortalGuard() {
     const { token } = useParams();
-    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [patient, setPatient] = useState<Patient | null>(null);
 
