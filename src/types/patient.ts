@@ -79,7 +79,11 @@ export interface ExerciseParameters {
     holdTime?: string; // e.g. "5s" (Isometrics/Pelvic)
     unilateral?: boolean;
     side?: 'left' | 'right' | 'alternating' | 'bilateral';
-    notes?: string; // [NEW] Specific instructions per exercise instance
+    notes?: string; // Specific instructions per exercise instance
+    // Pro Fields
+    rir?: string; // Reps in Reserve (e.g. "2 RIR")
+    percent1rm?: string; // % 1RM (e.g. "75%")
+    techniqueTags?: string[]; // e.g. ["Explosive", "Slow Eccentric"]
 }
 
 export interface PlanExercise {

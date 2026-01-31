@@ -142,9 +142,11 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
     // Modal State
     const [editingItem, setEditingItem] = useState<{ day: keyof typeof plan.schedule, instanceId: string } | null>(null);
     const [editForm, setEditForm] = useState<any>(null);
+    const [activeTab, setActiveTab] = useState<'general' | 'load' | 'notes'>('general');
 
     const handleEditClick = (dayKey: keyof typeof plan.schedule, item: PlanExercise) => {
         setEditingItem({ day: dayKey, instanceId: item.id });
+        setActiveTab('general'); // Reset tab
         // Deep copy details to avoid direct mutation
         setEditForm({
             sets: item.details?.sets || '',
@@ -156,7 +158,9 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
             holdTime: item.details?.holdTime || '',
             unilateral: item.details?.unilateral || false,
             side: item.details?.side || 'bilateral',
-            notes: item.details?.notes || ''
+            notes: item.details?.notes || '',
+            rir: item.details?.rir || '',
+            percent1rm: item.details?.percent1rm || '',
         });
     };
 
@@ -176,13 +180,24 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
         setEditForm(null);
     };
 
-    // Helper to get exercise name for modal title
-    const getEditingExerciseName = () => {
-        if (!editingItem) return '';
+    // Helper: Get Full Exercise for Modal (Video, etc)
+    const getEditingExercise = () => {
+        if (!editingItem) return null;
         const dayList = plan.schedule[editingItem.day];
         const item = dayList.find(i => i.id === editingItem.instanceId);
-        return item ? item.name : '';
+        if (!item) return null;
+        return exercises.find(e => e.id === item.exerciseId) || { name: item.name };
     };
+
+    // Helper: Extract YouTube ID
+    const getYoutubeId = (url?: string) => {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    };
+
+    const editingExercise = getEditingExercise();
 
     const filteredExercises = exercises.filter(ex =>
         (selectedCategory === 'All' || ex.category === selectedCategory) &&
@@ -278,7 +293,6 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
 
                 <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 bg-gray-50/50">
                     <div className="grid grid-cols-7 gap-4 min-w-[1000px] h-full">
-                        {/* Improved min-width for comfort */}
                         {DAYS.map(day => (
                             <div key={day.key} className="flex flex-col h-full bg-white rounded-xl border border-brand-100/50 shadow-sm hover:shadow-md transition-shadow">
                                 <div className="p-3 border-b border-brand-50 bg-brand-50/30 rounded-t-xl text-center">
@@ -336,146 +350,219 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
                 </div>
             </div>
 
-            {/* Editing Modal */}
+            {/* Pro Editing Modal */}
             <Dialog
                 isOpen={!!editingItem}
                 onClose={() => setEditingItem(null)}
-                title={getEditingExerciseName()}
-                className="max-w-xl"
+                title={(editingExercise as Exercise)?.name || 'Editar Ejercicio'}
+                className="max-w-4xl" // Wider for pro view
                 footer={(
-                    <Button onClick={handleSaveEdit} className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto">
+                    <Button onClick={handleSaveEdit} className="bg-brand-600 hover:bg-brand-700 text-white w-full sm:w-auto font-bold px-8">
                         Guardar Cambios
                     </Button>
                 )}
             >
                 {editForm && (
-                    <div className="space-y-6">
-                        {/* Primary Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Column 1: Media & Context */}
                         <div className="space-y-4">
-                            <h4 className="text-sm font-bold text-brand-800 uppercase tracking-wider border-b border-brand-100 pb-1">Parámetros Básicos</h4>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-zinc-500">Series</label>
-                                    <input
-                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
-                                        placeholder="3"
-                                        value={editForm.sets}
-                                        onChange={e => setEditForm({ ...editForm, sets: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-zinc-500">Reps/Tiempo</label>
-                                    <input
-                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
-                                        placeholder="10"
-                                        value={editForm.reps}
-                                        onChange={e => setEditForm({ ...editForm, reps: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-zinc-500">Carga</label>
-                                    <input
-                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
-                                        placeholder="-- kg"
-                                        value={editForm.load}
-                                        onChange={e => setEditForm({ ...editForm, load: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-zinc-500">RPE (1-10)</label>
-                                    <input
-                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
-                                        placeholder="--"
-                                        value={editForm.rpe}
-                                        onChange={e => setEditForm({ ...editForm, rpe: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Advanced Stats */}
-                        <div className="space-y-4">
-                            <h4 className="text-sm font-bold text-brand-800 uppercase tracking-wider border-b border-brand-100 pb-1">Detalles Técnicos</h4>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-zinc-500">Descanso</label>
-                                    <input
-                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
-                                        placeholder="90s"
-                                        value={editForm.rest}
-                                        onChange={e => setEditForm({ ...editForm, rest: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-zinc-500">Tempo</label>
-                                    <input
-                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
-                                        placeholder="3010"
-                                        value={editForm.tempo}
-                                        onChange={e => setEditForm({ ...editForm, tempo: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-zinc-500">Mantención</label>
-                                    <input
-                                        className="w-full p-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none"
-                                        placeholder="5s"
-                                        value={editForm.holdTime}
-                                        onChange={e => setEditForm({ ...editForm, holdTime: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Unilateral Config */}
-                        <div className="p-3 bg-brand-50/50 rounded-lg border border-brand-100 space-y-3">
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="unilateral-check"
-                                    className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
-                                    checked={editForm.unilateral}
-                                    onChange={e => setEditForm({ ...editForm, unilateral: e.target.checked })}
-                                />
-                                <label htmlFor="unilateral-check" className="text-sm font-medium text-brand-900">Ejercicio Unilateral (Por lado)</label>
+                            {/* Video Player */}
+                            <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-inner border border-zinc-200">
+                                {(editingExercise as Exercise)?.videoUrl ? (
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        src={`https://www.youtube.com/embed/${getYoutubeId((editingExercise as Exercise).videoUrl)}?rel=0`}
+                                        title="Exercise Video"
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    ></iframe>
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-zinc-500 flex-col gap-2">
+                                        <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
+                                            <Play className="w-6 h-6 text-zinc-400" />
+                                        </div>
+                                        <span className="text-xs">Sin video disponible</span>
+                                    </div>
+                                )}
                             </div>
 
-                            {editForm.unilateral && (
-                                <div className="flex gap-2">
-                                    {[
-                                        { id: 'left', label: 'Izquierda' },
-                                        { id: 'right', label: 'Derecha' },
-                                        { id: 'alternating', label: 'Alternado' },
-                                        { id: 'bilateral', label: 'Ambos' } // Maybe redundant but ok
-                                    ].map(opt => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => setEditForm({ ...editForm, side: opt.id })}
-                                            className={cn(
-                                                "flex-1 py-1.5 text-xs rounded border transition-colors",
-                                                editForm.side === opt.id
-                                                    ? "bg-brand-600 text-white border-brand-600"
-                                                    : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
-                                            )}
-                                        >
-                                            {opt.label}
-                                        </button>
-                                    ))}
+                            {/* Instructions Preview */}
+                            {(editingExercise as Exercise)?.instructions && (
+                                <div className="p-3 bg-brand-50/50 rounded-lg text-xs text-brand-800 border border-brand-100">
+                                    <h5 className="font-bold mb-1 flex items-center gap-1"><InfoIcon className="w-3 h-3" /> Instrucciones Base</h5>
+                                    <p className="opacity-80 leading-relaxed">{(editingExercise as Exercise).instructions}</p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Notes */}
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-zinc-500">Notas / Instrucciones Específicas</label>
-                            <textarea
-                                className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-md text-sm focus:border-brand-500 outline-none min-h-[80px]"
-                                placeholder="Ej: Enfocarse en la respiración..."
-                                value={editForm.notes}
-                                onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
-                            />
-                        </div>
+                        {/* Column 2: Parameters Form */}
+                        <div className="flex flex-col h-full">
+                            {/* Tabs */}
+                            <div className="flex gap-1 mb-4 bg-zinc-100 p-1 rounded-lg">
+                                {[
+                                    { id: 'general', label: 'General' },
+                                    { id: 'load', label: 'Carga & Intensidad' },
+                                    { id: 'notes', label: 'Clínica & Notas' }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id as any)}
+                                        className={cn(
+                                            "flex-1 py-2 text-xs font-bold rounded-md transition-all",
+                                            activeTab === tab.id
+                                                ? "bg-white text-brand-700 shadow-sm"
+                                                : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50"
+                                        )}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
 
+                            {/* Tab Content */}
+                            <div className="flex-1 space-y-4">
+
+                                {/* GENERAL TAB */}
+                                {activeTab === 'general' && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-zinc-600 uppercase">Series</label>
+                                                <input
+                                                    className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all"
+                                                    placeholder="3"
+                                                    value={editForm.sets}
+                                                    onChange={e => setEditForm({ ...editForm, sets: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-zinc-600 uppercase">Reps / Tiempo</label>
+                                                <input
+                                                    className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all"
+                                                    placeholder="10"
+                                                    value={editForm.reps}
+                                                    onChange={e => setEditForm({ ...editForm, reps: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-zinc-600 uppercase">Descanso</label>
+                                                <input
+                                                    className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:border-brand-500 outline-none transition-all"
+                                                    placeholder="90s"
+                                                    value={editForm.rest}
+                                                    onChange={e => setEditForm({ ...editForm, rest: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-zinc-600 uppercase">Tempo</label>
+                                                <input
+                                                    className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:border-brand-500 outline-none transition-all"
+                                                    placeholder="3010"
+                                                    value={editForm.tempo}
+                                                    onChange={e => setEditForm({ ...editForm, tempo: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="p-3 bg-zinc-50 rounded-lg border border-zinc-200 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id="unilateral-check"
+                                                    className="w-4 h-4 text-brand-600 rounded focus:ring-brand-500"
+                                                    checked={editForm.unilateral}
+                                                    onChange={e => setEditForm({ ...editForm, unilateral: e.target.checked })}
+                                                />
+                                                <label htmlFor="unilateral-check" className="text-sm font-medium text-zinc-700">Unilateral</label>
+                                            </div>
+                                            {editForm.unilateral && (
+                                                <select
+                                                    className="text-xs p-1 bg-white border border-zinc-200 rounded outline-none"
+                                                    value={editForm.side}
+                                                    onChange={e => setEditForm({ ...editForm, side: e.target.value })}
+                                                >
+                                                    <option value="left">Izquierda</option>
+                                                    <option value="right">Derecha</option>
+                                                    <option value="alternating">Alternado</option>
+                                                    <option value="bilateral">Ambos</option>
+                                                </select>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* LOAD TAB */}
+                                {activeTab === 'load' && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-zinc-600 uppercase">Carga (kg/lbs)</label>
+                                                <input
+                                                    className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:border-brand-500 outline-none"
+                                                    placeholder="-- kg"
+                                                    value={editForm.load}
+                                                    onChange={e => setEditForm({ ...editForm, load: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-zinc-600 uppercase">% 1RM</label>
+                                                <input
+                                                    className="w-full p-2.5 bg-blue-50/50 border border-blue-100 text-blue-800 rounded-lg text-sm focus:border-blue-500 outline-none"
+                                                    placeholder="75%"
+                                                    value={editForm.percent1rm}
+                                                    onChange={e => setEditForm({ ...editForm, percent1rm: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-zinc-600 uppercase">RPE (1-10)</label>
+                                                <input
+                                                    className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:border-brand-500 outline-none"
+                                                    placeholder="8"
+                                                    value={editForm.rpe}
+                                                    onChange={e => setEditForm({ ...editForm, rpe: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-zinc-600 uppercase">RIR (Reserva)</label>
+                                                <input
+                                                    className="w-full p-2.5 bg-purple-50/50 border border-purple-100 text-purple-800 rounded-lg text-sm focus:border-purple-500 outline-none"
+                                                    placeholder="2 RIR"
+                                                    value={editForm.rir}
+                                                    onChange={e => setEditForm({ ...editForm, rir: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1 pt-2 border-t border-zinc-100">
+                                            <label className="text-xs font-bold text-zinc-600 uppercase">Mantención (Isometría)</label>
+                                            <input
+                                                className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:border-brand-500 outline-none"
+                                                placeholder="5s"
+                                                value={editForm.holdTime}
+                                                onChange={e => setEditForm({ ...editForm, holdTime: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* NOTES TAB */}
+                                {activeTab === 'notes' && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200 h-full flex flex-col">
+                                        <div className="space-y-1 flex-1 flex flex-col">
+                                            <label className="text-xs font-bold text-zinc-600 uppercase">Notas Clínicas / Instrucciones</label>
+                                            <textarea
+                                                className="w-full flex-1 p-3 bg-yellow-50/30 border border-yellow-200/50 rounded-lg text-sm focus:border-yellow-400 outline-none resize-none"
+                                                placeholder="Instrucciones específicas para el paciente (ej: 'No arquear la espalda', 'Respirar al subir')..."
+                                                value={editForm.notes}
+                                                onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                            </div>
+                        </div>
                     </div>
                 )}
             </Dialog>
@@ -488,5 +575,18 @@ function XIcon({ className }: { className?: string }) {
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
             <path d="M18 6 6 18" /><path d="m6 6 12 12" />
         </svg>
+    )
+}
+
+function InfoIcon({ className }: { className?: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
+        </svg>
+    )
+}
+function Play({ className }: { className?: string }) {
+    return (
+        <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
     )
 }
