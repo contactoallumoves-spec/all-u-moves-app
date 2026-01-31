@@ -165,11 +165,14 @@ export default function PatientDetailPage() {
             // Normalize and Merge
             const normalizedEvals = evals.map(e => ({
                 id: e.id,
-                type: e.type === 'fast' ? 'eval_fast' : 'eval_complete',
+                type: e.type === 'questionnaire' ? 'questionnaire' : (e.type === 'fast' ? 'eval_fast' : 'eval_complete'),
                 date: e.date,
-                title: e.type === 'fast' ? 'Evaluación Rápida' : 'Evaluación Completa',
+                title: e.type === 'questionnaire'
+                    ? (e.questionnaire?.type === 'udi-6' ? 'Cuestionario UDI-6' : 'Cuestionario ICIQ-SF')
+                    : (e.type === 'fast' ? 'Evaluación Rápida' : 'Evaluación Completa'),
                 summary: e.summary || 'Sin resumen',
                 findings: e.details?.symptoms || [],
+                questionnaire: e.questionnaire, // Explicitly pass questionnaire data
                 raw: e, // Store full object for detail view
                 timestamp: e.date instanceof Date ? e.date.getTime() : 0
             }));
@@ -953,22 +956,24 @@ export default function PatientDetailPage() {
                                     <Button variant="outline" onClick={() => setSelectedItem(null)}>
                                         Cerrar
                                     </Button>
-                                    <Button
-                                        onClick={() => {
-                                            if (!selectedItem) return;
-                                            if (selectedItem.type === 'session') {
-                                                // Assume we create a route /users/:patientId/sessions/:sessionId/edit OR query param
-                                                // Navigation to generic creator with edit param is easier for now
-                                                navigate(`/users/${id}/sessions/new?editId=${selectedItem.id}`);
-                                            } else {
-                                                const mode = selectedItem.type.includes('fast') ? 'fast' : 'complete';
-                                                navigate(`/eval/${mode}/${id}?editId=${selectedItem.id}`);
-                                            }
-                                        }}
-                                        className="bg-brand-100 text-brand-700 hover:bg-brand-200"
-                                    >
-                                        Editar
-                                    </Button>
+                                    {selectedItem.type !== 'questionnaire' && (
+                                        <Button
+                                            onClick={() => {
+                                                if (!selectedItem) return;
+                                                if (selectedItem.type === 'session') {
+                                                    // Assume we create a route /users/:patientId/sessions/:sessionId/edit OR query param
+                                                    // Navigation to generic creator with edit param is easier for now
+                                                    navigate(`/users/${id}/sessions/new?editId=${selectedItem.id}`);
+                                                } else if (selectedItem.type !== 'questionnaire') {
+                                                    const mode = selectedItem.type.includes('fast') ? 'fast' : 'complete';
+                                                    navigate(`/eval/${mode}/${id}?editId=${selectedItem.id}`);
+                                                }
+                                            }}
+                                            className="bg-brand-100 text-brand-700 hover:bg-brand-200"
+                                        >
+                                            Editar
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         </div>
