@@ -107,18 +107,7 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
         }));
     };
 
-    // Update specific field in details
-    const handleUpdateDetail = (dayKey: keyof typeof plan.schedule, instanceId: string, field: string, value: any) => {
-        setPlan(prev => ({
-            ...prev,
-            schedule: {
-                ...prev.schedule,
-                [dayKey]: prev.schedule[dayKey].map(i =>
-                    i.id === instanceId ? { ...i, details: { ...i.details, [field]: value } } : i
-                )
-            }
-        }));
-    };
+
 
     const handleSavePlan = async () => {
         setIsSaving(true);
