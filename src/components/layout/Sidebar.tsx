@@ -6,7 +6,8 @@ import {
     FileText,
     Settings,
     LogOut,
-    PlusCircle
+    PlusCircle,
+    Dumbbell // [NEW]
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
@@ -17,6 +18,7 @@ export function Sidebar() {
     const links = [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/users', label: 'Usuarias', icon: Users },
+        { href: '/exercises', label: 'Biblioteca', icon: Dumbbell }, // [NEW]
         { href: '/reports', label: 'Reportes', icon: FileText },
         { href: '/settings', label: 'Configuración', icon: Settings },
     ];

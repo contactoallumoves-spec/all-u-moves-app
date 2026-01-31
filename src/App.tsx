@@ -7,7 +7,8 @@ import NewEvaluationPage from './pages/NewEvaluationPage';
 import FastEvaluationWizard from './pages/FastEvaluationWizard';
 import CompleteEvaluation from './pages/CompleteEvaluation';
 import PatientDetailPage from './pages/PatientDetailPage'; // [NEW]
-import EvolutionPage from './pages/EvolutionPage'; // [NEW]
+import EvolutionPage from './pages/EvolutionPage';
+import ExercisesPage from './pages/ExercisesPage'; // [NEW]
 import { Button } from './components/ui/Button';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, User } from 'firebase/auth';
@@ -109,6 +110,7 @@ function App() {
                 {/* Hub & Sessions */}
                 <Route path="/users/:id" element={user ? <MainLayout><PatientDetailPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/users/:patientId/sessions/new" element={user ? <MainLayout><EvolutionPage /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/exercises" element={user ? <MainLayout><ExercisesPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] */}
 
                 {/* Public Routes */}
                 <Route path="/" element={<PublicLayout />}>
