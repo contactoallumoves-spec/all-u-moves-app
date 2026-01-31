@@ -1,6 +1,6 @@
-import { X, ExternalLink, RefreshCw, FileText, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { QuestionnaireResponse } from '../../services/evaluationService';
+import { X, ExternalLink, FileText, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Button } from '../../../ui/Button';
+import { QuestionnaireResponse } from '../../../services/evaluationService';
 
 interface ViewerProps {
     data: QuestionnaireResponse;
