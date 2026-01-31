@@ -42,7 +42,7 @@ export const generateProgressReport = async (
         }
 
         setFont('normal', 10, colors.secondary);
-        doc.text('Kinesiología Pélvica Integral', 14, 40); // Adjusted Y to clear logo
+        doc.text('Kinesiología y salud para el bienestar femenino', 14, 40); // Adjusted Y to clear logo
 
         // Date (Right aligned)
         const dateStr = new Date().toLocaleDateString('es-CL', {

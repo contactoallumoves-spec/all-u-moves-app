@@ -10,7 +10,7 @@ const PublicLayout: React.FC = () => {
                         <img src="/allumoves-logo.png" alt="All U Moves" className="h-12 w-auto" />
                     </div>
                     <p className="mt-2 text-sm text-gray-600">
-                        Kinesiología Pélvica Integral
+                        Kinesiología y salud para el bienestar femenino
                     </p>
                 </div>
 
