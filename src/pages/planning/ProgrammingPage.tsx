@@ -190,11 +190,7 @@ export default function ProgrammingPage() {
                     </Button>
                 </div>
 
-                <div className="mt-8 text-xs text-brand-400">
-                    <p className="font-bold mb-2 uppercase tracking-wider text-gray-400">Información</p>
-                    <p>Semana actual: <span className="text-brand-600 font-bold">#{currentWeekNumber}</span></p>
-                    <p>Plan: <span className="text-gray-600">{annualPlan.name}</span></p>
-                </div>
+                <div className="mt-8"></div>
             </div>
 
             {/* Main Content: Week View */}

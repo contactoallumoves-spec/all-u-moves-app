@@ -71,12 +71,77 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
         } as any;
     });
 
+    // Auto-save buffer
+    const [isDirty, setIsDirty] = useState(false);
+
+    // Track first mount to avoid saving initial state
+    const [isFirstMount, setIsFirstMount] = useState(true);
+
+    useEffect(() => {
+        setIsFirstMount(false);
+    }, []);
+
+    // Auto-save Effect
+    useEffect(() => {
+        if (isFirstMount) return;
+
+        setIsDirty(true);
+        const timer = setTimeout(async () => {
+            // Only save if dirty state is true (handled by isDirty logic implicitly by being here after a change)
+            // Check against initialPlan could be complex, simple debounce is "Save 1s after last change"
+            console.log("Auto-saving...");
+            if (customSaveHandler) {
+                await customSaveHandler(plan);
+            } else if (onSave) {
+                await PatientService.update(patient.id!, { activePlan: plan });
+            }
+            setIsDirty(false);
+        }, 2000); // 2 seconds debounce
+
+        return () => clearTimeout(timer);
+    }, [plan]); // Trigger on any plan change
+
     const handleCreateClick = () => setIsCreating(true);
 
     const handleSaveNewExercise = async (newEx: Exercise) => {
         setExercises(prev => [...prev, newEx]);
         setIsCreating(false);
         setSearchTerm(newEx.name); // Auto-search for it
+    };
+
+    // Track if update is from parent to prevent save loop
+    const isRemoteUpdate = React.useRef(false);
+
+    // Auto-save Effect
+    useEffect(() => {
+        if (isFirstMount) return;
+
+        // If this change was caused by a remote update (props), ignore it for auto-save
+        if (isRemoteUpdate.current) {
+            isRemoteUpdate.current = false;
+            return;
+        }
+
+        setIsDirty(true);
+        const timer = setTimeout(async () => {
+            console.log("Auto-saving...");
+            if (customSaveHandler) {
+                await customSaveHandler(plan);
+            } else if (onSave) {
+                await PatientService.update(patient.id!, { activePlan: plan });
+            }
+            setIsDirty(false);
+        }, 2000); // 2 seconds debounce
+
+        return () => clearTimeout(timer);
+    }, [plan]);
+
+    const handleCreateClick = () => setIsCreating(true);
+
+    const handleSaveNewExercise = async (newEx: Exercise) => {
+        setExercises(prev => [...prev, newEx]);
+        setIsCreating(false);
+        setSearchTerm(newEx.name);
     };
 
     // Initialize/Update when initialPlan or patient changes
@@ -90,13 +155,12 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
             }
 
             if (initialPlan) {
-                // Use provided plan
+                isRemoteUpdate.current = true; // Mark as remote
                 setPlan(initialPlan);
             } else if (patient.activePlan) {
-                // Fallback to patient's active plan (Legacy behavior)
+                isRemoteUpdate.current = true; // Mark as remote
                 let activeBlocks = patient.activePlan.activeBlocks;
 
-                // Backward Compatibility: Derive blocks if missing
                 if (!activeBlocks) {
                     activeBlocks = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
                     const schedule = patient.activePlan.schedule || {};
@@ -121,7 +185,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
         };
 
         init();
-    }, [initialPlan, patient.activePlan]); // Re-run if input plan changes
+    }, [initialPlan, patient.activePlan]);
 
     // Removed the old independent loadData() effect to avoid conflicts
 
@@ -241,6 +305,61 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
     const [editingItem, setEditingItem] = useState<{ day: keyof typeof plan.schedule, instanceId: string } | null>(null);
     const [editForm, setEditForm] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'general' | 'load' | 'notes'>('general');
+
+    // Add Workflow State
+    const [addingToDay, setAddingToDay] = useState<keyof typeof plan.schedule | null>(null);
+    const [selectedExerciseForAdd, setSelectedExerciseForAdd] = useState<Exercise | null>(null);
+
+    const handleSelectExerciseForAdd = (ex: Exercise) => {
+        setSelectedExerciseForAdd(ex);
+        // Initialize form with defaults
+        setActiveTab('general');
+        setEditForm({
+            sets: ex.defaultParams?.sets || '3',
+            reps: ex.defaultParams?.reps || '10',
+            load: '',
+            rpe: '',
+            rest: '',
+            tempo: '',
+            holdTime: '',
+            unilateral: false,
+            side: 'bilateral',
+            notes: '',
+            rir: '',
+            percent1rm: ''
+        });
+    };
+
+    const handleConfirmAdd = () => {
+        if (!addingToDay || !selectedExerciseForAdd || !editForm) return;
+
+        const newItem: PlanExercise = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+            exerciseId: selectedExerciseForAdd.id!,
+            name: selectedExerciseForAdd.name,
+            details: { ...editForm },
+            block: SESSION_BLOCKS.MAIN, // Default to MAIN, could vary
+            completed: false
+        };
+
+        setPlan(prev => ({
+            ...prev,
+            schedule: {
+                ...prev.schedule,
+                [addingToDay]: [...prev.schedule[addingToDay], newItem]
+            },
+            // Ensure block exists
+            activeBlocks: {
+                ...prev.activeBlocks || {},
+                [addingToDay]: Array.from(new Set([...(prev.activeBlocks?.[addingToDay] || []), SESSION_BLOCKS.MAIN]))
+            }
+        }));
+
+        // Reset
+        setAddingToDay(null);
+        setSelectedExerciseForAdd(null);
+        setEditForm(null);
+    };
 
     const handleEditClick = (dayKey: keyof typeof plan.schedule, item: PlanExercise) => {
         setEditingItem({ day: dayKey, instanceId: item.id });
@@ -392,26 +511,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                                     </div>
                                                 </div>
                                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <div className="relative group/add">
-                                                        <button className="p-1.5 bg-brand-100 rounded-full text-brand-600 hover:bg-brand-600 hover:text-white transition-colors">
-                                                            <Plus className="w-4 h-4" />
-                                                        </button>
-                                                        <div className="absolute right-0 top-8 w-40 bg-white shadow-xl rounded-lg border border-brand-100 p-2 hidden group-hover/add:block z-50">
-                                                            <p className="text-[10px] font-bold text-center text-brand-400 mb-1">Agregar a...</p>
-                                                            <div className="grid grid-cols-4 gap-1">
-                                                                {DAYS.map(d => (
-                                                                    <button
-                                                                        key={d.key}
-                                                                        onClick={() => handleAddExercise(d.key as any, ex, SESSION_BLOCKS.MAIN)}
-                                                                        className="aspect-square flex items-center justify-center text-[10px] font-bold bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white rounded transition-colors"
-                                                                        title={`Agregar a ${d.label} (Principal)`}
-                                                                    >
-                                                                        {d.label.substr(0, 1)}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    {/* Hover menu removed as requested */}
                                                 </div>
                                             </div>
                                         </div>
@@ -451,9 +551,10 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                             <Calendar className="w-5 h-5 text-brand-600" /> Plan Semanal
                         </h3>
                         <div className="flex gap-2">
-                            <Button onClick={handleSavePlan} disabled={isSaving} size="sm" className="bg-brand-700 hover:bg-brand-800 text-white shadow-brand-200/50 shadow-lg">
+                            <Button onClick={handleSavePlan} disabled={isSaving} size="sm" className="bg-brand-700 hover:bg-brand-800 text-white shadow-brand-200/50 shadow-lg relative">
                                 <Save className="w-4 h-4 mr-2" />
                                 {isSaving ? 'Guardando...' : 'Guardar Plan'}
+                                {isDirty && <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" title="Cambios sin guardar"></span>}
                             </Button>
                             <Button onClick={handleGenerateMockLink} variant="outline" size="sm" title="Generar/Copiar Enlace para Paciente" className="border-brand-200 text-brand-700 hover:bg-brand-50">
                                 {magicLink ? <Copy className="w-4 h-4 mr-2" /> : <LinkIcon className="w-4 h-4 mr-2" />}
@@ -498,11 +599,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                             {/* Quick Add Button */}
                                             <div className="flex justify-center -mb-2 z-20 relative">
                                                 <button
-                                                    onClick={() => {
-                                                        // Logic to open search or quick add dialog
-                                                        const searchTerm = prompt("Buscar ejercicio (filtro rápido):");
-                                                        if (searchTerm) setSearchTerm(searchTerm);
-                                                    }}
+                                                    onClick={() => setAddingToDay(day.key as any)}
                                                     className="w-full py-1 text-[10px] text-brand-400 hover:text-brand-600 hover:bg-brand-50 border border-transparent hover:border-brand-100 rounded transition-all flex items-center justify-center gap-1"
                                                 >
                                                     <Plus className="w-3 h-3" /> Agregar Ejercicio
@@ -603,6 +700,92 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                         </div>
                     </div>
                 </div>
+
+                {/* Add Exercise Modal / Selector */}
+                <Dialog
+                    isOpen={!!addingToDay}
+                    onClose={() => {
+                        setAddingToDay(null);
+                        setSelectedExerciseForAdd(null);
+                    }}
+                    title={selectedExerciseForAdd ? `Prescribir: ${selectedExerciseForAdd.name}` : "Seleccionar Ejercicio"}
+                    className="max-w-4xl"
+                >
+                    {!selectedExerciseForAdd ? (
+                        // SEARCH VIEW
+                        <div className="h-[60vh] flex flex-col">
+                            <div className="mb-4">
+                                <input
+                                    className="w-full text-sm px-4 py-3 bg-brand-50 rounded-xl outline-none focus:ring-2 focus:ring-brand-200 border-none"
+                                    placeholder="🔍 Buscar ejercicio..."
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    autoFocus
+                                />
+                                <div className="flex gap-2 overflow-x-auto pb-1 mt-2 no-scrollbar">
+                                    <button onClick={() => setSelectedCategory('All')} className={cn("px-3 py-1 text-xs rounded-full transition-colors", selectedCategory === 'All' ? "bg-brand-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200")}>Todos</button>
+                                    {categories.map(cat => (
+                                        <button key={cat} onClick={() => setSelectedCategory(cat)} className={cn("px-3 py-1 text-xs rounded-full transition-colors", selectedCategory === cat ? "bg-brand-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200")}>{cat}</button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-1">
+                                {filteredExercises.map(ex => (
+                                    <div
+                                        key={ex.id}
+                                        onClick={() => handleSelectExerciseForAdd(ex)}
+                                        className="p-3 bg-white border border-brand-100 rounded-xl hover:border-brand-400 hover:shadow-md transition-all cursor-pointer flex flex-col gap-2 group"
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <span className="font-bold text-brand-900 text-sm group-hover:text-brand-600 transition-colors">{ex.name}</span>
+                                            {ex.videoUrl && <Play className="w-3 h-3 text-brand-300" />}
+                                        </div>
+                                        <div className="flex gap-1 flex-wrap">
+                                            <span className="text-[10px] px-1.5 py-0.5 bg-brand-50 text-brand-600 rounded">{ex.category}</span>
+                                            {ex.equipment?.[0] && <span className="text-[10px] px-1.5 py-0.5 bg-zinc-50 text-zinc-500 rounded">{ex.equipment[0]}</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        // PRESCRIPTION VIEW (Reusing form styles)
+                        <div className="h-full flex flex-col">
+                            <div className="flex-1 overflow-y-auto pr-2">
+                                {/* SIMPLIFIED FORM FOR ADDING - Reusing Edit Logic Structure but streamlined */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-sm">
+                                            {selectedExerciseForAdd.videoUrl ? (
+                                                <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${getYoutubeId(selectedExerciseForAdd.videoUrl)}?rel=0`} title="Video" frameBorder="0" allowFullScreen></iframe>
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-zinc-500"><span className="text-xs">Sin video</span></div>
+                                            )}
+                                        </div>
+                                        {selectedExerciseForAdd.instructions && <p className="text-xs text-zinc-500">{selectedExerciseForAdd.instructions}</p>}
+                                    </div>
+
+                                    <div className="flex flex-col gap-4">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div><label className="text-xs font-bold text-zinc-500">SETS</label><input autoFocus className="w-full p-2 bg-zinc-50 rounded border border-zinc-200" value={editForm.sets} onChange={e => setEditForm({ ...editForm, sets: e.target.value })} /></div>
+                                            <div><label className="text-xs font-bold text-zinc-500">REPS</label><input className="w-full p-2 bg-zinc-50 rounded border border-zinc-200" value={editForm.reps} onChange={e => setEditForm({ ...editForm, reps: e.target.value })} /></div>
+                                            <div><label className="text-xs font-bold text-zinc-500">CARGA</label><input className="w-full p-2 bg-zinc-50 rounded border border-zinc-200" value={editForm.load} placeholder="kg" onChange={e => setEditForm({ ...editForm, load: e.target.value })} /></div>
+                                            <div><label className="text-xs font-bold text-zinc-500">RPE</label><input className="w-full p-2 bg-zinc-50 rounded border border-zinc-200" value={editForm.rpe} placeholder="1-10" onChange={e => setEditForm({ ...editForm, rpe: e.target.value })} /></div>
+                                        </div>
+                                        <div className="pt-2">
+                                            <label className="text-xs font-bold text-zinc-500">NOTAS</label>
+                                            <textarea className="w-full p-2 bg-zinc-50 rounded border border-zinc-200 text-sm" rows={2} value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })}></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-zinc-100">
+                                <Button variant="ghost" onClick={() => setSelectedExerciseForAdd(null)}>Volver a búsqueda</Button>
+                                <Button onClick={handleConfirmAdd} className="bg-brand-600 text-white min-w-[150px]">Confirmar y Agregar</Button>
+                            </div>
+                        </div>
+                    )}
+                </Dialog>
 
                 {/* Pro Editing Modal */}
                 <Dialog
