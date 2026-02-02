@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { PlanExercise, SessionExerciseLog } from '../../../types/patient';
-import { Play, Pause, RotateCcw, Check, Zap } from 'lucide-react';
+import { Play, Pause, Check, Zap } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { useSession } from '../../../context/SessionContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Button } from '../../../components/ui/Button';
 
 interface PelvicCardProps {
     exercise: PlanExercise;
@@ -37,7 +38,6 @@ export function PelvicCard({ exercise, sessionId, onSetComplete }: PelvicCardPro
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Initial parsing
-    const currentSetLog = exerciseLog?.sets?.[activeSetIndex || 0];
 
     const startSet = (index: number) => {
         if (activeSetIndex !== index) {
