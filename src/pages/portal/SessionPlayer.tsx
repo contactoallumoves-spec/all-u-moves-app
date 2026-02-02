@@ -111,6 +111,7 @@ export default function SessionPlayer() {
         } catch (error) {
             console.error("Sync failed", error);
             // Optionally show error toast
+            alert("Error al guardar la sesión en la nube. Se guardó localmente. Por favor revisa tu conexión.");
             navigate('../home'); // Exit anyway for now
         } finally {
             setIsSubmitting(false);
