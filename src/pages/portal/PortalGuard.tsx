@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Outlet } from 'react-router-dom';
-import { PatientService } from '../../services/patientService';
+import { db } from '../../lib/firebase';
+import { collection, query, where, onSnapshot, DocumentData, FirestoreError } from 'firebase/firestore';
 import { Patient } from '../../types/patient';
 import { Loader2 } from 'lucide-react';
 
@@ -26,7 +27,7 @@ export function PortalGuard() {
                 setPatient(null);
             }
             setLoading(false);
-        }, (error) => {
+        }, (error: FirestoreError) => {
             console.error("Error connecting to patient portal:", error);
             setLoading(false);
         });
