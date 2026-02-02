@@ -1,6 +1,16 @@
-// ... imports
+import { useState, useEffect } from 'react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
+import { Patient, SessionLog } from '../../types/patient';
+import { Card, CardContent } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { PlayCircle, Clock, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { WeeklyCalendar } from './components/WeeklyCalendar';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { SessionLogService } from '../../services/sessionLogService';
-import { SessionLog } from '../../types/patient';
+
+const DAYS_MAP = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 export default function PortalDashboard() {
     const { patient } = useOutletContext<{ patient: Patient }>();
