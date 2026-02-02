@@ -12,9 +12,10 @@ import { Timestamp } from 'firebase/firestore';
 
 interface PlanBuilderProps {
     patient: Patient;
-    onSave?: () => void; // Optional now
-    initialPlan?: PrescribedPlan; // [NEW] For editing specific plans (e.g. Annual Planner)
-    customSaveHandler?: (plan: PrescribedPlan) => Promise<void>; // [NEW] Override default save behavior
+    onSave?: () => void;
+    initialPlan?: PrescribedPlan;
+    customSaveHandler?: (plan: PrescribedPlan) => Promise<void>;
+    weekDates?: Record<string, Date>; // [NEW] Display specific dates
 }
 
 const DAYS = [
@@ -425,8 +426,26 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
 
                             return (
                                 <div key={day.key} className="flex flex-col h-full bg-white rounded-xl border border-brand-100/50 shadow-sm hover:shadow-md transition-shadow relative group/day">
-                                    <div className="p-3 border-b border-brand-50 bg-brand-50/30 rounded-t-xl text-center sticky top-0 z-10 backdrop-blur-sm">
-                                        <span className="text-xs font-bold text-brand-800 uppercase tracking-widest">{day.label}</span>
+                                    <div className={cn(
+                                        "p-3 border-b border-brand-50 bg-brand-50/30 rounded-t-xl text-center sticky top-0 z-10 backdrop-blur-sm",
+                                        weekDates?.[day.key] && new Date().toDateString() === weekDates[day.key].toDateString() ? "bg-brand-100/50" : ""
+                                    )}>
+                                        <div className="flex flex-col items-center">
+                                            <span className={cn(
+                                                "text-xs font-bold uppercase tracking-widest",
+                                                weekDates?.[day.key] && new Date().toDateString() === weekDates[day.key].toDateString() ? "text-brand-700" : "text-brand-800"
+                                            )}>
+                                                {day.label}
+                                            </span>
+                                            {weekDates?.[day.key] && (
+                                                <span className={cn(
+                                                    "text-[10px] font-medium mt-0.5",
+                                                    weekDates[day.key].toDateString() === new Date().toDateString() ? "text-brand-600" : "text-gray-400"
+                                                )}>
+                                                    {weekDates[day.key].getDate()} {weekDates[day.key].toLocaleDateString('es-ES', { month: 'short' })}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar relative">
 

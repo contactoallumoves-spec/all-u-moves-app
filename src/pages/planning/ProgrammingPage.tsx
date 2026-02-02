@@ -6,9 +6,9 @@ import { AnnualPlan } from '../../types/plan';
 import { Patient, PrescribedPlan } from '../../types/patient';
 import { PlanBuilder } from '../../components/clinical/PlanBuilder';
 import { Timestamp } from 'firebase/firestore';
-import { format, startOfWeek, addDays, getWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/Button';
 
@@ -66,8 +66,8 @@ export default function ProgrammingPage() {
     const getWeekNumber = (date: Date, planStart: Date) => {
         // Calculate week index considering plan start date
         // Simple approximation: difference in weeks
-        const diffTime = Math.abs(date.getTime() - planStart.getTime());
-        const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+        // const diffTime = Math.abs(date.getTime() - planStart.getTime());
+        // const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
         // Better: Use getWeek from date-fns relative to year, but we need relative to Plan Start.
         // Let's assume Plan Start is "Week 1".
         // Actually, let's just match the AnnualPlan structure. 
@@ -147,7 +147,7 @@ export default function ProgrammingPage() {
                     {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(d => <div key={d}>{d}</div>)}
                 </div>
                 <div className="grid grid-cols-7 gap-1 text-sm">
-                    {calendarDays.map((day, dayIdx) => {
+                    {calendarDays.map((day) => {
                         const isSameMonthDay = isSameMonth(day, monthStart);
                         const isSelected = isSameDay(day, selectedDate);
                         // Check if this week has data? (Optional optimization)
