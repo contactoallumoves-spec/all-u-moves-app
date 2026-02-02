@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import { PlanExercise, ExerciseParameters } from '../../../types/patient';
-import { SessionExerciseLog } from '../../../types/patient'; // Updated import
-import { Check, RotateCcw, Dumbbell, Hash, Save } from 'lucide-react';
+import { PlanExercise } from '../../../types/patient';
+import { SessionExerciseLog } from '../../../types/patient';
+import { Check, RotateCcw } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import { useSession } from '../../../context/SessionContext'; // Hook into context
+import { useSession } from '../../../context/SessionContext';
 
 interface StrengthCardProps {
     exercise: PlanExercise;

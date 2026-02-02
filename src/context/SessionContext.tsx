@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { SessionLog, SessionExerciseLog } from '../types/patient';
+import { SessionLog } from '../types/patient';
 
 // --- State Types ---
 interface SessionState {

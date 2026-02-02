@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Play, Pause, RotateCcw } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { X, Play, Pause } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Global timer state could be moved to Context if it needs to persist navigation

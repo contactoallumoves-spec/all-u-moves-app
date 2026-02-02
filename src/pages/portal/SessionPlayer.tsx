@@ -1,23 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate, useParams, Link } from 'react-router-dom';
-import { Patient } from '../../types/patient';
+import { Patient, PlanExercise } from '../../types/patient';
 import { ExerciseService } from '../../services/exerciseService';
 import { useSession } from '../../context/SessionContext';
 import { Button } from '../../components/ui/Button';
-import { ChevronLeft, Info, Play, X, CheckSquare, Flag, MessageSquare } from 'lucide-react';
+import { ChevronLeft, Info, Play, X, Flag, MessageSquare } from 'lucide-react';
 import { SmartTimer } from './components/SmartTimer';
 import { StrengthCard } from './components/StrengthCard';
+import { RPESelector, PainSelector } from '../../components/ui/PremiumInputs';
 import { cn } from '../../lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-
-// --- Assets & Icons ---
-// Using lucide-react
+import { motion } from 'framer-motion';
 
 export default function SessionPlayer() {
     const { patient } = useOutletContext<{ patient: Patient }>();
     const navigate = useNavigate();
     const { sessionId } = useParams();
-    const { state, dispatch } = useSession();
+    const { dispatch } = useSession(); // Removed 'state' as unused
 
     // 1. Resolve Session ID (Date Key)
     const todayIndex = new Date().getDay();
@@ -27,7 +25,7 @@ export default function SessionPlayer() {
 
     // 2. Load Plan
     const planExercises = patient.activePlan?.schedule?.[targetDay as keyof typeof patient.activePlan.schedule] || [];
-    const uniqueSessionId = `${new Date().toISOString().split('T')[0]}_${targetDay}`; // Robust unique ID for logs: YYYY-MM-DD_monday
+    const uniqueSessionId = `${new Date().toISOString().split('T')[0]}_${targetDay}`;
 
     // 3. Initialize Context Session
     useEffect(() => {
@@ -37,13 +35,23 @@ export default function SessionPlayer() {
                 payload: { sessionId: uniqueSessionId, patientId: patient.id }
             });
         }
-    }, [patient.id, uniqueSessionId]);
+    }, [patient.id, uniqueSessionId, dispatch]);
 
     // 4. Local UI State
     const [activeIndex, setActiveIndex] = useState(0);
     const [exerciseCache, setExerciseCache] = useState<Record<string, any>>({});
     const [timerVisible, setTimerVisible] = useState(false);
-    const [showInfo, setShowInfo] = useState(false); // Modal for instructions
+    const [showInfo, setShowInfo] = useState(false);
+
+    // Feedback State
+    const [showFeedback, setShowFeedback] = useState(false);
+    const [feedback, setFeedback] = useState({
+        rpe: 5,
+        pain: 0,
+        fatigue: 5,
+        symptoms: [] as string[],
+        notes: ''
+    });
 
     // Fetch Details cache
     useEffect(() => {
@@ -58,7 +66,7 @@ export default function SessionPlayer() {
             setExerciseCache(prev => ({ ...prev, ...data }));
         };
         if (planExercises.length > 0) fetchDetails();
-    }, [planExercises.length, activeIndex]); // Fetch as we go or all at once
+    }, [planExercises.length, activeIndex]); // Removed exerciseCache from dependency to avoid loop
 
     // Current Item
     const currentItem = planExercises[activeIndex];
@@ -79,10 +87,33 @@ export default function SessionPlayer() {
     };
 
     const handleFinish = () => {
-        // Validation or Summary Screen
-        // For V1, simple exit
+        setShowFeedback(true);
+    };
+
+    const handleSendFeedback = () => {
+        // Here we would sync with DB or Context
+        console.log("Saving feedback", feedback);
         navigate('../home');
     };
+
+    const toggleSymptom = (symptom: string) => {
+        setFeedback(prev => ({
+            ...prev,
+            symptoms: prev.symptoms.includes(symptom)
+                ? prev.symptoms.filter(s => s !== symptom)
+                : [...prev.symptoms, symptom]
+        }));
+    };
+
+    // Handle completion of specific item to auto-advance (optional, mainly for non-set-based exercises)
+    const handleComplete = (item: PlanExercise) => {
+        if (activeIndex < planExercises.length - 1) {
+            setTimeout(() => setActiveIndex(prev => prev + 1), 500);
+        } else {
+            handleFinish();
+        }
+    };
+
 
     // --- Loading / Empty States ---
     if (!planExercises.length) return (
@@ -274,7 +305,7 @@ export default function SessionPlayer() {
                         <Button
                             size="lg"
                             className="flex-[3] rounded-xl h-14 text-lg bg-zinc-900 hover:bg-black text-white shadow-xl shadow-zinc-300"
-                            onClick={() => setActiveIndex(i => i + 1)}
+                            onClick={() => handleComplete(currentItem)}
                         >
                             Siguiente
                         </Button>
