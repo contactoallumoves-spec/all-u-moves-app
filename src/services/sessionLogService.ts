@@ -21,20 +21,26 @@ export const SessionLogService = {
 
     async getByPatientId(patientId: string) {
         try {
+            // [FIX] Client-side sort to avoid "Missing Index" error
             const q = query(
                 collection(db, COLLECTION_NAME),
-                where('patientId', '==', patientId),
-                orderBy('date', 'desc')
+                where('patientId', '==', patientId)
             );
 
             const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SessionLog));
+            const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SessionLog));
+
+            // Sort in memory (Newest first)
+            return logs.sort((a, b) => {
+                const dateA = (a.date as any)?.toDate ? (a.date as any).toDate() : new Date(a.date);
+                const dateB = (b.date as any)?.toDate ? (b.date as any).toDate() : new Date(b.date);
+                return dateB.getTime() - dateA.getTime();
+            });
         } catch (error: any) {
             console.error("Error getting session logs", error);
             if (error?.message?.includes("index")) {
                 alert("Error de Sistema: Falta un índice en la base de datos para ver el historial. Por favor avisa al administrador.");
             }
-            // Fallback for missing index or other errors
             return [];
         }
     },
@@ -50,15 +56,19 @@ export const SessionLogService = {
             const endOfDay = new Date(date);
             endOfDay.setHours(23, 59, 59, 999);
 
+            // [FIX] Client-side filtering to avoid "Missing Index" error
             const q = query(
                 collection(db, COLLECTION_NAME),
-                where('patientId', '==', patientId),
-                where('date', '>=', Timestamp.fromDate(startOfDay)),
-                where('date', '<=', Timestamp.fromDate(endOfDay))
+                where('patientId', '==', patientId)
             );
 
             const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SessionLog));
+            const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SessionLog));
+
+            return logs.filter(log => {
+                const logDate = (log.date as any)?.toDate ? (log.date as any).toDate() : new Date(log.date);
+                return logDate >= startOfDay && logDate <= endOfDay;
+            });
         } catch (error) {
             console.error("Error getting session logs by date", error);
             return [];
@@ -67,16 +77,25 @@ export const SessionLogService = {
 
     async getLastLog(patientId: string): Promise<SessionLog | null> {
         try {
+            // [FIX] Client-side sort/limit
             const q = query(
                 collection(db, COLLECTION_NAME),
-                where('patientId', '==', patientId),
-                orderBy('date', 'desc'),
-                limit(1)
+                where('patientId', '==', patientId)
             );
 
             const snapshot = await getDocs(q);
             if (snapshot.empty) return null;
-            return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as SessionLog;
+
+            const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SessionLog));
+
+            // Sort to find newest
+            logs.sort((a, b) => {
+                const dateA = (a.date as any)?.toDate ? (a.date as any).toDate() : new Date(a.date);
+                const dateB = (b.date as any)?.toDate ? (b.date as any).toDate() : new Date(b.date);
+                return dateB.getTime() - dateA.getTime();
+            });
+
+            return logs[0];
         } catch (error) {
             console.error("Error getting last session log", error);
             return null;
