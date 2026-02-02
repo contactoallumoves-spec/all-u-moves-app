@@ -20,6 +20,7 @@ import { PortalLayout } from './components/portal/PortalLayout'; // [NEW]
 import { PortalGuard } from './pages/portal/PortalGuard'; // [NEW]
 import PortalDashboard from './pages/portal/PortalDashboard'; // [NEW]
 import SessionPlayer from './pages/portal/SessionPlayer'; // [NEW]
+import AnnualPlannerPage from './pages/planning/AnnualPlannerPage'; // [NEW]
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -115,6 +116,7 @@ function App() {
                 <Route path="/users/:id" element={user ? <MainLayout><PatientDetailPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/users/:patientId/sessions/new" element={user ? <MainLayout><EvolutionPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/exercises" element={user ? <MainLayout><ExercisesPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] */}
+                <Route path="/users/:patientId/planning" element={user ? <MainLayout><AnnualPlannerPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] Phase 13 */}
 
                 {/* Public Routes */}
                 <Route path="/" element={<PublicLayout />}>

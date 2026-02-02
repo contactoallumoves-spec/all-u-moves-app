@@ -7,15 +7,33 @@ import { cn } from '../../lib/utils'; // Assuming this exists
 interface AnnualCalendarProps {
     plan: AnnualPlan;
     onSelectWeek: (week: number) => void;
-    onAddMacrocycle: () => void;
+    onAddMacrocycle: (macro: Omit<Macrocycle, 'id'>) => Promise<void>;
 }
 
 export function AnnualCalendar({ plan, onSelectWeek, onAddMacrocycle }: AnnualCalendarProps) {
     const weeks = Array.from({ length: 52 }, (_, i) => i + 1);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [newMacro, setNewMacro] = useState({
+        name: '',
+        startWeek: 1,
+        endWeek: 4,
+        color: '#3B82F6',
+        focus: ''
+    });
 
     // Helper to find if a week belongs to a macrocycle
     const getMacroForWeek = (week: number) => {
         return plan.macrocycles.find(m => week >= m.startWeek && week <= m.endWeek);
+    };
+
+    const handleSave = async () => {
+        if (newMacro.endWeek < newMacro.startWeek) {
+            alert("La semana de término debe ser posterior a la de inicio");
+            return;
+        }
+        await onAddMacrocycle(newMacro as any);
+        setIsModalOpen(false);
+        setNewMacro({ name: '', startWeek: 1, endWeek: 4, color: '#3B82F6', focus: '' });
     };
 
     return (
@@ -25,7 +43,7 @@ export function AnnualCalendar({ plan, onSelectWeek, onAddMacrocycle }: AnnualCa
                     <CalendarIcon className="w-5 h-5 text-brand-500" />
                     Vista Anual: {plan.name}
                 </h3>
-                <Button size="sm" variant="outline" onClick={onAddMacrocycle}>
+                <Button size="sm" variant="outline" onClick={() => setIsModalOpen(true)}>
                     + Nuevo Macrociclo
                 </Button>
             </div>
@@ -84,6 +102,72 @@ export function AnnualCalendar({ plan, onSelectWeek, onAddMacrocycle }: AnnualCa
                     <span>Vacío</span>
                 </div>
             </div>
+
+            {/* Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-4 border-b border-gray-100">
+                            <h3 className="font-bold text-gray-900">Nuevo Macrociclo</h3>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label>
+                                <input
+                                    className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                                    placeholder="Ej: Fase General"
+                                    value={newMacro.name}
+                                    onChange={e => setNewMacro({ ...newMacro, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Inicio (Semana)</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={52}
+                                        className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                                        value={newMacro.startWeek}
+                                        onChange={e => setNewMacro({ ...newMacro, startWeek: parseInt(e.target.value) })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Fin (Semana)</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={52}
+                                        className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                                        value={newMacro.endWeek}
+                                        onChange={e => setNewMacro({ ...newMacro, endWeek: parseInt(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Color</label>
+                                <div className="flex gap-2">
+                                    {['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'].map(c => (
+                                        <button
+                                            key={c}
+                                            onClick={() => setNewMacro({ ...newMacro, color: c })}
+                                            className={cn(
+                                                "w-8 h-8 rounded-full border-2 transition-all",
+                                                newMacro.color === c ? "border-gray-900 scale-110" : "border-transparent"
+                                            )}
+                                            style={{ backgroundColor: c }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 bg-gray-50 flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                            <Button onClick={handleSave}>Guardar</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

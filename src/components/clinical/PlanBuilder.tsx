@@ -12,7 +12,9 @@ import { Timestamp } from 'firebase/firestore';
 
 interface PlanBuilderProps {
     patient: Patient;
-    onSave: () => void;
+    onSave?: () => void; // Optional now
+    initialPlan?: PrescribedPlan; // [NEW] For editing specific plans (e.g. Annual Planner)
+    customSaveHandler?: (plan: PrescribedPlan) => Promise<void>; // [NEW] Override default save behavior
 }
 
 const DAYS = [
@@ -25,92 +27,82 @@ const DAYS = [
     { key: 'sunday', label: 'Domingo' }
 ] as const;
 
-export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
+export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler }: PlanBuilderProps) {
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
-
-    // Plan State
-    const [plan, setPlan] = useState<PrescribedPlan>({
-        startDate: Timestamp.now(),
-        schedule: {
-            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
-        },
-        activeBlocks: {
-            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
-        }
-    });
-
     const [isSaving, setIsSaving] = useState(false);
-    const [magicLink, setMagicLink] = useState<string | null>(null);
-
-    // Quick Create State
+    const [magicLink, setMagicLink] = useState('');
     const [isCreating, setIsCreating] = useState(false);
 
-    const handleCreateClick = () => {
-        setIsCreating(true);
+    // Initialize plan state
+    const [plan, setPlan] = useState<PrescribedPlan>(() => {
+        if (initialPlan) return initialPlan;
+        if (patient.activePlan) return { ...patient.activePlan, activeBlocks: patient.activePlan.activeBlocks || {} };
+        return {
+            startDate: Timestamp.now(), // We need Timestamp here actually for default? No, usually Date in Types, check type defs. Local Date is fine for now or Timestamp.fromDate(new Date()) 
+            // actually the Type says Timestamp | Date usually. Let's use Date for safety if Timestamp is causing issues, or keep imported if needed.
+            // Wait, I am removing Timestamp import? If I remove it, I can't use it.
+            // Let's use new Date() if allowed by type.
+            schedule: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] },
+            activeBlocks: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] }
+        } as any;
+    });
+
+    const handleCreateClick = () => setIsCreating(true);
+
+    const handleSaveNewExercise = async (newEx: Exercise) => {
+        setExercises(prev => [...prev, newEx]);
+        setIsCreating(false);
+        setSearchTerm(newEx.name); // Auto-search for it
     };
 
-    // NEW: We don't need 'newExercise' state here anymore, handled by modal
-    const handleSaveNewExercise = async (exerciseData: Omit<Exercise, 'id'>) => {
-        try {
-            const id = await ExerciseService.create(exerciseData);
-            const created = { id, ...exerciseData } as Exercise;
-            setExercises(prev => [...prev, created]);
-            setSearchTerm(exerciseData.name);
-            setIsCreating(false);
-        } catch (e) {
-            console.error("Error creating exercise", e);
-            throw e;
-        }
-    };
-
+    // Initialize/Update when initialPlan or patient changes
     useEffect(() => {
-        if (patient.magicLinkToken) {
-            const baseUrl = window.location.origin;
-            setMagicLink(`${baseUrl}/portal/${patient.magicLinkToken}`);
-        }
-    }, [patient.magicLinkToken]);
-
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
-        setLoading(true);
-        const exList = await ExerciseService.getAll();
-        setExercises(exList);
-
-        if (patient.activePlan) {
-            let activeBlocks = patient.activePlan.activeBlocks;
-
-            // Backward Compatibility: Derive blocks if missing
-            if (!activeBlocks) {
-                activeBlocks = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
-
-                // Helper to safely iterate schedule
-                const schedule = patient.activePlan.schedule || {};
-                Object.entries(schedule).forEach(([day, exercises]) => {
-                    if (Array.isArray(exercises)) {
-                        const uniqueBlocks = new Set<string>();
-                        exercises.forEach(ex => {
-                            uniqueBlocks.add(ex.block || SESSION_BLOCKS.MAIN);
-                        });
-                        if (activeBlocks) {
-                            (activeBlocks as any)[day] = Array.from(uniqueBlocks);
-                        }
-                    }
-                });
+        const init = async () => {
+            setLoading(true);
+            // Always ensure exercises are loaded
+            if (exercises.length === 0) {
+                const exList = await ExerciseService.getAll();
+                setExercises(exList);
             }
 
-            setPlan({
-                ...patient.activePlan,
-                activeBlocks
-            });
-        }
-        setLoading(false);
-    };
+            if (initialPlan) {
+                // Use provided plan
+                setPlan(initialPlan);
+            } else if (patient.activePlan) {
+                // Fallback to patient's active plan (Legacy behavior)
+                let activeBlocks = patient.activePlan.activeBlocks;
+
+                // Backward Compatibility: Derive blocks if missing
+                if (!activeBlocks) {
+                    activeBlocks = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
+                    const schedule = patient.activePlan.schedule || {};
+                    Object.entries(schedule).forEach(([day, exList]) => {
+                        if (Array.isArray(exList)) {
+                            const uniqueBlocks = new Set<string>();
+                            exList.forEach(ex => {
+                                uniqueBlocks.add(ex.block || SESSION_BLOCKS.MAIN);
+                            });
+                            // @ts-ignore
+                            if (activeBlocks) activeBlocks[day] = Array.from(uniqueBlocks);
+                        }
+                    });
+                }
+
+                setPlan({
+                    ...patient.activePlan,
+                    activeBlocks
+                });
+            }
+            setLoading(false);
+        };
+
+        init();
+    }, [initialPlan, patient.activePlan]); // Re-run if input plan changes
+
+    // Removed the old independent loadData() effect to avoid conflicts
 
     const handleAddExercise = (dayKey: keyof typeof plan.schedule, exercise: Exercise, block: string = SESSION_BLOCKS.MAIN) => {
         const defaultSets = exercise.defaultParams?.sets || '3';
@@ -192,10 +184,15 @@ export function PlanBuilder({ patient, onSave }: PlanBuilderProps) {
     const handleSavePlan = async () => {
         setIsSaving(true);
         try {
-            await PatientService.update(patient.id!, {
-                activePlan: plan
-            });
-            onSave();
+            if (customSaveHandler) {
+                await customSaveHandler(plan);
+            } else {
+                await PatientService.update(patient.id!, {
+                    activePlan: plan
+                });
+            }
+
+            if (onSave) onSave();
             alert("Plan guardado correctamente");
         } catch (error) {
             console.error(error);
