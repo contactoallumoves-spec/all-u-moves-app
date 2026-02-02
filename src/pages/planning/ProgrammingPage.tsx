@@ -162,7 +162,10 @@ export default function ProgrammingPage() {
                         const isSelected = isSameDay(day, selectedDate);
                         // Check if this week has data? (Optional optimization)
                         const weekNum = getWeekNumber(day, annualPlan.startDate instanceof Timestamp ? annualPlan.startDate.toDate() : new Date(annualPlan.startDate));
-                        const hasData = annualPlan.weeks[weekNum] && Object.values(annualPlan.weeks[weekNum].schedule).some(d => d.length > 0);
+                        // Map 0-6 (Sun-Sat) to schedule keys
+                        const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        const dayKey = dayKeys[day.getDay()];
+                        const hasData = annualPlan.weeks[weekNum]?.schedule?.[dayKey]?.length > 0;
 
                         return (
                             <button

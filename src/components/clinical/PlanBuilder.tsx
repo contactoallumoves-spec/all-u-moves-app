@@ -73,6 +73,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
 
     // Auto-save buffer
     const [isDirty, setIsDirty] = useState(false);
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
     // Track first mount to avoid saving initial state
     const [isFirstMount, setIsFirstMount] = useState(true);
@@ -104,6 +105,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
             } else if (onSave) {
                 await PatientService.update(patient.id!, { activePlan: plan });
             }
+            setLastSaved(new Date());
             setIsDirty(false);
         }, 2000); // 2 seconds debounce
 
@@ -252,7 +254,8 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
             }
 
             if (onSave) onSave();
-            alert("Plan guardado correctamente");
+            setLastSaved(new Date());
+            // alert("Plan guardado correctamente"); // Removed alert for smoother experience, using UI feedback instead
         } catch (error) {
             console.error(error);
             alert("Error al guardar el plan");
@@ -530,10 +533,13 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                         <h3 className="font-bold text-brand-900 flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-brand-600" /> Plan Semanal
                         </h3>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
+                            <span className="text-[10px] text-gray-500 font-medium mr-1 transition-opacity duration-300">
+                                {isSaving ? 'Guardando...' : isDirty ? 'Cambios pendientes...' : lastSaved ? `Guardado ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                            </span>
                             <Button onClick={handleSavePlan} disabled={isSaving} size="sm" className="bg-brand-700 hover:bg-brand-800 text-white shadow-brand-200/50 shadow-lg relative">
                                 <Save className="w-4 h-4 mr-2" />
-                                {isSaving ? 'Guardando...' : 'Guardar Plan'}
+                                {isSaving ? 'Guardando...' : 'Guardar'}
                                 {isDirty && <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" title="Cambios sin guardar"></span>}
                             </Button>
                             <Button onClick={handleGenerateMockLink} variant="outline" size="sm" title="Generar/Copiar Enlace para Paciente" className="border-brand-200 text-brand-700 hover:bg-brand-50">
