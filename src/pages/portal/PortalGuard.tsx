@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Outlet } from 'react-router-dom';
 import { db } from '../../lib/firebase';
-import { collection, query, where, onSnapshot, DocumentData, FirestoreError } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, FirestoreError } from 'firebase/firestore';
 import { Patient } from '../../types/patient';
 import { Loader2 } from 'lucide-react';
 
