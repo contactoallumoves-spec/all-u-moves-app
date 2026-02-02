@@ -316,18 +316,24 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
             completed: false
         };
 
-        setPlan(prev => ({
-            ...prev,
-            schedule: {
-                ...prev.schedule,
-                [addingToDay]: [...prev.schedule[addingToDay], newItem]
-            },
-            // Ensure block exists
-            activeBlocks: {
-                ...prev.activeBlocks || {},
-                [addingToDay]: Array.from(new Set([...(prev.activeBlocks?.[addingToDay] || []), SESSION_BLOCKS.MAIN]))
-            }
-        }));
+        setPlan(prev => {
+            const currentActiveBlocks = prev.activeBlocks || {
+                monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+            };
+
+            return {
+                ...prev,
+                schedule: {
+                    ...prev.schedule,
+                    [addingToDay]: [...prev.schedule[addingToDay], newItem]
+                },
+                // Ensure block exists
+                activeBlocks: {
+                    ...currentActiveBlocks,
+                    [addingToDay]: Array.from(new Set([...(currentActiveBlocks[addingToDay] || []), SESSION_BLOCKS.MAIN]))
+                }
+            };
+        });
 
         // Reset
         setAddingToDay(null);
