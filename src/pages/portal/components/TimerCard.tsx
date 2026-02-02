@@ -154,7 +154,7 @@ export function TimerCard({ exercise, sessionId, onSetComplete }: TimerCardProps
                                             </button>
                                             {isActive && (
                                                 <button
-                                                    onClick={() => handleReset(i)}
+                                                    onClick={() => handleReset()}
                                                     className="w-10 h-10 rounded-full bg-white shadow-sm border border-zinc-200 flex items-center justify-center hover:bg-zinc-50 active:scale-95 transition-all text-zinc-400"
                                                 >
                                                     <RotateCcw className="w-4 h-4" />
