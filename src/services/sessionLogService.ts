@@ -85,7 +85,8 @@ export const SessionLogService = {
             console.error("Error getting session logs by date", error);
             return [];
         }
-    }
+    },
+
     async getLastLog(patientId: string): Promise<SessionLog | null> {
         try {
             const q = query(
