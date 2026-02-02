@@ -1,13 +1,17 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useOutletContext } from 'react-router-dom';
 import { SessionProvider } from '../../context/SessionContext';
+import { Patient } from '../../types/patient';
 
 export function PortalLayout() {
+    const context = useOutletContext<{ patient: Patient }>();
+
     return (
-        {/* Mobile Bottom Nav (Optional, maybe for future) */ }
-            {/* <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-brand-100 p-4 flex justify-around text-xs text-brand-400">
-                <span>Inicio</span>
-                <span>Progreso</span>
-            </nav> */}
-        </div >
+        <SessionProvider>
+            <div className="min-h-screen bg-brand-50/30">
+                <main className="max-w-md mx-auto min-h-screen bg-white shadow-2xl overflow-hidden relative">
+                    <Outlet context={context} />
+                </main>
+            </div>
+        </SessionProvider>
     );
 }
