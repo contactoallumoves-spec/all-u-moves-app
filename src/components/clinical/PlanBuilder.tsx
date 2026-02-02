@@ -20,7 +20,7 @@ function DraggableItem({ id, data, children, className }: { id: string, data: an
     );
 }
 
-function DroppableDay({ id, children, className, active }: { id: string, children: React.ReactNode, className?: string, active?: boolean }) {
+function DroppableDay({ id, children, className }: { id: string, children: React.ReactNode, className?: string }) {
     const { setNodeRef, isOver } = useDroppable({ id });
     return (
         <div ref={setNodeRef} className={cn(className, isOver ? "ring-2 ring-brand-400 bg-brand-50" : "")}>
