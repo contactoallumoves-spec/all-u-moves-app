@@ -163,7 +163,7 @@ export default function ProgrammingPage() {
                         // Check if this week has data? (Optional optimization)
                         const weekNum = getWeekNumber(day, annualPlan.startDate instanceof Timestamp ? annualPlan.startDate.toDate() : new Date(annualPlan.startDate));
                         // Map 0-6 (Sun-Sat) to schedule keys
-                        const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
                         const dayKey = dayKeys[day.getDay()];
                         const hasData = annualPlan.weeks[weekNum]?.schedule?.[dayKey]?.length > 0;
 
