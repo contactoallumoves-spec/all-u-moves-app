@@ -5,7 +5,7 @@ import { ExerciseService } from '../../services/exerciseService';
 import { SessionLogService } from '../../services/sessionLogService';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
-import { ChevronLeft, Play, Info } from 'lucide-react';
+import { ChevronLeft, Play, Info, Timer, Ruler, Activity, TrendingUp, Wind, Zap, PauseCircle } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 
 export default function SessionPlayer() {
@@ -267,9 +267,23 @@ export default function SessionPlayer() {
                                     {currentItem.details.reps && <span className="bg-zinc-800 px-2 py-1 rounded">{currentItem.details.reps} reps</span>}
                                     {currentItem.details.load && <span className="bg-zinc-800 px-2 py-1 rounded text-orange-300 font-bold">{currentItem.details.load}</span>}
                                     {currentItem.details.rpe && <span className="bg-zinc-800 px-2 py-1 rounded text-purple-300">RPE: {currentItem.details.rpe}</span>}
-                                    {/* Additional detailed params render */}
-                                    {currentItem.details.unilateral && <span className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded font-xs">Unilateral</span>}
-                                    {currentItem.details.holdTime && <span className="bg-zinc-800 px-2 py-1 rounded">Mantención: {currentItem.details.holdTime}</span>}
+
+                                    {/* Cardio / Endurance */}
+                                    {currentItem.details.duration && <span className="flex items-center gap-1 bg-blue-900/40 text-blue-200 px-2 py-1 rounded border border-blue-900/50"><Timer className="w-3 h-3" /> {currentItem.details.duration}</span>}
+                                    {currentItem.details.distance && <span className="flex items-center gap-1 bg-blue-900/40 text-blue-200 px-2 py-1 rounded border border-blue-900/50"><Ruler className="w-3 h-3" /> {currentItem.details.distance}</span>}
+                                    {currentItem.details.heartRateZone && <span className="flex items-center gap-1 bg-red-900/40 text-red-200 px-2 py-1 rounded border border-red-900/50"><Activity className="w-3 h-3" /> {currentItem.details.heartRateZone}</span>}
+                                    {currentItem.details.incline && <span className="flex items-center gap-1 bg-orange-900/40 text-orange-200 px-2 py-1 rounded border border-orange-900/50"><TrendingUp className="w-3 h-3" /> {currentItem.details.incline}</span>}
+
+                                    {/* Pelvic / Isometric */}
+                                    {currentItem.details.contractionTime && <span className="flex items-center gap-1 bg-pink-900/40 text-pink-200 px-2 py-1 rounded border border-pink-900/50"><Zap className="w-3 h-3" /> {currentItem.details.contractionTime}</span>}
+                                    {currentItem.details.relaxationTime && <span className="flex items-center gap-1 bg-pink-900/20 text-pink-300 px-2 py-1 rounded border border-pink-900/30"><PauseCircle className="w-3 h-3" /> {currentItem.details.relaxationTime}</span>}
+
+                                    {/* Breath */}
+                                    {currentItem.details.breathPattern && <span className="flex items-center gap-1 bg-teal-900/40 text-teal-200 px-2 py-1 rounded border border-teal-900/50"><Wind className="w-3 h-3" /> {currentItem.details.breathPattern}</span>}
+
+                                    {/* Technical */}
+                                    {currentItem.details.unilateral && <span className="bg-zinc-800 text-zinc-400 px-2 py-1 rounded text-xs border border-zinc-700">Unilateral</span>}
+                                    {currentItem.details.holdTime && <span className="bg-zinc-800 px-2 py-1 rounded">Hold: {currentItem.details.holdTime}</span>}
                                 </>
                             ) : (
                                 <span>{currentDetails?.defaultParams && `${currentDetails.defaultParams.sets}x${currentDetails.defaultParams.reps}`}</span>

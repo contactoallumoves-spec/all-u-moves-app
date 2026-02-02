@@ -94,6 +94,19 @@ export interface ExerciseParameters {
     rir?: string; // Reps in Reserve (e.g. "2 RIR")
     percent1rm?: string; // % 1RM (e.g. "75%")
     techniqueTags?: string[]; // e.g. ["Explosive", "Slow Eccentric"]
+
+    // Cardio / Endurance
+    duration?: string; // e.g. "20 min"
+    distance?: string; // e.g. "5km"
+    heartRateZone?: string; // e.g. "Zone 2"
+    incline?: string; // e.g. "1.5%"
+
+    // Yoga / Pilates / Breath
+    breathPattern?: string; // e.g. "In 4 / Out 6"
+
+    // Pelvic Floor (Advanced)
+    contractionTime?: string; // e.g. "5s" (Work)
+    relaxationTime?: string; // e.g. "10s" (Rest)
 }
 
 export interface PlanExercise {

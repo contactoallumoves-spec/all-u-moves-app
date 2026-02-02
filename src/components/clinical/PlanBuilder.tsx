@@ -312,7 +312,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
     // Modal State
     const [editingItem, setEditingItem] = useState<{ day: keyof typeof plan.schedule, instanceId: string } | null>(null);
     const [editForm, setEditForm] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'general' | 'load' | 'notes'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'load' | 'specifics' | 'notes'>('general');
 
     // Add Workflow State
     const [addingToDay, setAddingToDay] = useState<keyof typeof plan.schedule | null>(null);
@@ -334,7 +334,15 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
             side: 'bilateral',
             notes: '',
             rir: '',
-            percent1rm: ''
+            percent1rm: '',
+            // [NEW]
+            duration: '',
+            distance: '',
+            heartRateZone: '',
+            incline: '',
+            breathPattern: '',
+            contractionTime: '',
+            relaxationTime: ''
         });
     };
 
@@ -392,6 +400,14 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
             notes: item.details?.notes || '',
             rir: item.details?.rir || '',
             percent1rm: item.details?.percent1rm || '',
+            // [NEW]
+            duration: item.details?.duration || '',
+            distance: item.details?.distance || '',
+            heartRateZone: item.details?.heartRateZone || '',
+            incline: item.details?.incline || '',
+            breathPattern: item.details?.breathPattern || '',
+            contractionTime: item.details?.contractionTime || '',
+            relaxationTime: item.details?.relaxationTime || ''
         });
     };
 
@@ -989,8 +1005,9 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                 <div className="flex gap-1 mb-4 bg-zinc-100 p-1 rounded-lg">
                                     {[
                                         { id: 'general', label: 'General' },
-                                        { id: 'load', label: 'Carga & Intensidad' },
-                                        { id: 'notes', label: 'Clínica & Notas' }
+                                        { id: 'load', label: 'Carga/Intensidad' },
+                                        { id: 'specifics', label: 'Específicos' },
+                                        { id: 'notes', label: 'Notas' }
                                     ].map(tab => (
                                         <button
                                             key={tab.id}
@@ -1119,6 +1136,15 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                                         onChange={e => setEditForm({ ...editForm, rir: e.target.value })}
                                                     />
                                                 </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-bold text-zinc-600 uppercase">Zona FC</label>
+                                                    <input
+                                                        className="w-full p-2.5 bg-red-50/50 border border-red-100 text-red-800 rounded-lg text-sm focus:border-red-500 outline-none"
+                                                        placeholder="Zona 2"
+                                                        value={editForm.heartRateZone}
+                                                        onChange={e => setEditForm({ ...editForm, heartRateZone: e.target.value })}
+                                                    />
+                                                </div>
                                             </div>
                                             <div className="space-y-1 pt-2 border-t border-zinc-100">
                                                 <label className="text-xs font-bold text-zinc-600 uppercase">Mantención (Isometría)</label>
@@ -1127,6 +1153,72 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                                     placeholder="5s"
                                                     value={editForm.holdTime}
                                                     onChange={e => setEditForm({ ...editForm, holdTime: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* SPECIFICS TAB (NEW) */}
+                                    {activeTab === 'specifics' && (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
+                                            {/* Cardio Section */}
+                                            <div className="p-3 bg-orange-50/50 rounded-lg border border-orange-100 space-y-3">
+                                                <h6 className="text-[10px] uppercase font-bold text-orange-700 flex items-center gap-1">Cardio & Running</h6>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-bold text-zinc-600 uppercase">Distancia</label>
+                                                        <input
+                                                            className="w-full p-2.5 bg-white border border-zinc-200 rounded-lg text-sm outline-none"
+                                                            placeholder="5km"
+                                                            value={editForm.distance}
+                                                            onChange={e => setEditForm({ ...editForm, distance: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-bold text-zinc-600 uppercase">Inclinación</label>
+                                                        <input
+                                                            className="w-full p-2.5 bg-white border border-zinc-200 rounded-lg text-sm outline-none"
+                                                            placeholder="1.5%"
+                                                            value={editForm.incline}
+                                                            onChange={e => setEditForm({ ...editForm, incline: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Pelvic / Isometric Section */}
+                                            <div className="p-3 bg-pink-50/50 rounded-lg border border-pink-100 space-y-3">
+                                                <h6 className="text-[10px] uppercase font-bold text-pink-700 flex items-center gap-1">Suelo Pélvico / Isometría</h6>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-bold text-zinc-600 uppercase">T. Contracción</label>
+                                                        <input
+                                                            className="w-full p-2.5 bg-white border border-zinc-200 rounded-lg text-sm outline-none"
+                                                            placeholder="5s"
+                                                            value={editForm.contractionTime}
+                                                            onChange={e => setEditForm({ ...editForm, contractionTime: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-bold text-zinc-600 uppercase">T. Relajación</label>
+                                                        <input
+                                                            className="w-full p-2.5 bg-white border border-zinc-200 rounded-lg text-sm outline-none"
+                                                            placeholder="10s"
+                                                            value={editForm.relaxationTime}
+                                                            onChange={e => setEditForm({ ...editForm, relaxationTime: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Breathing Section */}
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-zinc-600 uppercase">Patrón Respiratorio (Yoga/Pilates)</label>
+                                                <input
+                                                    className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:border-brand-500 outline-none"
+                                                    placeholder="In 4s / Ret 4s / Ex 4s / Ret 4s"
+                                                    value={editForm.breathPattern}
+                                                    onChange={e => setEditForm({ ...editForm, breathPattern: e.target.value })}
                                                 />
                                             </div>
                                         </div>
