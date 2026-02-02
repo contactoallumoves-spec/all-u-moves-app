@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs, orderBy, deleteDoc, doc, limit } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 import { SessionLog } from '../types/patient';
 
