@@ -19,7 +19,7 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
     const [name, setName] = useState(initialName || '');
     const [englishName, setEnglishName] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
-    const [category, setCategory] = useState<ExerciseCategory>('Fuerza'); // Default legacy category
+    const [categories, setCategories] = useState<ExerciseCategory[]>(['Fuerza']); // Default
 
     // Taxonomy State
     const [taxonomy, setTaxonomy] = useState({
@@ -29,7 +29,9 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
         pattern: '',
         region: '',
         posture: '',
-        impact: ''
+        impact: '',
+        contractionType: '',
+        isometricType: ''
     });
 
     const [instructions, setInstructions] = useState('');
@@ -43,7 +45,8 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
                 name,
                 englishName,
                 videoUrl,
-                category: category as any, // Legacy field fallback
+                category: categories[0], // Main legacy category
+                categories: categories, // New multi-category
                 instructions,
                 defaultParams: {},
                 // Map taxonomy fields
@@ -54,6 +57,8 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
                 clean_region: taxonomy.region as any,
                 posture: taxonomy.posture as any,
                 impact_level: taxonomy.impact as any,
+                contractionType: taxonomy.contractionType as any,
+                isometricType: taxonomy.isometricType as any,
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
@@ -75,6 +80,15 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
                 ? prev.equipment.filter(e => e !== eq)
                 : [...prev.equipment, eq]
         }));
+    };
+
+    const toggleCategory = (cat: ExerciseCategory) => {
+        setCategories(prev => {
+            if (prev.includes(cat)) {
+                return prev.length > 1 ? prev.filter(c => c !== cat) : prev; // Prevent empty
+            }
+            return [...prev, cat];
+        });
     };
 
     return (
@@ -165,6 +179,27 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
                                     onChange={e => setInstructions(e.target.value)}
                                 />
                             </FormGroup>
+
+                            {/* Multi-Category Selector */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-zinc-500 uppercase">Categorías (Múltiple)</label>
+                                <div className="flex flex-wrap gap-2 bg-zinc-50 p-3 rounded-lg border border-zinc-200">
+                                    {['Fuerza', 'Movilidad', 'Suelo Pélvico', 'Respiración', 'Educación', 'Otro'].map(c => (
+                                        <button
+                                            key={c}
+                                            onClick={() => toggleCategory(c as ExerciseCategory)}
+                                            className={cn(
+                                                "px-3 py-1.5 text-xs rounded-full border transition-all",
+                                                categories.includes(c as ExerciseCategory)
+                                                    ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                                                    : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
+                                            )}
+                                        >
+                                            {c}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -196,6 +231,23 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
                                     options={TAXONOMY_OPTIONS.functions}
                                     onChange={(val) => setTaxonomy({ ...taxonomy, function: val })}
                                 />
+                                {/* [NEW] Advanced Physiology */}
+                                <SelectGroup
+                                    label="Tipo de Contracción"
+                                    value={taxonomy.contractionType}
+                                    options={TAXONOMY_OPTIONS.contractionTypes || []}
+                                    onChange={(val) => setTaxonomy({ ...taxonomy, contractionType: val })}
+                                />
+                                {taxonomy.contractionType === 'Isométrico' && (
+                                    <div className="animate-in fade-in slide-in-from-top-2">
+                                        <SelectGroup
+                                            label="Tipo Isométrico (Natera)"
+                                            value={taxonomy.isometricType}
+                                            options={TAXONOMY_OPTIONS.isometricTypes || []}
+                                            onChange={(val) => setTaxonomy({ ...taxonomy, isometricType: val })}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-2">
@@ -236,20 +288,6 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
                                     options={TAXONOMY_OPTIONS.impact}
                                     onChange={(val) => setTaxonomy({ ...taxonomy, impact: val })}
                                 />
-                            </div>
-
-                            <div className="p-4 bg-orange-50 border border-orange-100 rounded-lg">
-                                <h4 className="text-sm font-bold text-orange-800 mb-2">Categoría Legacy</h4>
-                                <p className="text-xs text-orange-600 mb-3">Selecciona la categoría principal para compatibilidad con versiones anteriores.</p>
-                                <select
-                                    className="w-full p-2 bg-white border border-orange-200 rounded text-sm"
-                                    value={category}
-                                    onChange={e => setCategory(e.target.value as any)}
-                                >
-                                    {['Fuerza', 'Movilidad', 'Suelo Pélvico', 'Respiración', 'Educación', 'Otro'].map(c => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
                             </div>
                         </div>
                     )}
