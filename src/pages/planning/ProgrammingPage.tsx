@@ -4,7 +4,7 @@ import { PlanService } from '../../services/planService';
 import { PatientService } from '../../services/patientService';
 import { SessionLogService } from '../../services/sessionLogService';
 import { AnnualPlan } from '../../types/plan';
-import { Patient, PrescribedPlan, SessionLog } from '../../types/patient';
+import { Patient, PrescribedPlan } from '../../types/patient';
 import { PlanBuilder } from '../../components/clinical/PlanBuilder';
 import { Timestamp } from 'firebase/firestore';
 import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
