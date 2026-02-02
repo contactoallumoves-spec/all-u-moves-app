@@ -103,8 +103,8 @@ export default function SessionPlayer() {
                 payload: { sessionId: uniqueSessionId, feedback }
             });
 
-            // 2. Trigger Cloud Sync
-            await syncSession(uniqueSessionId);
+            // 2. Trigger Cloud Sync (Pass feedback directly to avoid stale state)
+            await syncSession(uniqueSessionId, { feedback });
 
             // 3. Navigate back
             navigate('../home');

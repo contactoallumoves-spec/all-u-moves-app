@@ -120,7 +120,7 @@ const SessionContext = createContext<{
     state: SessionState;
     dispatch: React.Dispatch<Action>;
     getSessionLog: (sessionId: string) => SessionLog | undefined;
-    syncSession: (sessionId: string) => Promise<void>;
+    syncSession: (sessionId: string, mergeData?: Partial<SessionLog>) => Promise<void>;
     loadHistory: (patientId: string) => Promise<void>;
 }>({
     state: initialState,
@@ -159,16 +159,19 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
     // Helpers
     const getSessionLog = (sessionId: string) => state.logs[sessionId];
 
-    const syncSession = async (sessionId: string) => {
-        const log = state.logs[sessionId];
-        if (!log) return;
+    const syncSession = async (sessionId: string, mergeData?: Partial<SessionLog>) => {
+        // [FIX] Use mergeData if provided (resolves stale closure issue for feedback)
+        const currentLog = state.logs[sessionId];
+        if (!currentLog) return;
+
+        const logToSave = mergeData ? { ...currentLog, ...mergeData } : currentLog;
 
         dispatch({ type: 'SET_SYNC_STATUS', payload: 'syncing' });
         try {
             // Strip ID for creation if needed
             // Use destructuring to remove 'id' safely (works even if id is required/optional in source type)
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { id, ...logWithoutId } = log;
+            const { id, ...logWithoutId } = logToSave;
 
             // Cast to any to assume compatibility with Service.create requirement
             await SessionLogService.create(logWithoutId as any);
@@ -176,6 +179,7 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
         } catch (error) {
             console.error("Sync failed", error);
             dispatch({ type: 'SET_SYNC_STATUS', payload: 'error' });
+            throw error; // [FIX] Rethrow so caller knows it failed
         }
     };
 
