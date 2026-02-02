@@ -280,14 +280,43 @@ export default function SessionPlayer() {
                         className="space-y-6"
                     >
                         {/* Dynamic Card Template Switcher */}
-                        {/* For V1, we default to StrengthCard. In Phase 2, check exercise type */}
-
                         <div className="bg-white rounded-3xl p-1 shadow-sm border border-zinc-100 overflow-hidden">
-                            <StrengthCard
-                                exercise={currentItem}
-                                sessionId={uniqueSessionId}
-                                onSetComplete={handleSetComplete}
-                            />
+                            {(() => {
+                                // Determine card type
+                                const cat = currentDetails?.category || 'Fuerza';
+                                const system = currentDetails?.system;
+
+                                // Pelvic Floor
+                                if (cat === 'Suelo Pélvico' || system === 'Suelo Pélvico') {
+                                    return (
+                                        <PelvicCard
+                                            exercise={currentItem}
+                                            sessionId={uniqueSessionId}
+                                            onSetComplete={handleSetComplete}
+                                        />
+                                    );
+                                }
+
+                                // Timer Based (Mobility, Relaxation, Breathing)
+                                if (cat === 'Movilidad' || cat === 'Relajación' || cat === 'Respiración') {
+                                    return (
+                                        <TimerCard
+                                            exercise={currentItem}
+                                            sessionId={uniqueSessionId}
+                                            onSetComplete={handleSetComplete}
+                                        />
+                                    );
+                                }
+
+                                // Default Strength
+                                return (
+                                    <StrengthCard
+                                        exercise={currentItem}
+                                        sessionId={uniqueSessionId}
+                                        onSetComplete={handleSetComplete}
+                                    />
+                                );
+                            })()}
                         </div>
 
                         {/* Info / Instructions (Conditionally revealed or inline) */}
