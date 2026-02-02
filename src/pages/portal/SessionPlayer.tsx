@@ -13,9 +13,16 @@ export default function SessionPlayer() {
     const navigate = useNavigate();
 
 
-    // For now, let's assume we play "Today's" session
-    const todayKey = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const planExercises = patient.activePlan?.schedule?.[todayKey as keyof typeof patient.activePlan.schedule] || [];
+    // Get day from URL params (e.g. 'monday', 'tuesday')
+    const { sessionId } = useParams();
+
+    // Robust fallback to today's key if no param or invalid
+    const todayIndex = new Date().getDay();
+    const DAYS_MAP = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const todayKey = DAYS_MAP[todayIndex];
+
+    const targetDay = (sessionId || todayKey).toLowerCase(); // Ensure lowercase
+    const planExercises = patient.activePlan?.schedule?.[targetDay as keyof typeof patient.activePlan.schedule] || [];
 
     const [activeIndex, setActiveIndex] = useState(0);
     const [completedMap, setCompletedMap] = useState<Record<string, boolean>>({});
