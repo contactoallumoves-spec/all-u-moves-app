@@ -3,7 +3,6 @@ import { PlanExercise, SessionExerciseLog } from '../../../types/patient';
 import { Play, Pause, RotateCcw, Check, Clock } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { useSession } from '../../../context/SessionContext';
-import { Button } from '../../../components/ui/Button';
 
 interface TimerCardProps {
     exercise: PlanExercise;
@@ -79,7 +78,7 @@ export function TimerCard({ exercise, sessionId, onSetComplete }: TimerCardProps
         }
     };
 
-    const handleReset = (index: number) => {
+    const handleReset = () => {
         setIsRunning(false);
         setCurrentTime(targetSeconds);
         // If unchecking? handled by check logic
