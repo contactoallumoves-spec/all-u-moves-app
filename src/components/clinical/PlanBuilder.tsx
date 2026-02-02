@@ -27,7 +27,7 @@ const DAYS = [
     { key: 'sunday', label: 'Domingo' }
 ] as const;
 
-export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler }: PlanBuilderProps) {
+export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, weekDates }: PlanBuilderProps) {
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
