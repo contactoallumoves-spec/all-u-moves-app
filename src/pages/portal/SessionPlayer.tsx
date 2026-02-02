@@ -93,6 +93,79 @@ export default function SessionPlayer() {
         </div>
     );
 
+    // Feedback View
+    if (showFeedback) {
+        return (
+            <div className="flex flex-col h-screen bg-black text-white p-6 overflow-y-auto animate-in slide-in-from-bottom-10 fade-in duration-300">
+                <h1 className="text-2xl font-bold mb-1 text-brand-100">Resumen de Sesión</h1>
+                <p className="text-zinc-400 text-sm mb-6">Completa estos datos para mejorar tu próxima rutina.</p>
+
+                <div className="space-y-8">
+                    {/* RPE Scale (Premium) */}
+                    <RPESelector
+                        value={feedback.rpe}
+                        onChange={(val) => setFeedback({ ...feedback, rpe: val })}
+                    />
+
+                    {/* Pain Scale (Premium) */}
+                    <PainSelector
+                        value={feedback.pain}
+                        onChange={(val) => setFeedback({ ...feedback, pain: val })}
+                    />
+
+                    {/* Fatigue Scale (Standard Slider for now, or re-use RPE/Slider) */}
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center px-1">
+                            <span className="text-xs font-bold uppercase text-zinc-400">Fatiga General</span>
+                            <span className="text-xs font-bold bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{feedback.fatigue}/10</span>
+                        </div>
+                        <input
+                            type="range" min="0" max="10" step="1"
+                            value={feedback.fatigue}
+                            onChange={(e) => setFeedback({ ...feedback, fatigue: parseInt(e.target.value) })}
+                            className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                        />
+                        <div className="flex justify-between text-[10px] text-zinc-500">
+                            <span>Fresco</span>
+                            <span>Exhausto</span>
+                        </div>
+                    </div>
+
+                    {/* Symptoms */}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase text-zinc-400 block px-1">Sensaciones / Síntomas</label>
+                        <div className="flex flex-wrap gap-2">
+                            {["Pesadez Pélvica", "Escape de orina", "Dolor Articular", "Mareo", "Falta de aire", "Calambre"].map(sym => (
+                                <button
+                                    key={sym}
+                                    onClick={() => toggleSymptom(sym)}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all active:scale-95",
+                                        feedback.symptoms.includes(sym)
+                                            ? "bg-brand-900 border-brand-500 text-brand-100 shadow-[0_0_10px_rgba(236,72,153,0.3)]"
+                                            : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                                    )}
+                                >
+                                    {sym}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-auto pt-8">
+                    <Button
+                        size="lg"
+                        className="w-full rounded-xl h-14 text-lg bg-brand-600 hover:bg-brand-700 text-white shadow-xl shadow-brand-200"
+                        onClick={handleSendFeedback}
+                    >
+                        Enviar Feedback y Finalizar
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 bg-white z-50 flex flex-col overflow-hidden">
             {/* 1. Immersive Header (Progress Bar) */}
