@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate, useParams, Link } from 'react-router-dom';
-import { Patient, PlanExercise } from '../../types/patient';
+import { Patient } from '../../types/patient';
 import { ExerciseService } from '../../services/exerciseService';
 import { useSession } from '../../context/SessionContext';
 import { Button } from '../../components/ui/Button';
@@ -106,7 +106,7 @@ export default function SessionPlayer() {
     };
 
     // Handle completion of specific item to auto-advance (optional, mainly for non-set-based exercises)
-    const handleComplete = (item: PlanExercise) => {
+    const handleComplete = () => {
         if (activeIndex < planExercises.length - 1) {
             setTimeout(() => setActiveIndex(prev => prev + 1), 500);
         } else {
@@ -305,7 +305,7 @@ export default function SessionPlayer() {
                         <Button
                             size="lg"
                             className="flex-[3] rounded-xl h-14 text-lg bg-zinc-900 hover:bg-black text-white shadow-xl shadow-zinc-300"
-                            onClick={() => handleComplete(currentItem)}
+                            onClick={() => handleComplete()}
                         >
                             Siguiente
                         </Button>
