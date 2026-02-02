@@ -1,25 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Exercise, TAXONOMY_OPTIONS, ExerciseCategory } from '../../types/exercise';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { ChevronDown, ChevronRight, Video, Tag, Activity, Info } from 'lucide-react';
-import { cn } from '../../lib/utils'; // Assuming you have this utility
+import { cn } from '../../lib/utils';
 
 interface ExerciseCreatorModalProps {
     isOpen: boolean;
     onClose: () => void;
     initialName?: string;
+    existingExercise?: Exercise | null; // [NEW] Support editing
     onSave: (exercise: Omit<Exercise, 'id'>) => Promise<void>;
 }
 
-export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: ExerciseCreatorModalProps) {
+export function ExerciseCreatorModal({ isOpen, onClose, initialName, existingExercise, onSave }: ExerciseCreatorModalProps) {
     const [loading, setLoading] = useState(false);
 
     // Form State
     const [name, setName] = useState(initialName || '');
     const [englishName, setEnglishName] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
-    const [categories, setCategories] = useState<ExerciseCategory[]>(['Fuerza']); // Default
+    const [categories, setCategories] = useState<ExerciseCategory[]>(['Fuerza']);
 
     // Taxonomy State
     const [taxonomy, setTaxonomy] = useState({
@@ -37,6 +38,32 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
     const [instructions, setInstructions] = useState('');
     const [activeSection, setActiveSection] = useState<'basic' | 'taxonomy' | 'clinical'>('basic');
 
+    // Load existing data when modal opens or exercise changes
+    useEffect(() => {
+        if (existingExercise) {
+            setName(existingExercise.name || '');
+            setEnglishName(existingExercise.englishName || '');
+            setVideoUrl(existingExercise.videoUrl || '');
+            setInstructions(existingExercise.instructions || '');
+            setCategories(existingExercise.categories || (existingExercise.category ? [existingExercise.category] : ['Fuerza']));
+
+            setTaxonomy({
+                system: existingExercise.system || '',
+                function: existingExercise.function || '',
+                equipment: existingExercise.equipment || [],
+                pattern: existingExercise.pattern || '',
+                region: existingExercise.clean_region || '',
+                posture: existingExercise.posture || '',
+                impact: existingExercise.impact_level || '',
+                contractionType: existingExercise.contractionType || '',
+                isometricType: existingExercise.isometricType || ''
+            });
+        } else {
+            // Reset if creating new (optional, but good practice)
+            if (initialName) setName(initialName);
+        }
+    }, [existingExercise, initialName, isOpen]);
+
     const handleSave = async () => {
         if (!name) return;
         setLoading(true);
@@ -45,10 +72,10 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
                 name,
                 englishName,
                 videoUrl,
-                category: categories[0], // Main legacy category
-                categories: categories, // New multi-category
+                category: categories[0],
+                categories: categories,
                 instructions,
-                defaultParams: {},
+                defaultParams: existingExercise?.defaultParams || {},
                 // Map taxonomy fields
                 system: taxonomy.system as any,
                 function: taxonomy.function as any,
@@ -59,14 +86,14 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, onSave }: E
                 impact_level: taxonomy.impact as any,
                 contractionType: taxonomy.contractionType as any,
                 isometricType: taxonomy.isometricType as any,
-                createdAt: new Date(),
+                createdAt: existingExercise?.createdAt || new Date(),
                 updatedAt: new Date()
             };
 
             await onSave(exerciseData);
             onClose();
         } catch (error) {
-            console.error("Error creating exercise", error);
+            console.error("Error saving exercise", error);
             alert("Error al guardar ejercicio");
         } finally {
             setLoading(false);

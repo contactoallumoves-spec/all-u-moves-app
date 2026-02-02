@@ -3,7 +3,8 @@ import { ExerciseService } from '../services/exerciseService';
 import { Exercise, EXERCISE_CATEGORIES, ExerciseCategory } from '../types/exercise';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
-import { Plus, Search, Youtube, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Search, Youtube, Edit, Trash2 } from 'lucide-react';
+import { ExerciseCreatorModal } from '../components/clinical/ExerciseCreatorModal'; // [NEW]
 
 export default function ExercisesPage() {
     const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -14,12 +15,8 @@ export default function ExercisesPage() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
-    const [formData, setFormData] = useState<Partial<Exercise>>({
-        name: '',
-        category: 'Fuerza',
-        videoUrl: '',
-        instructions: ''
-    });
+
+    // [CLEANUP] Removed detailed form state, now handled by modal
 
     useEffect(() => {
         loadExercises();
@@ -35,25 +32,18 @@ export default function ExercisesPage() {
     const handleOpenModal = (exercise?: Exercise) => {
         if (exercise) {
             setEditingExercise(exercise);
-            setFormData(exercise);
         } else {
             setEditingExercise(null);
-            setFormData({
-                name: '',
-                category: 'Fuerza',
-                videoUrl: '',
-                instructions: ''
-            });
         }
         setIsModalOpen(true);
     };
 
-    const handleSave = async () => {
+    const handleSave = async (data: Omit<Exercise, 'id'>) => {
         try {
             if (editingExercise && editingExercise.id) {
-                await ExerciseService.update(editingExercise.id, formData);
+                await ExerciseService.update(editingExercise.id, data);
             } else {
-                await ExerciseService.create(formData as Exercise);
+                await ExerciseService.create(data as Exercise);
             }
             setIsModalOpen(false);
             loadExercises();
@@ -157,6 +147,15 @@ export default function ExercisesPage() {
                                 <div className="p-4">
                                     <h3 className="font-semibold text-brand-900 line-clamp-1" title={ex.name}>{ex.name}</h3>
                                     <p className="text-xs text-brand-500 mt-1 line-clamp-2 min-h-[2.5em]">{ex.instructions || 'Sin instrucciones detalladas.'}</p>
+                                    {/* Show tags/badges for new taxonomy if available */}
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                        {ex.categories?.map(c => (
+                                            <span key={c} className="text-[10px] px-1.5 py-0.5 bg-brand-50 text-brand-600 rounded-full border border-brand-100">{c}</span>
+                                        ))}
+                                        {ex.contractionType && (
+                                            <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100">{ex.contractionType}</span>
+                                        )}
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -165,67 +164,12 @@ export default function ExercisesPage() {
             </div>
 
             {/* Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
-                        <div className="px-6 py-4 border-b border-brand-100 flex justify-between items-center bg-brand-50/50">
-                            <h3 className="font-bold text-lg text-brand-900">
-                                {editingExercise ? 'Editar Ejercicio' : 'Nuevo Ejercicio'}
-                            </h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-brand-400 hover:text-brand-600">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-brand-700 mb-1">Nombre</label>
-                                <input
-                                    className="w-full px-3 py-2 rounded-lg border border-brand-200 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm"
-                                    placeholder="Ej: Puente Glúteo"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-semibold text-brand-700 mb-1">Categoría</label>
-                                    <select
-                                        className="w-full px-3 py-2 rounded-lg border border-brand-200 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm"
-                                        value={formData.category}
-                                        onChange={e => setFormData({ ...formData, category: e.target.value as ExerciseCategory })}
-                                    >
-                                        {EXERCISE_CATEGORIES.map(cat => (
-                                            <option key={cat} value={cat}>{cat}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-brand-700 mb-1">Link de Video (YouTube)</label>
-                                    <input
-                                        className="w-full px-3 py-2 rounded-lg border border-brand-200 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm"
-                                        placeholder="https://youtube.com/..."
-                                        value={formData.videoUrl}
-                                        onChange={e => setFormData({ ...formData, videoUrl: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-brand-700 mb-1">Instrucciones</label>
-                                <textarea
-                                    className="w-full px-3 py-2 rounded-lg border border-brand-200 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm h-24 resize-none"
-                                    placeholder="Describe cómo realizar el ejercicio..."
-                                    value={formData.instructions}
-                                    onChange={e => setFormData({ ...formData, instructions: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                        <div className="px-6 py-4 border-t border-brand-100 flex justify-end gap-2 bg-gray-50/50">
-                            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                            <Button onClick={handleSave}>Guardar</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ExerciseCreatorModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                existingExercise={editingExercise} // Pass the exercise being edited
+                onSave={handleSave} // Reuse handleSave which now just needs to accept the object
+            />
         </div>
     );
 }
