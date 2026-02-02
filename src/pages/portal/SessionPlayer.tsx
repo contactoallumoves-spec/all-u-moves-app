@@ -4,7 +4,7 @@ import { Patient } from '../../types/patient';
 import { ExerciseService } from '../../services/exerciseService';
 import { useSession } from '../../context/SessionContext';
 import { Button } from '../../components/ui/Button';
-import { ChevronLeft, Info, Play, X, Flag, MessageSquare } from 'lucide-react';
+import { ChevronLeft, Info, Play, X, Flag, MessageSquare, Loader2 } from 'lucide-react';
 import { SmartTimer } from './components/SmartTimer';
 import { StrengthCard } from './components/StrengthCard';
 import { RPESelector, PainSelector } from '../../components/ui/PremiumInputs';
@@ -15,7 +15,7 @@ export default function SessionPlayer() {
     const { patient } = useOutletContext<{ patient: Patient }>();
     const navigate = useNavigate();
     const { sessionId } = useParams();
-    const { dispatch } = useSession(); // Removed 'state' as unused
+    const { dispatch, syncSession, loadHistory, state } = useSession(); // Access methods
 
     // 1. Resolve Session ID (Date Key)
     const todayIndex = new Date().getDay();
@@ -27,13 +27,16 @@ export default function SessionPlayer() {
     const planExercises = patient.activePlan?.schedule?.[targetDay as keyof typeof patient.activePlan.schedule] || [];
     const uniqueSessionId = `${new Date().toISOString().split('T')[0]}_${targetDay}`;
 
-    // 3. Initialize Context Session
+    // 3. Initialize Context Session & Load History
     useEffect(() => {
         if (patient.id) {
+            // Init Session
             dispatch({
                 type: 'INIT_SESSION',
                 payload: { sessionId: uniqueSessionId, patientId: patient.id }
             });
+            // Load History
+            loadHistory(patient.id);
         }
     }, [patient.id, uniqueSessionId, dispatch]);
 
@@ -42,6 +45,7 @@ export default function SessionPlayer() {
     const [exerciseCache, setExerciseCache] = useState<Record<string, any>>({});
     const [timerVisible, setTimerVisible] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Feedback State
     const [showFeedback, setShowFeedback] = useState(false);
@@ -66,7 +70,7 @@ export default function SessionPlayer() {
             setExerciseCache(prev => ({ ...prev, ...data }));
         };
         if (planExercises.length > 0) fetchDetails();
-    }, [planExercises.length, activeIndex]); // Removed exerciseCache from dependency to avoid loop
+    }, [planExercises.length, activeIndex]);
 
     // Current Item
     const currentItem = planExercises[activeIndex];
@@ -90,10 +94,27 @@ export default function SessionPlayer() {
         setShowFeedback(true);
     };
 
-    const handleSendFeedback = () => {
-        // Here we would sync with DB or Context
-        console.log("Saving feedback", feedback);
-        navigate('../home');
+    const handleSendFeedback = async () => {
+        setIsSubmitting(true);
+        try {
+            // 1. Save Logic in Context
+            dispatch({
+                type: 'UPDATE_FEEDBACK',
+                payload: { sessionId: uniqueSessionId, feedback }
+            });
+
+            // 2. Trigger Cloud Sync
+            await syncSession(uniqueSessionId);
+
+            // 3. Navigate back
+            navigate('../home');
+        } catch (error) {
+            console.error("Sync failed", error);
+            // Optionally show error toast
+            navigate('../home'); // Exit anyway for now
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const toggleSymptom = (symptom: string) => {
@@ -105,7 +126,7 @@ export default function SessionPlayer() {
         }));
     };
 
-    // Handle completion of specific item to auto-advance (optional, mainly for non-set-based exercises)
+    // Handle completion of specific item to auto-advance
     const handleComplete = () => {
         if (activeIndex < planExercises.length - 1) {
             setTimeout(() => setActiveIndex(prev => prev + 1), 500);
@@ -189,8 +210,10 @@ export default function SessionPlayer() {
                         size="lg"
                         className="w-full rounded-xl h-14 text-lg bg-brand-600 hover:bg-brand-700 text-white shadow-xl shadow-brand-200"
                         onClick={handleSendFeedback}
+                        disabled={isSubmitting}
                     >
-                        Enviar Feedback y Finalizar
+                        {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
+                        {isSubmitting ? 'Guardando...' : 'Enviar Feedback y Finalizar'}
                     </Button>
                 </div>
             </div>

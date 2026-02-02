@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { SessionLog } from '../types/patient';
+import { SessionLogService } from '../services/sessionLogService';
 
 // --- State Types ---
 interface SessionState {
-    currentSessionId: string | null; // Date Key (YYYY-MM-DD)
-    logs: Record<string, SessionLog>; // Keyed by session ID
+    currentSessionId: string | null;
+    logs: Record<string, SessionLog>; // Local WIP logs
+    history: SessionLog | null; // Last completed session (Ghost Data)
     syncStatus: 'synced' | 'syncing' | 'offline' | 'error';
     lastSaved: number | null;
 }
@@ -15,12 +17,15 @@ type Action =
     | { type: 'UPDATE_SET'; payload: { sessionId: string; exerciseId: string; setIndex: number; data: any } }
     | { type: 'MARK_COMPLETED'; payload: { sessionId: string; exerciseId: string; completed: boolean } }
     | { type: 'SET_SYNC_STATUS'; payload: 'synced' | 'syncing' | 'offline' | 'error' }
-    | { type: 'LOAD_FROM_STORAGE'; payload: SessionState };
+    | { type: 'LOAD_FROM_STORAGE'; payload: SessionState }
+    | { type: 'SET_HISTORY'; payload: SessionLog | null }
+    | { type: 'UPDATE_FEEDBACK'; payload: { sessionId: string; feedback: any } };
 
 // --- Initial State ---
 const initialState: SessionState = {
     currentSessionId: null,
     logs: {},
+    history: null,
     syncStatus: 'synced',
     lastSaved: null
 };
@@ -37,7 +42,7 @@ function sessionReducer(state: SessionState, action: Action): SessionState {
                 id: sessionId,
                 date: new Date(),
                 patientId,
-                dayKey: 'unknown', // Updated by component
+                dayKey: 'unknown',
                 exercises: [],
                 status: 'partial'
             };
@@ -67,20 +72,40 @@ function sessionReducer(state: SessionState, action: Action): SessionState {
             sets[setIndex] = { ...sets[setIndex], ...data };
             exLog.sets = sets;
 
-            // Update exercises array
             const exIndex = exercises.findIndex(e => e.exerciseId === exerciseId);
             exercises[exIndex] = exLog;
 
             return {
                 ...state,
                 logs: { ...state.logs, [sessionId]: { ...log, exercises } },
-                syncStatus: 'offline', // Mark as needs sync
+                syncStatus: 'offline',
                 lastSaved: Date.now()
             };
         }
 
+        case 'SET_HISTORY':
+            return { ...state, history: action.payload };
+
+        case 'UPDATE_FEEDBACK': {
+            const { sessionId, feedback } = action.payload;
+            const log = state.logs[sessionId];
+            if (!log) return state;
+
+            return {
+                ...state,
+                logs: {
+                    ...state.logs,
+                    [sessionId]: { ...log, feedback }
+                },
+                lastSaved: Date.now()
+            };
+        }
+
+        case 'SET_SYNC_STATUS':
+            return { ...state, syncStatus: action.payload };
+
         case 'LOAD_FROM_STORAGE':
-            return action.payload;
+            return { ...action.payload, syncStatus: 'synced' }; // Reset sync status on load
 
         default:
             return state;
@@ -92,10 +117,14 @@ const SessionContext = createContext<{
     state: SessionState;
     dispatch: React.Dispatch<Action>;
     getSessionLog: (sessionId: string) => SessionLog | undefined;
+    syncSession: (sessionId: string) => Promise<void>;
+    loadHistory: (patientId: string) => Promise<void>;
 }>({
     state: initialState,
     dispatch: () => null,
-    getSessionLog: () => undefined
+    getSessionLog: () => undefined,
+    syncSession: async () => { },
+    loadHistory: async () => { }
 });
 
 // --- Provider ---
@@ -108,6 +137,8 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
+                // Ensure history field exists if loading old schema
+                if (!parsed.history) parsed.history = null;
                 dispatch({ type: 'LOAD_FROM_STORAGE', payload: parsed });
             } catch (e) {
                 console.error("Failed to load session backup", e);
@@ -122,11 +153,34 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
         }
     }, [state]);
 
-    // Helper
+    // Helpers
     const getSessionLog = (sessionId: string) => state.logs[sessionId];
 
+    const syncSession = async (sessionId: string) => {
+        const log = state.logs[sessionId];
+        if (!log) return;
+
+        dispatch({ type: 'SET_SYNC_STATUS', payload: 'syncing' });
+        try {
+            await SessionLogService.create(log);
+            dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' });
+        } catch (error) {
+            console.error("Sync failed", error);
+            dispatch({ type: 'SET_SYNC_STATUS', payload: 'error' });
+        }
+    };
+
+    const loadHistory = async (patientId: string) => {
+        try {
+            const lastLog = await SessionLogService.getLastLog(patientId);
+            dispatch({ type: 'SET_HISTORY', payload: lastLog });
+        } catch (error) {
+            // silent fail
+        }
+    };
+
     return (
-        <SessionContext.Provider value={{ state, dispatch, getSessionLog }}>
+        <SessionContext.Provider value={{ state, dispatch, getSessionLog, syncSession, loadHistory }}>
             {children}
         </SessionContext.Provider>
     );

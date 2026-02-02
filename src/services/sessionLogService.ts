@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, orderBy, deleteDoc, doc, limit } from 'firebase/firestore';
 
 export interface SessionLog {
     id?: string;
@@ -84,6 +84,23 @@ export const SessionLogService = {
         } catch (error) {
             console.error("Error getting session logs by date", error);
             return [];
+        }
+    }
+    async getLastLog(patientId: string): Promise<SessionLog | null> {
+        try {
+            const q = query(
+                collection(db, COLLECTION_NAME),
+                where('patientId', '==', patientId),
+                orderBy('date', 'desc'),
+                limit(1)
+            );
+
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) return null;
+            return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as SessionLog;
+        } catch (error) {
+            console.error("Error getting last session log", error);
+            return null;
         }
     }
 };
