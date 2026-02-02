@@ -18,6 +18,10 @@ export default function ExercisesPage() {
 
     // [CLEANUP] Removed detailed form state, now handled by modal
 
+    // Advanced Filters State
+    const [contractionFilter, setContractionFilter] = useState<string>('All');
+    const [equipmentFilter, setEquipmentFilter] = useState<string>('All');
+
     useEffect(() => {
         loadExercises();
     }, []);
@@ -62,8 +66,19 @@ export default function ExercisesPage() {
 
     const filteredExercises = exercises.filter(ex => {
         const matchesSearch = ex.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === 'All' || ex.category === selectedCategory;
-        return matchesSearch && matchesCategory;
+
+        // Category Logic: Match if selected is 'All', OR if existing legacy matches, OR if new array includes it
+        const matchesCategory = selectedCategory === 'All'
+            || ex.category === selectedCategory
+            || (ex.categories && ex.categories.includes(selectedCategory as any));
+
+        // Advanced Filters
+        const matchesContraction = contractionFilter === 'All' || ex.contractionType === contractionFilter;
+        // Equipment: check if the exercises' equipment array includes the selected filter
+        const matchesEquipment = equipmentFilter === 'All'
+            || (ex.equipment && ex.equipment.includes(equipmentFilter));
+
+        return matchesSearch && matchesCategory && matchesContraction && matchesEquipment;
     });
 
     return (
@@ -78,30 +93,61 @@ export default function ExercisesPage() {
                 </Button>
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-4 items-center bg-white p-4 rounded-xl border border-brand-100 shadow-sm">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-400 w-4 h-4" />
-                    <input
-                        type="text"
-                        placeholder="Buscar ejercicio..."
-                        className="pl-10 pr-4 py-2 w-full bg-brand-50 border-none rounded-lg focus:ring-2 focus:ring-brand-200 outline-none text-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+            {/* Filters Area */}
+            <div className="space-y-4">
+                {/* Search & Basic Tags */}
+                <div className="flex gap-4 items-center bg-white p-4 rounded-xl border border-brand-100 shadow-sm flex-wrap">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-400 w-4 h-4" />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre, tags..."
+                            className="pl-10 pr-4 py-2 w-full bg-brand-50 border-none rounded-lg focus:ring-2 focus:ring-brand-200 outline-none text-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Advanced Dropdowns */}
+                    <select
+                        className="px-3 py-2 bg-brand-50 rounded-lg text-sm text-brand-700 border-none outline-none focus:ring-2 focus:ring-brand-200"
+                        value={contractionFilter}
+                        onChange={(e) => setContractionFilter(e.target.value)}
+                    >
+                        <option value="All">Cualquier Contracción</option>
+                        <option value="Isométrico">Isométrico</option>
+                        <option value="Concéntrico">Concéntrico</option>
+                        <option value="Excéntrico">Excéntrico</option>
+                        <option value="Pliométrico">Pliométrico</option>
+                    </select>
+
+                    <select
+                        className="px-3 py-2 bg-brand-50 rounded-lg text-sm text-brand-700 border-none outline-none focus:ring-2 focus:ring-brand-200"
+                        value={equipmentFilter}
+                        onChange={(e) => setEquipmentFilter(e.target.value)}
+                    >
+                        <option value="All">Cualquier Implemento</option>
+                        <option value="Mat">Mat</option>
+                        <option value="Banda">Banda</option>
+                        <option value="Kettlebell">Kettlebell</option>
+                        <option value="Mancuerna">Mancuerna</option>
+                        <option value="Sin Implemento">Sin Implemento</option>
+                    </select>
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+
+                {/* Category Pills */}
+                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar px-1">
                     <button
                         onClick={() => setSelectedCategory('All')}
-                        className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors ${selectedCategory === 'All' ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-600 hover:bg-brand-100'}`}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${selectedCategory === 'All' ? 'bg-brand-600 text-white shadow-md' : 'bg-white text-brand-600 border border-brand-100 hover:bg-brand-50'}`}
                     >
-                        Todos
+                        Todas las Categorías
                     </button>
                     {EXERCISE_CATEGORIES.map(cat => (
                         <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
-                            className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors ${selectedCategory === cat ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-600 hover:bg-brand-100'}`}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${selectedCategory === cat ? 'bg-brand-600 text-white shadow-md' : 'bg-white text-brand-600 border border-brand-100 hover:bg-brand-50'}`}
                         >
                             {cat}
                         </button>
