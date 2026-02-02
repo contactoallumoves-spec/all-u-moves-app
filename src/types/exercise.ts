@@ -26,6 +26,7 @@ export interface Exercise {
 
     // Anatomical Focus
     muscleGroups?: string[]; // [NEW] principal muscles targeted
+    targetJoints?: string[]; // [NEW] e.g. ['Rodilla', 'Cadera']
 
     // Clinical/Sports Context
     clinicalGoals?: string[]; // [NEW] e.g. ['Control Motor', 'RTP', 'Analgesia']
@@ -66,6 +67,11 @@ export const TAXONOMY_OPTIONS = {
         'Pectoral', 'Dorsal', 'Trapecio', 'Deltoides', 'Manguito Rotador',
         'Bíceps', 'Tríceps', 'Antebrazo',
         'Abdominales', 'Lumbar', 'Suelo Pélvico', 'Cervical', 'Multífidos'
+    ],
+    joints: [
+        'Cervical', 'Torácica', 'Lumbar', 'Sacroilíaca',
+        'Hombro', 'Escápulo-Torácica', 'Codo', 'Muñeca/Mano',
+        'Cadera', 'Rodilla', 'Tobillo', 'Pie'
     ],
     clinicalGoals: [
         'Activación', 'Fortalecimiento', 'Hipertrofia', 'Potencia / RFD',
