@@ -148,75 +148,122 @@ export default function SessionPlayer() {
         </div>
     );
 
-    // Feedback View
+    // Duration State
+    const [startTime] = useState<number>(Date.now());
+    const [sessionDuration, setSessionDuration] = useState<string>('');
+
+    // Calculate duration on finish
+    useEffect(() => {
+        if (showFeedback && !sessionDuration) {
+            const end = Date.now();
+            const diffMinutes = Math.round((end - startTime) / 60000);
+            setSessionDuration(`${diffMinutes} min`);
+        }
+    }, [showFeedback, startTime, sessionDuration]);
+
+
+    // Feedback View (Unified Summary Screen)
     if (showFeedback) {
         return (
-            <div className="flex flex-col h-screen bg-black text-white p-6 overflow-y-auto animate-in slide-in-from-bottom-10 fade-in duration-300">
-                <h1 className="text-2xl font-bold mb-1 text-brand-100">Resumen de Sesión</h1>
-                <p className="text-zinc-400 text-sm mb-6">Completa estos datos para mejorar tu próxima rutina.</p>
+            <div className="flex flex-col h-screen bg-black text-white overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
 
-                <div className="space-y-8">
-                    {/* RPE Scale (Premium) */}
-                    <RPESelector
-                        value={feedback.rpe}
-                        onChange={(val) => setFeedback({ ...feedback, rpe: val })}
-                    />
-
-                    {/* Pain Scale (Premium) */}
-                    <PainSelector
-                        value={feedback.pain}
-                        onChange={(val) => setFeedback({ ...feedback, pain: val })}
-                    />
-
-                    {/* Fatigue Scale (Standard Slider for now, or re-use RPE/Slider) */}
-                    <div className="space-y-3">
-                        <div className="flex justify-between items-center px-1">
-                            <span className="text-xs font-bold uppercase text-zinc-400">Fatiga General</span>
-                            <span className="text-xs font-bold bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{feedback.fatigue}/10</span>
+                {/* 1. Header & Stats Section (No confetti, clean) */}
+                <div className="bg-gradient-to-b from-brand-900/30 to-black p-6 pb-2">
+                    <div className="flex justify-between items-start mb-4">
+                        <div onClick={() => setShowFeedback(false)} className="text-zinc-500 text-sm flex items-center gap-1 cursor-pointer">
+                            <ChevronLeft className="w-4 h-4" /> Volver
                         </div>
-                        <input
-                            type="range" min="0" max="10" step="1"
-                            value={feedback.fatigue}
-                            onChange={(e) => setFeedback({ ...feedback, fatigue: parseInt(e.target.value) })}
-                            className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
-                        />
-                        <div className="flex justify-between text-[10px] text-zinc-500">
-                            <span>Fresco</span>
-                            <span>Exhausto</span>
-                        </div>
+                        <span className="text-zinc-600 text-xs font-mono">{new Date().toLocaleDateString()}</span>
                     </div>
 
-                    {/* Symptoms */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-zinc-400 block px-1">Sensaciones / Síntomas</label>
-                        <div className="flex flex-wrap gap-2">
-                            {["Pesadez Pélvica", "Escape de orina", "Dolor Articular", "Mareo", "Falta de aire", "Calambre"].map(sym => (
-                                <button
-                                    key={sym}
-                                    onClick={() => toggleSymptom(sym)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all active:scale-95",
-                                        feedback.symptoms.includes(sym)
-                                            ? "bg-brand-900 border-brand-500 text-brand-100 shadow-[0_0_10px_rgba(236,72,153,0.3)]"
-                                            : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
-                                    )}
-                                >
-                                    {sym}
-                                </button>
-                            ))}
+                    <h1 className="text-3xl font-bold mb-2 text-white">¡Sesión Completada!</h1>
+                    <p className="text-brand-200 text-sm mb-6">Gran trabajo hoy. Aquí está tu resumen.</p>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center">
+                            <span className="text-3xl font-bold text-white mb-1">{sessionDuration || '0 min'}</span>
+                            <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Duración Tot.</span>
+                        </div>
+                        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center">
+                            <span className="text-3xl font-bold text-brand-400 mb-1">{planExercises.length}</span>
+                            <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Ejercicios</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-auto pt-8">
+                {/* 2. Scrollable Feedback Form */}
+                <div className="flex-1 overflow-y-auto px-6 pb-24">
+                    <div className="space-y-8 mt-4">
+
+                        {/* Title for Feedback Section */}
+                        <div className="flex items-center gap-2 mb-2">
+                            <MessageSquare className="w-4 h-4 text-brand-500" />
+                            <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wide">Registro Clínico</h3>
+                        </div>
+
+                        {/* RPE Scale (Premium) */}
+                        <RPESelector
+                            value={feedback.rpe}
+                            onChange={(val) => setFeedback({ ...feedback, rpe: val })}
+                        />
+
+                        {/* Pain Scale (Premium) */}
+                        <PainSelector
+                            value={feedback.pain}
+                            onChange={(val) => setFeedback({ ...feedback, pain: val })}
+                        />
+
+                        {/* Fatigue Scale */}
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center px-1">
+                                <span className="text-xs font-bold uppercase text-zinc-400">Fatiga General</span>
+                                <span className="text-xs font-bold bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{feedback.fatigue}/10</span>
+                            </div>
+                            <input
+                                type="range" min="0" max="10" step="1"
+                                value={feedback.fatigue}
+                                onChange={(e) => setFeedback({ ...feedback, fatigue: parseInt(e.target.value) })}
+                                className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                            />
+                            <div className="flex justify-between text-[10px] text-zinc-500">
+                                <span>Fresco</span>
+                                <span>Exhausto</span>
+                            </div>
+                        </div>
+
+                        {/* Symptoms */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase text-zinc-400 block px-1">Sensaciones / Síntomas</label>
+                            <div className="flex flex-wrap gap-2">
+                                {["Pesadez Pélvica", "Escape de orina", "Dolor Articular", "Mareo", "Falta de aire", "Calambre"].map(sym => (
+                                    <button
+                                        key={sym}
+                                        onClick={() => toggleSymptom(sym)}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all active:scale-95",
+                                            feedback.symptoms.includes(sym)
+                                                ? "bg-brand-900 border-brand-500 text-brand-100 shadow-[0_0_10px_rgba(236,72,153,0.3)]"
+                                                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                                        )}
+                                    >
+                                        {sym}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Footer Action */}
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur border-t border-zinc-900 z-50">
                     <Button
                         size="lg"
-                        className="w-full rounded-xl h-14 text-lg bg-brand-600 hover:bg-brand-700 text-white shadow-xl shadow-brand-200"
+                        className="w-full rounded-xl h-14 text-lg bg-brand-600 hover:bg-brand-700 text-white shadow-xl shadow-brand-900/20"
                         onClick={handleSendFeedback}
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
-                        {isSubmitting ? 'Guardando...' : 'Enviar Feedback y Finalizar'}
+                        {isSubmitting ? 'Guardando...' : 'Guardar y Finalizar'}
                     </Button>
                 </div>
             </div>
