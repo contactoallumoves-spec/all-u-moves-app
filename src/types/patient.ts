@@ -107,6 +107,9 @@ export interface ExerciseParameters {
     // Pelvic Floor (Advanced)
     contractionTime?: string; // e.g. "5s" (Work)
     relaxationTime?: string; // e.g. "10s" (Rest)
+
+    // [NEW] Explicit Card Type Selection (Overrides category)
+    cardType?: 'strength' | 'timer' | 'pelvic';
 }
 
 export interface PlanExercise {

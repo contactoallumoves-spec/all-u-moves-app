@@ -285,10 +285,22 @@ export default function SessionPlayer() {
                         <div className="bg-white rounded-3xl p-1 shadow-sm border border-zinc-100 overflow-hidden">
                             {(() => {
                                 // Determine card type
+                                const explicitType = currentItem.details?.cardType;
                                 const cat = currentDetails?.category || 'Fuerza';
                                 const system = currentDetails?.system;
 
-                                // Pelvic Floor
+                                // 1. Explicit Selection (Overrides everything)
+                                if (explicitType === 'pelvic') {
+                                    return <PelvicCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
+                                }
+                                if (explicitType === 'timer') {
+                                    return <TimerCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
+                                }
+                                if (explicitType === 'strength') {
+                                    return <StrengthCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
+                                }
+
+                                // 2. Fallback to Category/System Logic
                                 if (cat === 'Suelo Pélvico' || system === 'Suelo Pélvico') {
                                     return (
                                         <PelvicCard
@@ -299,7 +311,6 @@ export default function SessionPlayer() {
                                     );
                                 }
 
-                                // Timer Based (Mobility, Relaxation, Breathing)
                                 if (cat === 'Movilidad' || cat === 'Relajación' || cat === 'Respiración') {
                                     return (
                                         <TimerCard

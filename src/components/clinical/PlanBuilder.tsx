@@ -342,7 +342,8 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
             incline: '',
             breathPattern: '',
             contractionTime: '',
-            relaxationTime: ''
+            relaxationTime: '',
+            cardType: 'strength'
         });
     };
 
@@ -407,7 +408,8 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
             incline: item.details?.incline || '',
             breathPattern: item.details?.breathPattern || '',
             contractionTime: item.details?.contractionTime || '',
-            relaxationTime: item.details?.relaxationTime || ''
+            relaxationTime: item.details?.relaxationTime || '',
+            cardType: item.details?.cardType || 'strength'
         });
     };
 
@@ -1162,22 +1164,21 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                     {activeTab === 'specifics' && (
                                         <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
 
-                                            {/* Prescription Type Selector */}
+                                            {/* Card Type Selector (Visual Template) */}
                                             <div className="bg-brand-50 p-3 rounded-lg border border-brand-100 mb-4">
-                                                <label className="text-xs font-bold text-brand-800 uppercase block mb-2">Tipo de Prescripción</label>
+                                                <label className="text-xs font-bold text-brand-800 uppercase block mb-2">Vista en App (Tipo de Tarjeta)</label>
                                                 <div className="flex flex-wrap gap-2">
                                                     {[
-                                                        { id: 'standard', label: 'Estándar', icon: '📝' },
-                                                        { id: 'cardio', label: 'Cardio', icon: '🏃' },
-                                                        { id: 'pelvic', label: 'Suelo Pélvico', icon: '🦋' },
-                                                        { id: 'yoga', label: 'Yoga / Respiración', icon: '🧘' }
+                                                        { id: 'strength', label: 'Fuerza / General', icon: '💪' },
+                                                        { id: 'timer', label: 'Tiempo / Iso', icon: '⏱️' },
+                                                        { id: 'pelvic', label: 'Suelo Pélvico', icon: '🌸' }
                                                     ].map(type => (
                                                         <button
                                                             key={type.id}
-                                                            onClick={() => setEditForm({ ...editForm, prescriptionType: type.id })}
+                                                            onClick={() => setEditForm({ ...editForm, cardType: type.id })}
                                                             className={cn(
                                                                 "px-3 py-1.5 rounded-full text-xs font-bold transition-all border",
-                                                                (editForm.prescriptionType || 'standard') === type.id
+                                                                (editForm.cardType || 'strength') === type.id
                                                                     ? "bg-brand-600 text-white border-brand-600 shadow-md"
                                                                     : "bg-white text-brand-600 border-brand-200 hover:bg-brand-100"
                                                             )}
@@ -1188,48 +1189,30 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                                 </div>
                                             </div>
 
-                                            {/* CARDIO FIELDS */}
-                                            {(editForm.prescriptionType === 'cardio') && (
+                                            {/* TIMER FIELDS */}
+                                            {(editForm.cardType === 'timer') && (
                                                 <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
                                                     <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100 space-y-3">
                                                         <h5 className="text-xs font-bold text-blue-700 flex items-center gap-1">
-                                                            🏃 Parámetros Cardiovasculares
+                                                            ⏱️ Configuración de Tiempo
                                                         </h5>
                                                         <div className="grid grid-cols-2 gap-3">
                                                             <div className="space-y-1">
-                                                                <label className="text-[10px] font-bold text-blue-700 uppercase">Tiempo Total</label>
+                                                                <label className="text-[10px] font-bold text-blue-700 uppercase">Duración (Seg/Min)</label>
                                                                 <input
                                                                     className="w-full p-2 bg-white border border-blue-200 rounded text-sm focus:border-blue-500 outline-none"
-                                                                    placeholder="Ej: 20 min"
+                                                                    placeholder="Ej: 45s, 20m"
                                                                     value={editForm.duration}
                                                                     onChange={e => setEditForm({ ...editForm, duration: e.target.value })}
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <label className="text-[10px] font-bold text-blue-700 uppercase">Distancia</label>
+                                                                <label className="text-[10px] font-bold text-blue-700 uppercase">Hold (Isometría)</label>
                                                                 <input
                                                                     className="w-full p-2 bg-white border border-blue-200 rounded text-sm focus:border-blue-500 outline-none"
-                                                                    placeholder="Ej: 5 km"
-                                                                    value={editForm.distance}
-                                                                    onChange={e => setEditForm({ ...editForm, distance: e.target.value })}
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-bold text-blue-700 uppercase">Zona Cardíaca</label>
-                                                                <input
-                                                                    className="w-full p-2 bg-white border border-blue-200 rounded text-sm focus:border-blue-500 outline-none"
-                                                                    placeholder="Ej: Zona 2 (130-140 bpm)"
-                                                                    value={editForm.heartRateZone}
-                                                                    onChange={e => setEditForm({ ...editForm, heartRateZone: e.target.value })}
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-bold text-blue-700 uppercase">Inclinación</label>
-                                                                <input
-                                                                    className="w-full p-2 bg-white border border-blue-200 rounded text-sm focus:border-blue-500 outline-none"
-                                                                    placeholder="Ej: 2%"
-                                                                    value={editForm.incline}
-                                                                    onChange={e => setEditForm({ ...editForm, incline: e.target.value })}
+                                                                    placeholder="Ej: 5s"
+                                                                    value={editForm.holdTime}
+                                                                    onChange={e => setEditForm({ ...editForm, holdTime: e.target.value })}
                                                                 />
                                                             </div>
                                                         </div>
@@ -1238,69 +1221,47 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                             )}
 
                                             {/* PELVIC FIELDS */}
-                                            {(editForm.prescriptionType === 'pelvic') && (
+                                            {(editForm.cardType === 'pelvic') && (
                                                 <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
                                                     <div className="p-3 bg-pink-50/50 rounded-lg border border-pink-100 space-y-3">
                                                         <h5 className="text-xs font-bold text-pink-700 flex items-center gap-1">
-                                                            🦋 Suelo Pélvico (Kegel / Relajación)
+                                                            🦋 Suelo Pélvico (Visualizador Bloom)
                                                         </h5>
                                                         <div className="grid grid-cols-2 gap-3">
                                                             <div className="space-y-1">
-                                                                <label className="text-[10px] font-bold text-pink-700 uppercase">Contracción (Work)</label>
+                                                                <label className="text-[10px] font-bold text-pink-700 uppercase">Contracción (Subir)</label>
                                                                 <input
                                                                     className="w-full p-2 bg-white border border-pink-200 rounded text-sm focus:border-pink-500 outline-none"
-                                                                    placeholder="Ej: 5 seg"
+                                                                    placeholder="Ej: 5s"
                                                                     value={editForm.contractionTime}
                                                                     onChange={e => setEditForm({ ...editForm, contractionTime: e.target.value })}
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <label className="text-[10px] font-bold text-pink-700 uppercase">Relajación (Rest)</label>
+                                                                <label className="text-[10px] font-bold text-pink-700 uppercase">Relajación (Bajar)</label>
                                                                 <input
                                                                     className="w-full p-2 bg-white border border-pink-200 rounded text-sm focus:border-pink-500 outline-none"
-                                                                    placeholder="Ej: 10 seg"
+                                                                    placeholder="Ej: 10s"
                                                                     value={editForm.relaxationTime}
                                                                     onChange={e => setEditForm({ ...editForm, relaxationTime: e.target.value })}
                                                                 />
                                                             </div>
                                                         </div>
                                                         <div className="text-[10px] text-pink-600 italic mt-2">
-                                                            * Recuerda especificar las repeticiones en la pestaña General.
+                                                            * El visualizador guiará a la paciente con estos tiempos.
                                                         </div>
                                                     </div>
                                                 </div>
                                             )}
 
-                                            {/* YOGA / BREATH FIELDS */}
-                                            {(editForm.prescriptionType === 'yoga') && (
-                                                <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
-                                                    <div className="p-3 bg-teal-50/50 rounded-lg border border-teal-100 space-y-3">
-                                                        <h5 className="text-xs font-bold text-teal-700 flex items-center gap-1">
-                                                            🧘 Respiración y Conciencia
-                                                        </h5>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-bold text-teal-700 uppercase">Patrón Respiratorio</label>
-                                                            <textarea
-                                                                className="w-full p-2 bg-white border border-teal-200 rounded text-sm focus:border-teal-500 outline-none"
-                                                                rows={2}
-                                                                placeholder="Ej: Inhala en 4 tiempos, mantén 2, exhala en 6."
-                                                                value={editForm.breathPattern}
-                                                                onChange={e => setEditForm({ ...editForm, breathPattern: e.target.value })}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* STANDARD FIELDS (Always valid fallback or if standard selected) */}
-                                            {(!editForm.prescriptionType || editForm.prescriptionType === 'standard') && (
+                                            {/* STRENGTH / STANDARD FIELDS */}
+                                            {(!editForm.cardType || editForm.cardType === 'strength') && (
                                                 <div className="p-4 bg-zinc-50 rounded-lg border border-zinc-200 text-center space-y-2">
                                                     <p className="text-zinc-500 text-sm italic">
-                                                        Modo Estándar
+                                                        Modo Fuerza / General
                                                     </p>
                                                     <p className="text-xs text-zinc-400">
-                                                        Los parámetros generales (Series, Reps, Carga) se configuran en la pestaña "General" y "Carga". <br />
-                                                        Selecciona otra categoría arriba para añadir parámetros específicos.
+                                                        Se mostrará la tarjeta estándar con Series, Repeticiones y Carga.
                                                     </p>
                                                 </div>
                                             )}
