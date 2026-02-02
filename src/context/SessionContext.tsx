@@ -63,12 +63,16 @@ function sessionReducer(state: SessionState, action: Action): SessionState {
             let exLog = exercises.find(e => e.exerciseId === exerciseId);
 
             if (!exLog) {
-                exLog = { exerciseId, sets: [] };
+                exLog = { exerciseId, sets: [], skipped: false, notes: '' };
                 exercises.push(exLog);
             }
 
             // Ensure set exists
             const sets = [...exLog.sets];
+            // Ensure sets[setIndex] is initialized if undefined
+            if (!sets[setIndex]) {
+                sets[setIndex] = { completed: false, reps: '', load: '', rpe: '' };
+            }
             sets[setIndex] = { ...sets[setIndex], ...data };
             exLog.sets = sets;
 
@@ -82,108 +86,46 @@ function sessionReducer(state: SessionState, action: Action): SessionState {
                 lastSaved: Date.now()
             };
         }
+            // ... (skip unchanged handlers)
 
-        case 'SET_HISTORY':
-            return { ...state, history: action.payload };
+            const syncSession = async (sessionId: string) => {
+                const log = state.logs[sessionId];
+                if (!log) return;
 
-        case 'UPDATE_FEEDBACK': {
-            const { sessionId, feedback } = action.payload;
-            const log = state.logs[sessionId];
-            if (!log) return state;
+                dispatch({ type: 'SET_SYNC_STATUS', payload: 'syncing' });
+                try {
+                    // Strip ID for creation if needed, or just pass as is if Service handles it or if ID is the docRef
+                    // The service expects Omit<SessionLog, 'id' | 'createdAt'>.
+                    // Our local log has 'id' (the date key) which is NOT the Firestore Doc ID.
+                    // We should probably rely on Firestore auto-ID or use the date key as ID?
+                    // Service.create uses addDoc, so it auto-generates ID.
 
-            return {
-                ...state,
-                logs: {
-                    ...state.logs,
-                    [sessionId]: { ...log, feedback }
-                },
-                lastSaved: Date.now()
+                    const logToSave = { ...log };
+                    delete logToSave.id; // Remove the local date-key ID
+                    // createdAt is optional in type but Service overrides it. 
+
+                    await SessionLogService.create(logToSave as any);
+                    dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' });
+                } catch (error) {
+                    console.error("Sync failed", error);
+                    dispatch({ type: 'SET_SYNC_STATUS', payload: 'error' });
+                }
             };
-        }
 
-        case 'SET_SYNC_STATUS':
-            return { ...state, syncStatus: action.payload };
+            const loadHistory = async (patientId: string) => {
+                try {
+                    const lastLog = await SessionLogService.getLastLog(patientId);
+                    dispatch({ type: 'SET_HISTORY', payload: lastLog });
+                } catch (error) {
+                    // silent fail
+                }
+            };
 
-        case 'LOAD_FROM_STORAGE':
-            return { ...action.payload, syncStatus: 'synced' }; // Reset sync status on load
-
-        default:
-            return state;
-    }
-}
-
-// --- Context ---
-const SessionContext = createContext<{
-    state: SessionState;
-    dispatch: React.Dispatch<Action>;
-    getSessionLog: (sessionId: string) => SessionLog | undefined;
-    syncSession: (sessionId: string) => Promise<void>;
-    loadHistory: (patientId: string) => Promise<void>;
-}>({
-    state: initialState,
-    dispatch: () => null,
-    getSessionLog: () => undefined,
-    syncSession: async () => { },
-    loadHistory: async () => { }
-});
-
-// --- Provider ---
-export const SessionProvider = ({ children }: { children: React.ReactNode }) => {
-    const [state, dispatch] = useReducer(sessionReducer, initialState);
-
-    // 1. Load from LocalStorage on Mount
-    useEffect(() => {
-        const saved = localStorage.getItem('all_u_moves_sessions');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                // Ensure history field exists if loading old schema
-                if (!parsed.history) parsed.history = null;
-                dispatch({ type: 'LOAD_FROM_STORAGE', payload: parsed });
-            } catch (e) {
-                console.error("Failed to load session backup", e);
-            }
-        }
-    }, []);
-
-    // 2. Auto-Save to LocalStorage
-    useEffect(() => {
-        if (state.lastSaved) {
-            localStorage.setItem('all_u_moves_sessions', JSON.stringify(state));
-        }
-    }, [state]);
-
-    // Helpers
-    const getSessionLog = (sessionId: string) => state.logs[sessionId];
-
-    const syncSession = async (sessionId: string) => {
-        const log = state.logs[sessionId];
-        if (!log) return;
-
-        dispatch({ type: 'SET_SYNC_STATUS', payload: 'syncing' });
-        try {
-            await SessionLogService.create(log);
-            dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' });
-        } catch (error) {
-            console.error("Sync failed", error);
-            dispatch({ type: 'SET_SYNC_STATUS', payload: 'error' });
-        }
+            return (
+                <SessionContext.Provider value={{ state, dispatch, getSessionLog, syncSession, loadHistory }}>
+                    {children}
+                </SessionContext.Provider>
+            );
     };
 
-    const loadHistory = async (patientId: string) => {
-        try {
-            const lastLog = await SessionLogService.getLastLog(patientId);
-            dispatch({ type: 'SET_HISTORY', payload: lastLog });
-        } catch (error) {
-            // silent fail
-        }
-    };
-
-    return (
-        <SessionContext.Provider value={{ state, dispatch, getSessionLog, syncSession, loadHistory }}>
-            {children}
-        </SessionContext.Provider>
-    );
-};
-
-export const useSession = () => useContext(SessionContext);
+    export const useSession = () => useContext(SessionContext);

@@ -15,7 +15,7 @@ export default function SessionPlayer() {
     const { patient } = useOutletContext<{ patient: Patient }>();
     const navigate = useNavigate();
     const { sessionId } = useParams();
-    const { dispatch, syncSession, loadHistory, state } = useSession(); // Access methods
+    const { dispatch, syncSession, loadHistory } = useSession();
 
     // 1. Resolve Session ID (Date Key)
     const todayIndex = new Date().getDay();

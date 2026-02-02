@@ -1,32 +1,7 @@
 import { db } from '../lib/firebase';
 import { collection, addDoc, Timestamp, query, where, getDocs, orderBy, deleteDoc, doc, limit } from 'firebase/firestore';
 
-export interface SessionLog {
-    id?: string;
-    patientId: string;
-    date: any; // Timestamp
-    exercises: {
-        exerciseId: string;
-        name: string;
-        completed: boolean;
-        // Performed values
-        sets?: string;
-        reps?: string;
-        load?: string;
-        rpe?: number; // Per exercise RPE
-        notes?: string;
-    }[];
-    feedback?: {
-        rpe: number; // Session RPE (0-10)
-        pain: number; // 0-10 (Global or Max)
-        fatigue: number; // 0-10
-        energyLevel?: number; // 1-5
-        sleepQuality?: number; // 1-5
-        symptoms?: string[]; // List of specific symptoms
-        notes?: string;
-    };
-    createdAt: any;
-}
+import { SessionLog } from '../types/patient';
 
 const COLLECTION_NAME = 'sessionLogs';
 
