@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AnnualPlan, Macrocycle } from '../../types/plan';
 import { Button } from '../ui/Button';
-import { ChevronRight, Calendar as CalendarIcon, Zap, Activity } from 'lucide-react';
+import { Calendar as CalendarIcon, Zap } from 'lucide-react';
 import { cn } from '../../lib/utils'; // Assuming this exists
 
 interface AnnualCalendarProps {

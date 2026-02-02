@@ -1,16 +1,14 @@
 import {
     collection,
     doc,
-    getDoc,
     getDocs,
-    setDoc,
     updateDoc,
     query,
     where,
     Timestamp,
     addDoc
 } from 'firebase/firestore';
-import { db } from '../config/firebase'; // Adjust path if needed
+import { db } from '../lib/firebase'; // Corrected path
 import { AnnualPlan, Macrocycle } from '../types/plan';
 import { PrescribedPlan } from '../types/patient';
 

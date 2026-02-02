@@ -25,7 +25,7 @@ export default function AnnualPlannerPage() {
         try {
             const [planData, patientData] = await Promise.all([
                 PlanService.getActivePlan(patientId),
-                PatientService.get(patientId)
+                PatientService.getById(patientId)
             ]);
 
             let activePlan = planData;
@@ -130,7 +130,7 @@ export default function AnnualPlannerPage() {
                     onSelectWeek={setSelectedWeek}
                     onAddMacrocycle={async (macro) => {
                         // TODO: Wire this up to PlanService
-                        await PlanService.addMacrocycle(annualPlan.id!, macro, annualPlan.macrocycles);
+                        await PlanService.addMacrocycle(annualPlan.id!, { ...macro, id: Date.now().toString() }, annualPlan.macrocycles);
                         loadData();
                     }}
                 />
