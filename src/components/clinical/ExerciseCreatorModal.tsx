@@ -320,122 +320,120 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, existingExe
                                 )}
                             </div>
 
-                        </div>
-
                             {/* [NEW] Anatomical Focus */}
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-zinc-600 uppercase">Grupos Musculares</label>
-                            <div className="flex flex-wrap gap-2">
-                                {TAXONOMY_OPTIONS.muscleGroups.map(mg => (
-                                    <button
-                                        key={mg}
-                                        onClick={() => toggleMuscleGroup(mg)}
-                                        className={cn(
-                                            "px-3 py-1.5 text-xs rounded-full border transition-all",
-                                            taxonomy.muscleGroups.includes(mg)
-                                                ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                                                : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
-                                        )}
-                                    >
-                                        {mg}
-                                    </button>
-                                ))}
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-600 uppercase">Grupos Musculares</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {TAXONOMY_OPTIONS.muscleGroups.map(mg => (
+                                            <button
+                                                key={mg}
+                                                onClick={() => toggleMuscleGroup(mg)}
+                                                className={cn(
+                                                    "px-3 py-1.5 text-xs rounded-full border transition-all",
+                                                    taxonomy.muscleGroups.includes(mg)
+                                                        ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                                                        : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
+                                                )}
+                                            >
+                                                {mg}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-600 uppercase">Articulaciones / Zonas</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {TAXONOMY_OPTIONS.joints.map(joint => (
+                                            <button
+                                                key={joint}
+                                                onClick={() => toggleJoint(joint)}
+                                                className={cn(
+                                                    "px-3 py-1.5 text-xs rounded-full border transition-all",
+                                                    taxonomy.targetJoints.includes(joint)
+                                                        ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                                                        : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
+                                                )}
+                                            >
+                                                {joint}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-zinc-600 uppercase">Implementos</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {TAXONOMY_OPTIONS.equipment.map(eq => (
+                                        <button
+                                            key={eq}
+                                            onClick={() => toggleEquipment(eq)}
+                                            className={cn(
+                                                "px-3 py-1.5 text-xs rounded-full border transition-all",
+                                                taxonomy.equipment.includes(eq)
+                                                    ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                                                    : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
+                                            )}
+                                        >
+                                            {eq}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-zinc-600 uppercase">Articulaciones / Zonas</label>
-                            <div className="flex flex-wrap gap-2">
-                                {TAXONOMY_OPTIONS.joints.map(joint => (
-                                    <button
-                                        key={joint}
-                                        onClick={() => toggleJoint(joint)}
-                                        className={cn(
-                                            "px-3 py-1.5 text-xs rounded-full border transition-all",
-                                            taxonomy.targetJoints.includes(joint)
-                                                ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                                                : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
-                                        )}
-                                    >
-                                        {joint}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-zinc-600 uppercase">Implementos</label>
-                        <div className="flex flex-wrap gap-2">
-                            {TAXONOMY_OPTIONS.equipment.map(eq => (
-                                <button
-                                    key={eq}
-                                    onClick={() => toggleEquipment(eq)}
-                                    className={cn(
-                                        "px-3 py-1.5 text-xs rounded-full border transition-all",
-                                        taxonomy.equipment.includes(eq)
-                                            ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                                            : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
-                                    )}
-                                >
-                                    {eq}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
                     )}
 
-                {/* SECTION: CLINICAL */}
-                {activeSection === 'clinical' && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <SelectGroup
-                                label="Sistema"
-                                value={taxonomy.system}
-                                options={TAXONOMY_OPTIONS.systems}
-                                onChange={(val) => setTaxonomy({ ...taxonomy, system: val })}
-                            />
-                            <SelectGroup
-                                label="Nivel de Impacto (Pélvico)"
-                                value={taxonomy.impact}
-                                options={TAXONOMY_OPTIONS.impact}
-                                onChange={(val) => setTaxonomy({ ...taxonomy, impact: val })}
-                            />
-                            <SelectGroup
-                                label="Dificultad"
-                                value={taxonomy.difficulty}
-                                options={TAXONOMY_OPTIONS.difficulties || []}
-                                onChange={(val) => setTaxonomy({ ...taxonomy, difficulty: val })}
-                            />
-                        </div>
+                    {/* SECTION: CLINICAL */}
+                    {activeSection === 'clinical' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <SelectGroup
+                                    label="Sistema"
+                                    value={taxonomy.system}
+                                    options={TAXONOMY_OPTIONS.systems}
+                                    onChange={(val) => setTaxonomy({ ...taxonomy, system: val })}
+                                />
+                                <SelectGroup
+                                    label="Nivel de Impacto (Pélvico)"
+                                    value={taxonomy.impact}
+                                    options={TAXONOMY_OPTIONS.impact}
+                                    onChange={(val) => setTaxonomy({ ...taxonomy, impact: val })}
+                                />
+                                <SelectGroup
+                                    label="Dificultad"
+                                    value={taxonomy.difficulty}
+                                    options={TAXONOMY_OPTIONS.difficulties || []}
+                                    onChange={(val) => setTaxonomy({ ...taxonomy, difficulty: val })}
+                                />
+                            </div>
 
-                        {/* [NEW] Clinical Goals */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-zinc-600 uppercase">Objetivos Clínicos / Deportivos</label>
-                            <div className="flex flex-wrap gap-2">
-                                {TAXONOMY_OPTIONS.clinicalGoals.map(cg => (
-                                    <button
-                                        key={cg}
-                                        onClick={() => toggleClinicalGoal(cg)}
-                                        className={cn(
-                                            "px-3 py-1.5 text-xs rounded-full border transition-all",
-                                            taxonomy.clinicalGoals.includes(cg)
-                                                ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                                                : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
-                                        )}
-                                    >
-                                        {cg}
-                                    </button>
-                                ))}
+                            {/* [NEW] Clinical Goals */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-zinc-600 uppercase">Objetivos Clínicos / Deportivos</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {TAXONOMY_OPTIONS.clinicalGoals.map(cg => (
+                                        <button
+                                            key={cg}
+                                            onClick={() => toggleClinicalGoal(cg)}
+                                            className={cn(
+                                                "px-3 py-1.5 text-xs rounded-full border transition-all",
+                                                taxonomy.clinicalGoals.includes(cg)
+                                                    ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                                                    : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
+                                            )}
+                                        >
+                                            {cg}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
+                </div>
             </div>
-        </div>
         </Dialog >
     );
 }
