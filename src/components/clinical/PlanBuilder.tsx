@@ -9,12 +9,36 @@ import { ExerciseCreatorModal } from './ExerciseCreatorModal'; // [NEW]
 import { Search, Plus, Save, Calendar, Link as LinkIcon, Copy, Play, Info as InfoIcon, X as XIcon, GripVertical } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Timestamp } from 'firebase/firestore';
-import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent, DragOverEvent, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 function DraggableItem({ id, data, children, className }: { id: string, data: any, children: React.ReactNode, className?: string }) {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, data });
     return (
         <div ref={setNodeRef} {...listeners} {...attributes} className={cn(className, isDragging ? "opacity-50" : "")}>
+            {children}
+        </div>
+    );
+}
+
+function SortableExerciseItem({ id, children, className, data }: { id: string, children: React.ReactNode, className?: string, data?: any }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id, data });
+
+    const style = {
+        transform: CSS.Translate.toString(transform),
+        transition,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={cn(className, isDragging ? "opacity-30" : "")}>
             {children}
         </div>
     );
@@ -121,6 +145,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
     };
 
     // Initialize/Update when initialPlan or patient changes
+    // Initialize/Update when initialPlan or patient changes
     useEffect(() => {
         const init = async () => {
             setLoading(true);
@@ -130,38 +155,44 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                 setExercises(exList);
             }
 
-            if (initialPlan) {
-                isRemoteUpdate.current = true; // Mark as remote
-                setPlan(initialPlan);
-            } else if (patient.activePlan) {
-                isRemoteUpdate.current = true; // Mark as remote
-                let activeBlocks = patient.activePlan.activeBlocks;
+            // Only load from props if it's the first mount OR if we explicitly want to reset (not implemented yet)
+            // This prevents external updates (e.g. from save) from overwriting local state
+            if (isFirstMount) {
+                if (initialPlan) {
+                    isRemoteUpdate.current = true; // Mark as remote
+                    setPlan(initialPlan);
+                } else if (patient.activePlan) {
+                    isRemoteUpdate.current = true; // Mark as remote
+                    let activeBlocks = patient.activePlan.activeBlocks;
 
-                if (!activeBlocks) {
-                    activeBlocks = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
-                    const schedule = patient.activePlan.schedule || {};
-                    Object.entries(schedule).forEach(([day, exList]) => {
-                        if (Array.isArray(exList)) {
-                            const uniqueBlocks = new Set<string>();
-                            exList.forEach(ex => {
-                                uniqueBlocks.add(ex.block || SESSION_BLOCKS.MAIN);
-                            });
-                            // @ts-ignore
-                            if (activeBlocks) activeBlocks[day] = Array.from(uniqueBlocks);
-                        }
+                    if (!activeBlocks) {
+                        activeBlocks = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
+                        const schedule = patient.activePlan.schedule || {};
+                        Object.entries(schedule).forEach(([day, exList]) => {
+                            if (Array.isArray(exList)) {
+                                const uniqueBlocks = new Set<string>();
+                                exList.forEach(ex => {
+                                    uniqueBlocks.add(ex.block || SESSION_BLOCKS.MAIN);
+                                });
+                                // @ts-ignore
+                                if (activeBlocks) activeBlocks[day] = Array.from(uniqueBlocks);
+                            }
+                        });
+                    }
+
+                    setPlan({
+                        ...patient.activePlan,
+                        activeBlocks
                     });
                 }
-
-                setPlan({
-                    ...patient.activePlan,
-                    activeBlocks
-                });
             }
+
             setLoading(false);
         };
 
         init();
-    }, [initialPlan, patient.activePlan]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isFirstMount, initialPlan]);
 
     // Removed the old independent loadData() effect to avoid conflicts
 
@@ -406,28 +437,136 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
 
     const categories = Array.from(new Set(exercises.map(e => e.category)));
 
-    const handleDragStart = (event: DragStartEvent) => {
-        if (event.active.data.current) {
-            setActiveDragItem(event.active.data.current as Exercise);
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        })
+    );
+
+    const handleDragOver = (event: DragOverEvent) => {
+        const { active, over } = event;
+        if (!over) return;
+
+        const activeId = active.id;
+        const overId = over.id;
+
+        // Find which container (day) the items belong to
+        const findContainer = (id: string) => {
+            if (id in plan.schedule) return id as keyof typeof plan.schedule;
+            // Find day containing this exercise ID
+            return (Object.keys(plan.schedule) as Array<keyof typeof plan.schedule>).find(day =>
+                plan.schedule[day].some(item => item.id === id)
+            );
+        };
+
+        const activeContainer = findContainer(activeId as string);
+        const overContainer = findContainer(overId as string);
+
+        if (!activeContainer || !overContainer || activeContainer === overContainer) {
+            return;
         }
+
+        // Move item to new container during drag (Optimistic UI)
+        setPlan(prev => {
+            const activeItems = prev.schedule[activeContainer];
+            const overItems = prev.schedule[overContainer];
+
+            const activeIndex = activeItems.findIndex(i => i.id === activeId);
+            const overIndex = overItems.findIndex(i => i.id === overId);
+
+            let newIndex;
+            if (overId in prev.schedule) {
+                // Dropped ON a day container
+                newIndex = overItems.length + 1;
+            } else {
+                // Dropped ON an item in the day
+                const isBelowOverItem =
+                    over &&
+                    active.rect.current.translated &&
+                    active.rect.current.translated.top > over.rect.top + over.rect.height;
+
+                const modifier = isBelowOverItem ? 1 : 0;
+                newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
+            }
+
+            return {
+                ...prev,
+                schedule: {
+                    ...prev.schedule,
+                    [activeContainer]: [
+                        ...prev.schedule[activeContainer].filter(item => item.id !== activeId)
+                    ],
+                    [overContainer]: [
+                        ...prev.schedule[overContainer].slice(0, newIndex),
+                        activeItems[activeIndex],
+                        ...prev.schedule[overContainer].slice(newIndex, prev.schedule[overContainer].length)
+                    ]
+                }
+            };
+        });
     };
+
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveDragItem(null);
+        if (!over) return;
 
-        if (over && active.data.current) {
-            const dayKey = over.id as keyof typeof plan.schedule;
-            const exercise = active.data.current as Exercise;
-            // Add to default block 'Principal'
-            handleAddExercise(dayKey, exercise, SESSION_BLOCKS.MAIN);
-            // Ensure block exists
-            handleAddBlock(dayKey, SESSION_BLOCKS.MAIN);
+        const activeId = active.id as string;
+        const overId = over.id as string;
+
+        // If dragging from library (new item)
+        if (active.data.current && (active.data.current as any).type !== 'PlanExercise') {
+            // Logic for new item from library (DraggableItem)
+            if (overId in plan.schedule) {
+                // Dropped on a day
+                const dayKey = overId as keyof typeof plan.schedule;
+                const exercise = active.data.current as Exercise;
+                handleAddExercise(dayKey, exercise, SESSION_BLOCKS.MAIN);
+                handleAddBlock(dayKey, SESSION_BLOCKS.MAIN);
+            }
+            return;
         }
+
+        // Dragging existing PlanExercise (Sortable logic)
+        const findContainer = (id: string) => {
+            if (id in plan.schedule) return id as keyof typeof plan.schedule;
+            return (Object.keys(plan.schedule) as Array<keyof typeof plan.schedule>).find(day =>
+                plan.schedule[day].some(item => item.id === id)
+            );
+        };
+
+        const activeContainer = findContainer(activeId);
+        const overContainer = findContainer(overId);
+
+        if (activeContainer && overContainer && activeContainer === overContainer) {
+            // Reordering within same day
+            const activeIndex = plan.schedule[activeContainer].findIndex(i => i.id === activeId);
+            const overIndex = plan.schedule[overContainer].findIndex(i => i.id === overId);
+
+            if (activeIndex !== overIndex) {
+                setPlan(prev => ({
+                    ...prev,
+                    schedule: {
+                        ...prev.schedule,
+                        [activeContainer]: arrayMove(prev.schedule[activeContainer], activeIndex, overIndex)
+                    }
+                }));
+            }
+        }
+        // If moved between containers, handled in DragOver, we just persist.
     };
 
     return (
-        <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+        >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-200px)]">
                 {/* Left: Exercise Library */}
                 <div className="lg:col-span-4 bg-white rounded-xl shadow-sm border border-brand-100 flex flex-col overflow-hidden">
@@ -581,9 +720,87 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                             </div>
                                         </div>
                                         <DroppableDay id={day.key} className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar relative min-h-[200px]">
+                                            <SortableContext
+                                                id={day.key}
+                                                items={dayExercises.map(d => d.id)}
+                                                strategy={verticalListSortingStrategy}
+                                            >
+                                                {/* Render Active Blocks */}
+                                                {activeBlockList.map(blockName => {
+                                                    const blockExercises = dayExercises.filter((i: PlanExercise) => i.block === blockName);
 
-                                            {/* Quick Add Button */}
-                                            <div className="flex justify-center -mb-2 z-20 relative">
+                                                    return (
+                                                        <div key={blockName} className="space-y-2 group/block">
+                                                            <div className="flex items-center gap-2 px-1 justify-between group/header cursor-default">
+                                                                <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
+                                                                <span className="text-[9px] font-bold uppercase tracking-wider whitespace-nowrap text-brand-400 group-hover/header:text-brand-600">
+                                                                    {blockName}
+                                                                </span>
+                                                                <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
+
+                                                                {/* Remove Block Button (Only if empty) */}
+                                                                {blockExercises.length === 0 && (
+                                                                    <button
+                                                                        onClick={() => handleRemoveBlock(day.key as any, blockName)}
+                                                                        className="opacity-0 group-hover/header:opacity-100 text-gray-300 hover:text-red-400 transition-all p-0.5"
+                                                                        title="Eliminar bloque vacío"
+                                                                    >
+                                                                        <XIcon className="w-3 h-3" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="space-y-2 min-h-[20px]">
+                                                                {blockExercises.map((item: PlanExercise) => (
+                                                                    <SortableExerciseItem
+                                                                        key={item.id}
+                                                                        id={item.id}
+                                                                        data={{ type: 'PlanExercise', current: item }}
+                                                                    >
+                                                                        <div
+                                                                            onClick={() => handleEditClick(day.key as any, item)}
+                                                                            className="relative p-2.5 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
+                                                                        >
+                                                                            <div className="flex justify-between items-start mb-1 gap-2">
+                                                                                <p className="text-xs font-bold text-brand-900 leading-tight line-clamp-2 text-left">{item.name}</p>
+
+                                                                                <button
+                                                                                    onClick={(e: React.MouseEvent) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleRemoveExercise(day.key as any, item.id);
+                                                                                    }}
+                                                                                    className="opacity-0 group-hover:opacity-100 text-zinc-300 hover:text-red-500 transition-colors absolute top-1 right-1 p-1 bg-white/90 rounded"
+                                                                                    onPointerDown={(e) => e.stopPropagation()}
+                                                                                >
+                                                                                    <XIcon className="w-3 h-3" />
+                                                                                </button>
+                                                                            </div>
+
+                                                                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                                {item.details?.sets && item.details?.reps && (
+                                                                                    <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-[9px] font-medium rounded border border-brand-100">
+                                                                                        {item.details.sets}x{item.details.reps}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </SortableExerciseItem>
+                                                                ))}
+
+                                                                {/* Drop Placeholder if empty */}
+                                                                {blockExercises.length === 0 && (
+                                                                    <div className="h-6 w-full rounded border border-dashed border-gray-100 flex items-center justify-center text-[9px] text-gray-300">
+                                                                        Arrastra o agrega aquí
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </SortableContext>
+
+                                            {/* Quick Add Button - Moved to bottom as requested */}
+                                            <div className="flex justify-center mt-2 mb-2 z-20 relative">
                                                 <button
                                                     onClick={() => setAddingToDay(day.key as any)}
                                                     className="w-full py-1 text-[10px] text-brand-400 hover:text-brand-600 hover:bg-brand-50 border border-transparent hover:border-brand-100 rounded transition-all flex items-center justify-center gap-1"
@@ -591,73 +808,6 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                                     <Plus className="w-3 h-3" /> Agregar Ejercicio
                                                 </button>
                                             </div>
-
-                                            {/* Render Active Blocks */}
-                                            {activeBlockList.map(blockName => {
-                                                const blockExercises = dayExercises.filter((i: PlanExercise) => i.block === blockName);
-
-                                                return (
-                                                    <div key={blockName} className="space-y-2 group/block">
-                                                        <div className="flex items-center gap-2 px-1 justify-between group/header cursor-default">
-                                                            <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
-                                                            <span className="text-[9px] font-bold uppercase tracking-wider whitespace-nowrap text-brand-400 group-hover/header:text-brand-600">
-                                                                {blockName}
-                                                            </span>
-                                                            <div className="h-px bg-brand-50 flex-1 group-hover/header:bg-brand-100 transition-colors" />
-
-                                                            {/* Remove Block Button (Only if empty) */}
-                                                            {blockExercises.length === 0 && (
-                                                                <button
-                                                                    onClick={() => handleRemoveBlock(day.key as any, blockName)}
-                                                                    className="opacity-0 group-hover/header:opacity-100 text-gray-300 hover:text-red-400 transition-all p-0.5"
-                                                                    title="Eliminar bloque vacío"
-                                                                >
-                                                                    <XIcon className="w-3 h-3" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="space-y-2 min-h-[20px]">
-                                                            {blockExercises.map((item: PlanExercise) => (
-                                                                <div
-                                                                    key={item.id}
-                                                                    onClick={() => handleEditClick(day.key as any, item)}
-                                                                    className="relative p-2.5 bg-white border border-brand-100 rounded-lg shadow-sm hover:border-brand-400 hover:shadow-md transition-all cursor-pointer group"
-                                                                >
-                                                                    <div className="flex justify-between items-start mb-1 gap-2">
-                                                                        <p className="text-xs font-bold text-brand-900 leading-tight line-clamp-2">{item.name}</p>
-
-                                                                        <button
-                                                                            onClick={(e: React.MouseEvent) => {
-                                                                                e.stopPropagation();
-                                                                                handleRemoveExercise(day.key as any, item.id);
-                                                                            }}
-                                                                            className="opacity-0 group-hover:opacity-100 text-zinc-300 hover:text-red-500 transition-colors absolute top-1 right-1 p-1 bg-white/90 rounded"
-                                                                        >
-                                                                            <XIcon className="w-3 h-3" />
-                                                                        </button>
-                                                                    </div>
-
-                                                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                                                        {item.details?.sets && item.details?.reps && (
-                                                                            <span className="px-1.5 py-0.5 bg-brand-50 text-brand-700 text-[9px] font-medium rounded border border-brand-100">
-                                                                                {item.details.sets}x{item.details.reps}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-
-                                                            {/* Drop Placeholder if empty */}
-                                                            {blockExercises.length === 0 && (
-                                                                <div className="h-6 w-full rounded border border-dashed border-gray-100 flex items-center justify-center text-[9px] text-gray-300">
-                                                                    Arrastra o agrega aquí
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
 
                                             {/* "Add Block" Button at bottom */}
                                             <div className="pt-2 opacity-0 group-hover/day:opacity-100 transition-opacity flex justify-center">
