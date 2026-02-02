@@ -32,7 +32,11 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, existingExe
         posture: '',
         impact: '',
         contractionType: '',
-        isometricType: ''
+        isometricType: '',
+        // [NEW]
+        muscleGroups: [] as string[],
+        clinicalGoals: [] as string[],
+        difficulty: ''
     });
 
     const [instructions, setInstructions] = useState('');
@@ -56,7 +60,11 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, existingExe
                 posture: existingExercise.posture || '',
                 impact: existingExercise.impact_level || '',
                 contractionType: existingExercise.contractionType || '',
-                isometricType: existingExercise.isometricType || ''
+                isometricType: existingExercise.isometricType || '',
+                // [NEW]
+                muscleGroups: existingExercise.muscleGroups || [],
+                clinicalGoals: existingExercise.clinicalGoals || [],
+                difficulty: existingExercise.difficulty || ''
             });
         } else {
             // Reset if creating new (optional, but good practice)
@@ -86,6 +94,11 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, existingExe
                 impact_level: taxonomy.impact as any,
                 contractionType: taxonomy.contractionType as any,
                 isometricType: taxonomy.isometricType as any,
+                // [NEW]
+                muscleGroups: taxonomy.muscleGroups,
+                clinicalGoals: taxonomy.clinicalGoals,
+                difficulty: taxonomy.difficulty as any,
+
                 createdAt: existingExercise?.createdAt || new Date(),
                 updatedAt: new Date()
             };
@@ -106,6 +119,24 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, existingExe
             equipment: prev.equipment.includes(eq)
                 ? prev.equipment.filter(e => e !== eq)
                 : [...prev.equipment, eq]
+        }));
+    };
+
+    const toggleMuscleGroup = (mg: string) => {
+        setTaxonomy(prev => ({
+            ...prev,
+            muscleGroups: prev.muscleGroups.includes(mg)
+                ? prev.muscleGroups.filter(m => m !== mg)
+                : [...prev.muscleGroups, mg]
+        }));
+    };
+
+    const toggleClinicalGoal = (cg: string) => {
+        setTaxonomy(prev => ({
+            ...prev,
+            clinicalGoals: prev.clinicalGoals.includes(cg)
+                ? prev.clinicalGoals.filter(c => c !== cg)
+                : [...prev.clinicalGoals, cg]
         }));
     };
 
@@ -277,6 +308,27 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, existingExe
                                 )}
                             </div>
 
+                            {/* [NEW] Anatomical Focus */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-zinc-600 uppercase">Grupos Musculares</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {TAXONOMY_OPTIONS.muscleGroups.map(mg => (
+                                        <button
+                                            key={mg}
+                                            onClick={() => toggleMuscleGroup(mg)}
+                                            className={cn(
+                                                "px-3 py-1.5 text-xs rounded-full border transition-all",
+                                                taxonomy.muscleGroups.includes(mg)
+                                                    ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                                                    : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
+                                            )}
+                                        >
+                                            {mg}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-zinc-600 uppercase">Implementos</label>
                                 <div className="flex flex-wrap gap-2">
@@ -315,6 +367,33 @@ export function ExerciseCreatorModal({ isOpen, onClose, initialName, existingExe
                                     options={TAXONOMY_OPTIONS.impact}
                                     onChange={(val) => setTaxonomy({ ...taxonomy, impact: val })}
                                 />
+                                <SelectGroup
+                                    label="Dificultad"
+                                    value={taxonomy.difficulty}
+                                    options={TAXONOMY_OPTIONS.difficulties || []}
+                                    onChange={(val) => setTaxonomy({ ...taxonomy, difficulty: val })}
+                                />
+                            </div>
+
+                            {/* [NEW] Clinical Goals */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-zinc-600 uppercase">Objetivos Clínicos / Deportivos</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {TAXONOMY_OPTIONS.clinicalGoals.map(cg => (
+                                        <button
+                                            key={cg}
+                                            onClick={() => toggleClinicalGoal(cg)}
+                                            className={cn(
+                                                "px-3 py-1.5 text-xs rounded-full border transition-all",
+                                                taxonomy.clinicalGoals.includes(cg)
+                                                    ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                                                    : "bg-white text-zinc-600 border-zinc-200 hover:border-brand-300"
+                                            )}
+                                        >
+                                            {cg}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     )}
