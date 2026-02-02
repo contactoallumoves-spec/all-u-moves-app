@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { PlanService } from '../../services/planService';
 import { PatientService } from '../../services/patientService';
 import { AnnualPlan } from '../../types/plan';
@@ -8,12 +8,13 @@ import { PlanBuilder } from '../../components/clinical/PlanBuilder';
 import { Timestamp } from 'firebase/firestore';
 import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/Button';
 
 export default function ProgrammingPage() {
     const { patientId } = useParams<{ patientId: string }>();
+    const navigate = useNavigate();
     const [annualPlan, setAnnualPlan] = useState<AnnualPlan | null>(null);
     const [patient, setPatient] = useState<Patient | null>(null);
     const [loading, setLoading] = useState(true);
@@ -133,6 +134,15 @@ export default function ProgrammingPage() {
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
             {/* Sidebar Calendar */}
             <div className="w-80 border-r border-gray-100 flex flex-col bg-gray-50/50 p-4">
+                <Button
+                    variant="ghost"
+                    className="mb-6 pl-0 hover:bg-transparent hover:text-brand-600 justify-start"
+                    onClick={() => navigate(`/users/${patientId}`)}
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Volver a Ficha
+                </Button>
+
                 {/* Month Navigator */}
                 <div className="flex items-center justify-between mb-4">
                     <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1 hover:bg-white rounded-full transition-colors"><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
