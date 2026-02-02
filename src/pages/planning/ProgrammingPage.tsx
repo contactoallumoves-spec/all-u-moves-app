@@ -89,11 +89,27 @@ export default function ProgrammingPage() {
     // Persist changes
     const handleSaveWeek = async (weekPlan: PrescribedPlan) => {
         if (!annualPlan?.id) return;
-        await PlanService.updateWeek(annualPlan.id, currentWeekNumber, weekPlan);
-        // Refresh local state without full reload?
-        if (annualPlan) {
-            const updatedWeeks = { ...annualPlan.weeks, [currentWeekNumber]: weekPlan };
-            setAnnualPlan({ ...annualPlan, weeks: updatedWeeks });
+
+        try {
+            // 1. Update Annual Plan Repository
+            await PlanService.updateWeek(annualPlan.id, currentWeekNumber, weekPlan);
+
+            // 2. Sync to Patient Active Plan (For Portal Visibility)
+            // This ensures the Portal sees the changes immediately.
+            if (patientId) {
+                await PatientService.update(patientId, {
+                    activePlan: weekPlan
+                });
+            }
+
+            // 3. Update Local State
+            if (annualPlan) {
+                const updatedWeeks = { ...annualPlan.weeks, [currentWeekNumber]: weekPlan };
+                setAnnualPlan({ ...annualPlan, weeks: updatedWeeks });
+            }
+        } catch (error) {
+            console.error("Error saving week:", error);
+            alert("Error al guardar cambios"); // Optional UI feedback
         }
     };
 
