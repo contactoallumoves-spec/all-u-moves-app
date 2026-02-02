@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
 import { Patient, PlanExercise } from '../../types/patient';
 import { ExerciseService } from '../../services/exerciseService';
 import { SessionLogService } from '../../services/sessionLogService';
