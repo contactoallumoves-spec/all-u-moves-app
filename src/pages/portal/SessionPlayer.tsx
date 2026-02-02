@@ -7,6 +7,8 @@ import { Button } from '../../components/ui/Button';
 import { ChevronLeft, Info, Play, X, Flag, MessageSquare, Loader2 } from 'lucide-react';
 import { SmartTimer } from './components/SmartTimer';
 import { StrengthCard } from './components/StrengthCard';
+import { PelvicCard } from './components/PelvicCard';
+import { TimerCard } from './components/TimerCard';
 import { RPESelector, PainSelector } from '../../components/ui/PremiumInputs';
 import { cn } from '../../lib/utils';
 import { motion } from 'framer-motion';
