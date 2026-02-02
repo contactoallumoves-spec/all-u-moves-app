@@ -445,6 +445,12 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
         })
     );
 
+    const handleDragStart = (event: DragStartEvent) => {
+        if (event.active.data.current) {
+            setActiveDragItem(event.active.data.current as Exercise);
+        }
+    };
+
     const handleDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
         if (!over) return;
