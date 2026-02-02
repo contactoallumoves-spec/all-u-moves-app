@@ -81,33 +81,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
         setIsFirstMount(false);
     }, []);
 
-    // Auto-save Effect
-    useEffect(() => {
-        if (isFirstMount) return;
 
-        setIsDirty(true);
-        const timer = setTimeout(async () => {
-            // Only save if dirty state is true (handled by isDirty logic implicitly by being here after a change)
-            // Check against initialPlan could be complex, simple debounce is "Save 1s after last change"
-            console.log("Auto-saving...");
-            if (customSaveHandler) {
-                await customSaveHandler(plan);
-            } else if (onSave) {
-                await PatientService.update(patient.id!, { activePlan: plan });
-            }
-            setIsDirty(false);
-        }, 2000); // 2 seconds debounce
-
-        return () => clearTimeout(timer);
-    }, [plan]); // Trigger on any plan change
-
-    const handleCreateClick = () => setIsCreating(true);
-
-    const handleSaveNewExercise = async (newEx: Exercise) => {
-        setExercises(prev => [...prev, newEx]);
-        setIsCreating(false);
-        setSearchTerm(newEx.name); // Auto-search for it
-    };
 
     // Track if update is from parent to prevent save loop
     const isRemoteUpdate = React.useRef(false);
