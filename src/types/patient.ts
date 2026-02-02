@@ -150,12 +150,14 @@ export interface SessionFeedback {
 // [NEW] Actual execution log
 export interface SessionExerciseLog {
     exerciseId: string;
+    name?: string; // [NEW] Snapshot of name
     sets: {
         reps?: string;
         load?: string;
         rpe?: string;
         completed: boolean;
     }[];
+    completed?: boolean; // [NEW] Aggregate completion status
     skipped?: boolean;
     skipReason?: string;
     notes?: string;
