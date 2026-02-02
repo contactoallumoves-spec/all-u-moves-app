@@ -166,9 +166,9 @@ export default function PortalDashboard() {
                             <Button
                                 className="w-full bg-brand-800 hover:bg-brand-900 text-white shadow-lg shadow-brand-200/50 mt-2 group"
                                 size="lg"
-                                onClick={() => navigate(`session/${dayKey}`)} // Correct route
+                                onClick={() => navigate(`../session/${dayKey}`)} // Use relative up .. to ensure we stay under :token
                             >
-                                <span className="mr-2">Ver Rutina</span>
+                                <span className="mr-2">Ver Sesión</span>
                                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </div>
