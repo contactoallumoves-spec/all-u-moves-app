@@ -1,15 +1,6 @@
-import { useState } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
-import { Patient } from '../../types/patient';
-import { Card, CardContent } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { PlayCircle, Clock, ChevronRight, CheckCircle2 } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { WeeklyCalendar } from './components/WeeklyCalendar';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-
-const DAYS_MAP = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+// ... imports
+import { SessionLogService } from '../../services/sessionLogService';
+import { SessionLog } from '../../types/patient';
 
 export default function PortalDashboard() {
     const { patient } = useOutletContext<{ patient: Patient }>();
@@ -17,6 +8,7 @@ export default function PortalDashboard() {
 
     // State for selected day view (default to Today)
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]); // [NEW] Store logs for calendar
 
     // Derived State
     const dayIndex = selectedDate.getDay();
@@ -33,14 +25,37 @@ export default function PortalDashboard() {
             .map(([day]) => day)
         : [];
 
-    // Mock Completed Dates (Replace with actual data fetch later)
-    // TODO: Connect to patient.sessionLogs
-    const completedDates: string[] = [];
+    // [NEW] Fetch Session Logs on Mount to populate Calendar
+    useEffect(() => {
+        if (patient.id) {
+            SessionLogService.getByPatientId(patient.id)
+                .then(logs => {
+                    setSessionLogs(logs);
+                })
+                .catch(err => console.error("Error fetching logs for dashboard", err));
+        }
+    }, [patient.id]);
+
+    // [NEW] Compute Completed Dates from Logs
+    const completedDates = sessionLogs.map(log => {
+        // Handle Firestore Timestamp or JS Date
+        let dateObj = log.date;
+        if ((log.date as any)?.toDate) {
+            dateObj = (log.date as any).toDate();
+        } else if (!(log.date instanceof Date)) {
+            dateObj = new Date(log.date);
+        }
+        return format(dateObj, 'yyyy-MM-dd');
+    });
 
     // Selected Date Content
     const selectedExercises = activePlan && activePlan.schedule && (dayKey in activePlan.schedule)
         ? activePlan.schedule[dayKey as keyof typeof activePlan.schedule]
         : [];
+
+    // Check if the SELECTED date is completed
+    // We compare formatting selectedDate to YYYY-MM-DD with our completedDates list
+    const isSelectedDateCompleted = completedDates.includes(format(selectedDate, 'yyyy-MM-dd'));
 
     const hasSession = selectedExercises && selectedExercises.length > 0;
 
@@ -81,7 +96,9 @@ export default function PortalDashboard() {
                                 </span>
                             </div>
                             <h2 className="text-xl font-bold text-brand-900 leading-tight">
-                                {hasSession ? "Tu Sesión" : "Día de Descanso"}
+                                {hasSession
+                                    ? (isSelectedDateCompleted ? "¡Sesión Completada!" : "Tu Sesión")
+                                    : "Día de Descanso"}
                             </h2>
                             {hasSession && (
                                 <p className="text-brand-500 text-xs mt-1 font-medium">
@@ -91,9 +108,9 @@ export default function PortalDashboard() {
                         </div>
                         <div className={cn(
                             "w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm",
-                            hasSession ? "bg-brand-900 text-white" : "bg-zinc-100 text-zinc-400"
+                            isSelectedDateCompleted ? "bg-green-500 text-white" : (hasSession ? "bg-brand-900 text-white" : "bg-zinc-100 text-zinc-400")
                         )}>
-                            {hasSession ? <PlayCircle className="w-6 h-6 ml-0.5" /> : <Clock className="w-6 h-6" />}
+                            {isSelectedDateCompleted ? <CheckCircle2 className="w-6 h-6" /> : (hasSession ? <PlayCircle className="w-6 h-6 ml-0.5" /> : <Clock className="w-6 h-6" />)}
                         </div>
                     </div>
 
@@ -116,10 +133,15 @@ export default function PortalDashboard() {
                             </div>
 
                             <Button
-                                className="w-full bg-brand-900 hover:bg-brand-800 text-white shadow-xl shadow-brand-900/20 group h-12 text-base rounded-xl"
+                                className={cn(
+                                    "w-full text-white shadow-xl group h-12 text-base rounded-xl transition-colors",
+                                    isSelectedDateCompleted
+                                        ? "bg-green-600 hover:bg-green-700 shadow-green-900/20"
+                                        : "bg-brand-900 hover:bg-brand-800 shadow-brand-900/20"
+                                )}
                                 onClick={() => navigate(`../session/${dayKey}`)}
                             >
-                                <span className="mr-2">Ver Sesión</span>
+                                <span className="mr-2">{isSelectedDateCompleted ? "Ver Resumen / Repetir" : "Iniciar Sesión"}</span>
                                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </div>
