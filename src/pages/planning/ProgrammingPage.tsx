@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlanService } from '../../services/planService';
 import { PatientService } from '../../services/patientService';
+import { SessionLogService } from '../../services/sessionLogService';
 import { AnnualPlan } from '../../types/plan';
-import { Patient, PrescribedPlan } from '../../types/patient';
+import { Patient, PrescribedPlan, SessionLog } from '../../types/patient';
 import { PlanBuilder } from '../../components/clinical/PlanBuilder';
 import { Timestamp } from 'firebase/firestore';
 import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
@@ -18,6 +19,7 @@ export default function ProgrammingPage() {
     const [annualPlan, setAnnualPlan] = useState<AnnualPlan | null>(null);
     const [patient, setPatient] = useState<Patient | null>(null);
     const [loading, setLoading] = useState(true);
+    const [completedDates, setCompletedDates] = useState<Set<string>>(new Set());
 
     // Date State
     const [selectedDate, setSelectedDate] = useState(new Date()); // The specific day selected or today
@@ -31,10 +33,18 @@ export default function ProgrammingPage() {
         if (!patientId) return;
         setLoading(true);
         try {
-            const [planData, patientData] = await Promise.all([
+            const [planData, patientData, logs] = await Promise.all([
                 PlanService.getActivePlan(patientId),
-                PatientService.getById(patientId)
+                PatientService.getById(patientId),
+                SessionLogService.getByPatientId(patientId)
             ]);
+
+            // Process Completed Dates
+            const dates = new Set(logs.map(log => {
+                const d = (log.date as any)?.toDate ? (log.date as any).toDate() : new Date(log.date);
+                return format(d, 'yyyy-MM-dd');
+            }));
+            setCompletedDates(dates);
 
             let activePlan = planData;
             // Create default plan if needed, same as before
@@ -75,7 +85,6 @@ export default function ProgrammingPage() {
         // If Annual Plan starts Jan 1st, and we select Feb 1st.
         // For robustness, let's rely on standard ISO weeks if the plan aligns, 
         // BUT the AnnualPlan 'weeks' object is indexed by 1..52 relative to start.
-
         // Let's implement a simple relative week calculator
         const oneDay = 24 * 60 * 60 * 1000;
         const start = startOfWeek(planStart, { weekStartsOn: 1 });
@@ -183,6 +192,10 @@ export default function ProgrammingPage() {
                         const dayKey = dayKeys[day.getDay()];
                         const hasData = annualPlan.weeks[weekNum]?.schedule?.[dayKey]?.length > 0;
 
+                        // Check Completion
+                        const dateStr = format(day, 'yyyy-MM-dd');
+                        const isCompleted = completedDates.has(dateStr);
+
                         return (
                             <button
                                 key={day.toString()}
@@ -195,8 +208,11 @@ export default function ProgrammingPage() {
                                 )}
                             >
                                 {format(day, 'd')}
-                                {hasData && !isSelected && (
-                                    <div className="absolute bottom-1 w-1 h-1 bg-brand-400 rounded-full"></div>
+                                {(hasData || isCompleted) && !isSelected && (
+                                    <div className={cn(
+                                        "absolute bottom-1 w-1 h-1 rounded-full",
+                                        isCompleted ? "bg-green-500" : "bg-brand-400"
+                                    )}></div>
                                 )}
                             </button>
                         );
