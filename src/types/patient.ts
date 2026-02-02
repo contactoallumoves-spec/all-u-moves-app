@@ -140,11 +140,37 @@ export const SESSION_BLOCKS = {
 export type SessionBlockType = typeof SESSION_BLOCKS[keyof typeof SESSION_BLOCKS];
 
 export interface SessionFeedback {
-    rpe?: number; // 0-10
+    rpe?: number; // 0-10 or 1-10
     pain?: number; // 0-10
     fatigue?: number; // 0-10
     symptoms?: string[]; // e.g. ["Pérdida de orina", "Dolor lumbar"]
     comments?: string;
+}
+
+// [NEW] Actual execution log
+export interface SessionExerciseLog {
+    exerciseId: string;
+    sets: {
+        reps?: string;
+        load?: string;
+        rpe?: string;
+        completed: boolean;
+    }[];
+    skipped?: boolean;
+    skipReason?: string;
+    notes?: string;
+}
+
+export interface SessionLog {
+    id: string; // date string YYYY-MM-DD
+    date: any; // Timestamp
+    patientId: string;
+    dayKey: string; // 'monday', 'tuesday' etc.
+    exercises: SessionExerciseLog[];
+    feedback?: SessionFeedback;
+    status: 'completed' | 'partial' | 'skipped';
+    completedAt?: any;
+    durationSeconds?: number;
 }
 
 export interface Task {
