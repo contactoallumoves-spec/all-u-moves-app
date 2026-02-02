@@ -10,21 +10,28 @@ export function PortalGuard() {
     const [patient, setPatient] = useState<Patient | null>(null);
 
     useEffect(() => {
-        const validate = async () => {
-            if (!token) {
-                setLoading(false);
-                return;
-            }
+        if (!token) {
+            setLoading(false);
+            return;
+        }
 
-            const p = await PatientService.validateMagicToken(token);
-            if (p) {
-                setPatient(p);
-                // Store in local storage/context if needed, for now just pass via simple outlet context or re-fetch
-                // Actually, for simplicity, we might just pass `patient` down via Outlet context
+        // Use onSnapshot for real-time updates
+        const q = query(collection(db, 'patients'), where('magicLinkToken', '==', token));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const doc = snapshot.docs[0];
+                setPatient({ id: doc.id, ...doc.data() } as Patient);
+            } else {
+                setPatient(null);
             }
             setLoading(false);
-        };
-        validate();
+        }, (error) => {
+            console.error("Error connecting to patient portal:", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [token]);
 
     if (loading) {
