@@ -29,8 +29,11 @@ export const SessionLogService = {
 
             const snapshot = await getDocs(q);
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SessionLog));
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error getting session logs", error);
+            if (error?.message?.includes("index")) {
+                alert("Error de Sistema: Falta un índice en la base de datos para ver el historial. Por favor avisa al administrador.");
+            }
             // Fallback for missing index or other errors
             return [];
         }

@@ -140,6 +140,16 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
+
+                // [FIX] Hydrate Dates
+                if (parsed.logs) {
+                    Object.keys(parsed.logs).forEach(key => {
+                        if (typeof parsed.logs[key].date === 'string') {
+                            parsed.logs[key].date = new Date(parsed.logs[key].date);
+                        }
+                    });
+                }
+
                 // Ensure history field exists if loading old schema
                 if (!parsed.history) parsed.history = null;
                 dispatch({ type: 'LOAD_FROM_STORAGE', payload: parsed });
@@ -162,7 +172,11 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
     const syncSession = async (sessionId: string, mergeData?: Partial<SessionLog>) => {
         // [FIX] Use mergeData if provided (resolves stale closure issue for feedback)
         const currentLog = state.logs[sessionId];
-        if (!currentLog) return;
+        if (!currentLog) {
+            console.error(`Attempted to sync non-existent session: ${sessionId}`);
+            alert(`Error crítico: No se encontró la sesión activa (${sessionId}). Por favor recarga la página.`);
+            return;
+        }
 
         const logToSave = mergeData ? { ...currentLog, ...mergeData } : currentLog;
 
