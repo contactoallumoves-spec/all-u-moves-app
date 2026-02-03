@@ -7,15 +7,16 @@ import { Patient } from '../../types/patient';
 // import { ExerciseService } from '../../services/exerciseService';
 import { useSession } from '../../context/SessionContext';
 import { Button } from '../../components/ui/Button';
-// import { ChevronLeft, Info, Loader2, CheckCircle2, SkipForward } from 'lucide-react';
-// import { cn } from '../../lib/utils';
-// import { motion } from 'framer-motion'; // Disable Animation temporarily
+import { ChevronLeft, Info, Loader2, CheckCircle2, SkipForward } from 'lucide-react';
+import { cn } from '../../lib/utils';
+// import { motion } from 'framer-motion'; // [FIX] Disabled Animation to prevent crash
 
-// CARDS DISABLED TO ISOLATE CRASH
+// CARDS (Sequentially enabling)
 // import { SmartTimer } from './components/SmartTimer';
-// import { StrengthCard } from './components/StrengthCard';
+import { StrengthCard } from './components/StrengthCard'; // [TEST] Enabling this one
 // import { PelvicCard } from './components/PelvicCard';
 // import { TimerCard } from './components/TimerCard';
+// import { IntervalCard } from './components/IntervalCard';
 
 export default function SessionPlayer() {
     const { patient } = useOutletContext<{ patient: Patient }>();
@@ -32,8 +33,6 @@ export default function SessionPlayer() {
     const targetDay = DAYS_MAP[sessionDayIndex];
     const uniqueSessionId = `${dateStr || new Date().toISOString().split('T')[0]}_${targetDay}`;
 
-    console.log("DEBUGVARS:", dispatch, uniqueSessionId); // Force usage
-
     // 3. Logic: Fetch Plan
     const [annualPlan, setAnnualPlan] = useState<AnnualPlan | null>(null);
     const [currentWeekExercises, setCurrentWeekExercises] = useState<any[] | null>(null);
@@ -44,7 +43,7 @@ export default function SessionPlayer() {
         if (patient.id) {
             PlanService.getActivePlan(patient.id)
                 .then(plan => setAnnualPlan(plan))
-                .catch(err => console.error("Plan Fetch Error", err))
+                .catch(err => console.error(err))
                 .finally(() => setLoadingPlan(false));
         }
     }, [patient.id]);
@@ -78,7 +77,6 @@ export default function SessionPlayer() {
             }
         }
 
-        // Fallback
         const legacyExercises = patient.activePlan?.schedule?.[targetDay as keyof typeof patient.activePlan.schedule] || [];
         setCurrentWeekExercises(legacyExercises);
 
@@ -86,30 +84,101 @@ export default function SessionPlayer() {
 
     const planExercises = currentWeekExercises;
 
-    // 4. Render
-    if (loadingPlan && !planExercises) {
-        return <div className="p-8 text-center text-brand-600">Cargando Plan... (Hooks OK)</div>;
-    }
+    // 4. Player State
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [showInfo, setShowInfo] = useState(false);
 
-    if (!planExercises || planExercises.length === 0) {
-        return <div className="p-8 text-center text-zinc-500">No hay ejercicios (Hooks OK)</div>;
-    }
+    useEffect(() => {
+        setActiveIndex(0);
+        // Init Session Log if needed
+        if (planExercises && planExercises.length > 0) {
+            dispatch({ type: 'INIT_SESSION', payload: { sessionId: uniqueSessionId, patientId: patient.id } });
+        }
+    }, [uniqueSessionId, patient.id, planExercises?.length]); // Added dependency
 
-    const currentItem = planExercises[0]; // Just show first for test
+    // Navigation
+    const handleNext = () => {
+        if (activeIndex < (planExercises?.length || 0) - 1) {
+            setActiveIndex(prev => prev + 1);
+        } else {
+            navigate('../home');
+        }
+    };
+
+    const handlePrev = () => {
+        if (activeIndex > 0) setActiveIndex(prev => prev - 1);
+    };
+
+    const handleSetComplete = () => {
+        console.log("Set Completed");
+    };
+
+    // 5. Guards
+    if (loadingPlan && !planExercises) return <div className="fixed inset-0 bg-white flex items-center justify-center"><Loader2 className="animate-spin text-brand-600" /></div>;
+    if (!planExercises || planExercises.length === 0) return <div className="p-8 text-center">Descanso</div>;
+
+    const currentItem = planExercises[activeIndex];
+
+    if (!currentItem) return <div>Cargando...</div>;
+
 
     return (
-        <div className="min-h-screen bg-zinc-50 p-6">
-            <h1 className="text-xl font-bold text-blue-600 mb-4">SEMI-SAFE MODE</h1>
-            <p className="mb-4">Hooks activados. Imports de Cartas desactivados.</p>
-
-            <div className="bg-white p-4 rounded shadow border border-blue-200">
-                <h3 className="font-bold mb-2">Datos del Ejercicio:</h3>
-                <pre className="text-xs bg-zinc-100 p-2 rounded overflow-auto h-64">
-                    {JSON.stringify(currentItem, null, 2)}
-                </pre>
+        <div className="min-h-screen bg-zinc-50 flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4 bg-white border-b border-zinc-100 sticky top-0 z-40">
+                <button onClick={() => navigate('../home')} className="p-2 -ml-2 text-zinc-400 hover:text-zinc-600">
+                    <ChevronLeft className="w-6 h-6" />
+                </button>
+                <div className="text-center">
+                    <p className="text-xs font-semibold text-brand-600 uppercase tracking-wider">
+                        Ejercicio {activeIndex + 1} de {planExercises?.length}
+                    </p>
+                    <h2 className="text-sm font-medium text-zinc-900 truncate max-w-[200px]">
+                        {currentItem.name || "Ejercicio"}
+                    </h2>
+                </div>
+                <div className="w-10 flex justify-end">
+                    <button onClick={() => setShowInfo(!showInfo)} className="p-2 -mr-2 text-zinc-400 hover:text-brand-500">
+                        <Info className={cn("w-5 h-5", showInfo && "text-brand-500 fill-brand-50")} />
+                    </button>
+                </div>
             </div>
 
-            <Button className="mt-4" onClick={() => navigate('../home')}>Salir</Button>
+            {/* Content w/o Motion */}
+            <div className="flex-1 overflow-y-auto pb-24 relative">
+                <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-brand-50/50 to-transparent pointer-events-none" />
+
+                <div className="p-4 relative z-10 max-w-md mx-auto space-y-6">
+                    {/* CARD RENDERER */}
+                    <div className="bg-white rounded-3xl p-1 shadow-sm border border-zinc-100 overflow-hidden">
+                        {(() => {
+                            const explicitType = currentItem.details?.cardType;
+                            // Only StrengthCard enabled for now
+                            if (explicitType === 'pelvic' || explicitType === 'timer') {
+                                return <div className="p-4 text-center text-zinc-400">Carta desactivada por seguridad (Modo Debug)</div>
+                            }
+                            return <StrengthCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
+                        })()}
+                    </div>
+
+                    {showInfo && (
+                        <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                            <h4 className="font-semibold text-blue-900 text-sm mb-2">Instrucciones</h4>
+                            <p className="text-sm text-blue-800">{currentItem.details?.instructions || "Sin instrucciones."}</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Controls */}
+            <div className="bg-white border-t border-zinc-100 p-4 sticky bottom-0 z-40 safe-area-pb">
+                <div className="max-w-md mx-auto flex gap-3">
+                    <Button variant="ghost" className="flex-1 h-14" onClick={handlePrev} disabled={activeIndex === 0}>Anterior</Button>
+                    <Button className="flex-[2] h-14" onClick={handleNext}>
+                        {activeIndex === planExercises.length - 1 ? "Finalizar" : "Siguiente"}
+                    </Button>
+                </div>
+            </div>
         </div>
     );
 }
