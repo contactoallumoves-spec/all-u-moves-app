@@ -4,16 +4,16 @@ import { PlanService } from '../../services/planService';
 import { AnnualPlan } from '../../types/plan';
 import { startOfWeek, parseISO } from 'date-fns';
 import { Patient } from '../../types/patient';
-// import { ExerciseService } from '../../services/exerciseService';
+import { ExerciseService } from '../../services/exerciseService';
 import { useSession } from '../../context/SessionContext';
 import { Button } from '../../components/ui/Button';
-import { ChevronLeft, Info, Loader2 } from 'lucide-react';
+import { ChevronLeft, Info, Loader2, CheckCircle2, Play, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 // import { motion } from 'framer-motion'; // [FIX] Disabled Animation to prevent crash
 
-// CARDS (Sequentially enabling)
-// import { SmartTimer } from './components/SmartTimer';
-import { StrengthCard } from './components/StrengthCard'; // [TEST] Enabling this one
+// CARDS
+import { SmartTimer } from './components/SmartTimer';
+import { StrengthCard } from './components/StrengthCard';
 // import { PelvicCard } from './components/PelvicCard';
 // import { TimerCard } from './components/TimerCard';
 // import { IntervalCard } from './components/IntervalCard';
@@ -87,37 +87,80 @@ export default function SessionPlayer() {
     // 4. Player State
     const [activeIndex, setActiveIndex] = useState(0);
     const [showInfo, setShowInfo] = useState(false);
+    const [fullExercise, setFullExercise] = useState<any>(null); // [NEW] Full Details (Video)
+    const [isTimerVisible, setIsTimerVisible] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
 
     useEffect(() => {
         setActiveIndex(0);
+        setIsFinished(false);
         // Init Session Log if needed
         if (planExercises && planExercises.length > 0 && patient.id) {
             dispatch({ type: 'INIT_SESSION', payload: { sessionId: uniqueSessionId, patientId: patient.id } });
         }
     }, [uniqueSessionId, patient.id, planExercises?.length]);
 
+    const currentItem = planExercises?.[activeIndex];
+
+    // [NEW] Fetch Full Exercise Details
+    useEffect(() => {
+        if (currentItem?.exerciseId) {
+            // Check if we have details already, if not fetch
+            ExerciseService.getById(currentItem.exerciseId).then(ex => {
+                setFullExercise(ex);
+            }).catch(e => {
+                console.error("Failed to fetch exercise details", e);
+                setFullExercise(null);
+            });
+        }
+    }, [currentItem?.exerciseId]);
+
     // Navigation
     const handleNext = () => {
         if (activeIndex < (planExercises?.length || 0) - 1) {
             setActiveIndex(prev => prev + 1);
+            setFullExercise(null); // Reset while loading
         } else {
-            navigate('../home');
+            setIsFinished(true); // Show Finish Screen instead of just exiting
         }
     };
 
     const handlePrev = () => {
-        if (activeIndex > 0) setActiveIndex(prev => prev - 1);
+        if (activeIndex > 0) {
+            setActiveIndex(prev => prev - 1);
+            setFullExercise(null);
+        }
     };
 
     const handleSetComplete = () => {
-        console.log("Set Completed");
+        setIsTimerVisible(true);
+    };
+
+    const handleFinishSession = () => {
+        dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' }); // Force sync attempt
+        navigate('../home');
     };
 
     // 5. Guards
     if (loadingPlan && !planExercises) return <div className="fixed inset-0 bg-white flex items-center justify-center"><Loader2 className="animate-spin text-brand-600" /></div>;
-    if (!planExercises || planExercises.length === 0) return <div className="p-8 text-center">Descanso</div>;
 
-    const currentItem = planExercises[activeIndex];
+    // [NEW] Finish Screen
+    if (isFinished) {
+        return (
+            <div className="fixed inset-0 bg-brand-600 z-50 flex flex-col items-center justify-center p-8 text-white">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6">
+                    <Check className="w-10 h-10 text-white" />
+                </div>
+                <h1 className="text-3xl font-bold mb-2">¡Sesión Completada!</h1>
+                <p className="text-brand-100 text-center mb-8">Has terminado tu entrenamiento de hoy. Tómate un momento para descansar/hidratarte.</p>
+                <Button onClick={handleFinishSession} className="bg-white text-brand-600 hover:bg-brand-50 w-full max-w-xs h-12 text-lg">
+                    Volver al Inicio
+                </Button>
+            </div>
+        )
+    }
+
+    if (!planExercises || planExercises.length === 0) return <div className="p-8 text-center">Descanso</div>;
 
     if (!currentItem) return <div>Cargando...</div>;
 
@@ -149,6 +192,34 @@ export default function SessionPlayer() {
                 <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-brand-50/50 to-transparent pointer-events-none" />
 
                 <div className="p-4 relative z-10 max-w-md mx-auto space-y-6">
+
+                    {/* [NEW] Video / Visual Aid */}
+                    <div className="aspect-video bg-black rounded-2xl shadow-lg overflow-hidden relative group">
+                        {fullExercise?.videoUrl ? (
+                            <iframe
+                                src={fullExercise.videoUrl.replace('watch?v=', 'embed/')}
+                                title="Exercise Video"
+                                className="w-full h-full object-cover"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            />
+                        ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-white/50 bg-zinc-900">
+                                <Play className="w-12 h-12 mb-2 opacity-50" />
+                                <span className="text-xs">Sin Video Disponible</span>
+                            </div>
+                        )}
+                        {/* Overlay Instructions if toggled */}
+                        {showInfo && (
+                            <div className="absolute inset-0 bg-black/80 p-6 text-white overflow-auto backdrop-blur-sm z-20">
+                                <h4 className="font-bold text-lg mb-2 text-brand-300">Instrucciones</h4>
+                                <p className="text-sm leading-relaxed text-zinc-300">
+                                    {fullExercise?.instructions || currentItem.details?.instructions || "Sigue las indicaciones de tu kinesiólogo."}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
                     {/* CARD RENDERER */}
                     <div className="bg-white rounded-3xl p-1 shadow-sm border border-zinc-100 overflow-hidden">
                         {(() => {
@@ -160,22 +231,28 @@ export default function SessionPlayer() {
                             return <StrengthCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
                         })()}
                     </div>
-
-                    {showInfo && (
-                        <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                            <h4 className="font-semibold text-blue-900 text-sm mb-2">Instrucciones</h4>
-                            <p className="text-sm text-blue-800">{currentItem.details?.instructions || "Sin instrucciones."}</p>
-                        </div>
-                    )}
                 </div>
             </div>
+
+            {/* Smart Timer */}
+            <SmartTimer
+                isVisible={isTimerVisible}
+                onClose={() => setIsTimerVisible(false)}
+                autoStartDuration={90}
+            />
 
             {/* Controls */}
             <div className="bg-white border-t border-zinc-100 p-4 sticky bottom-0 z-40 safe-area-pb">
                 <div className="max-w-md mx-auto flex gap-3">
                     <Button variant="ghost" className="flex-1 h-14" onClick={handlePrev} disabled={activeIndex === 0}>Anterior</Button>
-                    <Button className="flex-[2] h-14" onClick={handleNext}>
-                        {activeIndex === planExercises.length - 1 ? "Finalizar" : "Siguiente"}
+                    <Button className="flex-[2] h-14 bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-200" onClick={handleNext}>
+                        <div className="flex items-center gap-2">
+                            {activeIndex === planExercises.length - 1 ? (
+                                <> <CheckCircle2 className="w-5 h-5" /> Finalizar Sesión </>
+                            ) : (
+                                <> Siguiente Ejercicio <ChevronLeft className="w-5 h-5 rotate-180" /> </>
+                            )}
+                        </div>
                     </Button>
                 </div>
             </div>

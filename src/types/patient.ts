@@ -153,6 +153,7 @@ export interface SessionFeedback {
 // [NEW] Actual execution log
 export interface SessionExerciseLog {
     exerciseId: string;
+    instanceId?: string; // [NEW] Unique instance ID (e.g. "squat_1", "squat_2")
     name?: string; // [NEW] Snapshot of name
     sets: {
         reps?: string;

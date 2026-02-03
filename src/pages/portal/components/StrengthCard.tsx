@@ -13,9 +13,11 @@ interface StrengthCardProps {
 export function StrengthCard({ exercise, sessionId, onSetComplete }: StrengthCardProps) {
     const { state, dispatch } = useSession();
 
-    // Get log for this exercise
+    // Get log for this exercise (Match by instanceId if available, else exerciseId)
     const sessionLog = state.logs[sessionId];
-    const exerciseLog: SessionExerciseLog | undefined = sessionLog?.exercises?.find(e => e.exerciseId === exercise.exerciseId);
+    const exerciseLog: SessionExerciseLog | undefined = sessionLog?.exercises?.find(e =>
+        exercise.id ? e.instanceId === exercise.id : e.exerciseId === exercise.exerciseId
+    );
 
     // Initial parsing of plan
     const details = exercise.details || {};
@@ -43,6 +45,7 @@ export function StrengthCard({ exercise, sessionId, onSetComplete }: StrengthCar
             payload: {
                 sessionId,
                 exerciseId: exercise.exerciseId,
+                instanceId: exercise.id, // [FIX] Include Instance ID
                 setIndex: index,
                 data: { completed: newStatus }
             }
@@ -59,6 +62,7 @@ export function StrengthCard({ exercise, sessionId, onSetComplete }: StrengthCar
             payload: {
                 sessionId,
                 exerciseId: exercise.exerciseId,
+                instanceId: exercise.id, // [FIX] Include Instance ID
                 setIndex: index,
                 data: { [field]: value }
             }
@@ -76,6 +80,7 @@ export function StrengthCard({ exercise, sessionId, onSetComplete }: StrengthCar
                     payload: {
                         sessionId,
                         exerciseId: exercise.exerciseId,
+                        instanceId: exercise.id, // [FIX] Include Instance ID
                         setIndex: i,
                         data: {
                             load: histSet.load,
