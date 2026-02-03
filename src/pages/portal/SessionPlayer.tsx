@@ -271,7 +271,7 @@ export default function SessionPlayer() {
                         {isSubmitting ? 'Guardando...' : 'Guardar y Finalizar'}
                     </Button>
                 </div>
-            </div>
+            </motion.div>
         );
     }
 
