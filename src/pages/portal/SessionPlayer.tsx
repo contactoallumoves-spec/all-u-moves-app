@@ -165,7 +165,12 @@ export default function SessionPlayer() {
     // Feedback View (Unified Summary Screen)
     if (showFeedback) {
         return (
-            <div className="flex flex-col h-screen bg-black text-white overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+            <motion.div
+                initial={{ opacity: 0, y: "100%" }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="flex flex-col h-screen bg-black text-white overflow-hidden"
+            >
 
                 {/* 1. Header & Stats Section (No confetti, clean) */}
                 <div className="bg-gradient-to-b from-brand-900/30 to-black p-6 pb-2">
