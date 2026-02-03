@@ -39,13 +39,16 @@ export default function SessionPlayer() {
 
     // 2. Load Plan (Multi-Cycle Logic)
     const [annualPlan, setAnnualPlan] = useState<AnnualPlan | null>(null);
-    const [currentWeekExercises, setCurrentWeekExercises] = useState<any[]>([]);
+    const [currentWeekExercises, setCurrentWeekExercises] = useState<any[] | null>(null); // [FIX] Null = Loading
+    const [loadingPlan, setLoadingPlan] = useState(true);
 
     useEffect(() => {
+        setLoadingPlan(true);
         if (patient.id) {
             PlanService.getActivePlan(patient.id)
                 .then(plan => setAnnualPlan(plan))
-                .catch(err => console.error(err));
+                .catch(err => console.error(err))
+                .finally(() => setLoadingPlan(false));
         }
     }, [patient.id]);
 
@@ -72,9 +75,29 @@ export default function SessionPlayer() {
         const legacyExercises = patient.activePlan?.schedule?.[targetDay as keyof typeof patient.activePlan.schedule] || [];
         setCurrentWeekExercises(legacyExercises);
 
-    }, [annualPlan, sessionDate, targetDay, patient.activePlan]);
+    }, [annualPlan, sessionDate, targetDay, patient.activePlan, loadingPlan]);
 
     const planExercises = currentWeekExercises;
+
+    // Guard: Loading State
+    if (loadingPlan && !planExercises) {
+        return (
+            <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+            </div>
+        );
+    }
+
+    // Guard: No Exercises Found (Rest Day or Error)
+    if (!planExercises || planExercises.length === 0) {
+        return (
+            <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-8 text-center">
+                <h2 className="text-xl font-bold text-brand-900 mb-2">Día de Descanso</h2>
+                <p className="text-gray-500 mb-6">No hay ejercicios programados para este día.</p>
+                <Button onClick={() => navigate('../home')}>Volver</Button>
+            </div>
+        );
+    }
 
     // 3. Initialize Context Session & Load History
     useEffect(() => {

@@ -147,11 +147,13 @@ export function WeeklyCalendar({ selectedDate, onSelectDate, scheduledDays, comp
                                     key={i}
                                     onClick={() => onSelectDate(date)}
                                     className={cn(
-                                        "aspect-[3/4] rounded-xl flex flex-col items-center justify-center gap-1 transition-all border relative overflow-hidden group",
+                                        "aspect-[3/4] rounded-2xl flex flex-col items-center justify-between p-1 relative overflow-hidden transition-all duration-300",
                                         isSelected
-                                            ? "bg-brand-700 text-white border-brand-700 shadow-lg scale-105 z-10"
-                                            : "bg-white text-brand-400 border-brand-100/50 hover:border-brand-200 hover:bg-brand-50/50",
-                                        isToday && !isSelected && "ring-2 ring-brand-200 ring-offset-1 bg-brand-50"
+                                            ? (isCompleted ? "bg-green-600 text-white shadow-lg scale-105" : "bg-brand-700 text-white shadow-lg scale-105")
+                                            : isCompleted
+                                                ? "bg-green-50 border border-green-200 text-green-900 hover:border-green-300"
+                                                : "bg-white text-zinc-900 border border-zinc-100 hover:border-brand-200",
+                                        isToday && !isSelected && !isCompleted && "border-brand-300 bg-brand-50"
                                     )}
                                 >
                                     <span className="text-[10px] font-extrabold opacity-70">{dayLetter}</span>
