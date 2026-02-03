@@ -33,14 +33,32 @@ export default function PortalDashboard() {
     const safeDate = (d: any): Date | undefined => {
         if (!d) return undefined;
         try {
-            if (d?.toDate) return d.toDate(); // Firestore
+            // Firestore Timestamp strategy 1: method
+            if (typeof d.toDate === 'function') return d.toDate();
+
+            // Strategy 2: serialized object { seconds, ... }
+            if (typeof d === 'object' && d !== null && 'seconds' in d) {
+                return new Date(d.seconds * 1000);
+            }
+
+            // Strategy 3: Native Date
             if (d instanceof Date) return d;
+
+            // Strategy 4: String/Number construction
             const parsed = new Date(d);
             return isNaN(parsed.getTime()) ? undefined : parsed;
         } catch (e) {
             return undefined;
         }
     };
+
+    //... (keep existing code in between)
+
+    {/* TEMP DEBUG: Verify Plan Dates */ }
+    <div className="text-[10px] text-zinc-300 p-2 text-center font-mono overflow-hidden text-ellipsis whitespace-nowrap">
+        RAW: {JSON.stringify(activePlan?.startDate).slice(0, 50)} |
+        Safe: {safeDate(activePlan?.startDate) ? format(safeDate(activePlan?.startDate)!, 'yyyy-MM-dd') : 'INVALID'}
+    </div>
 
     // [NEW] Check if Selected Date is within Plan Duration
     const isPlanActiveForDate = activePlan ? (() => {
