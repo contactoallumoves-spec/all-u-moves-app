@@ -186,7 +186,7 @@ export default function PortalDashboard() {
                             {hasSession ? (
                                 <>
                                     <h2 className="text-xl font-bold text-brand-900 leading-tight">
-                                        {activePlan?.name || "Tu Sesión"}
+                                        Tu Sesión
                                     </h2>
                                     {/* Equipment Summary Line */}
                                     {equipmentSummary && (
