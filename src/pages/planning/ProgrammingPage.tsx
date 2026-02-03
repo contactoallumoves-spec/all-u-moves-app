@@ -7,7 +7,7 @@ import { AnnualPlan } from '../../types/plan';
 import { Patient, PrescribedPlan } from '../../types/patient';
 import { PlanBuilder } from '../../components/clinical/PlanBuilder';
 import { Timestamp } from 'firebase/firestore';
-import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -104,10 +104,16 @@ export default function ProgrammingPage() {
             await PlanService.updateWeek(annualPlan.id, currentWeekNumber, weekPlan);
 
             // 2. Sync to Patient Active Plan (For Portal Visibility)
-            // This ensures the Portal sees the changes immediately.
+            // [FIX] Enforce End Date to prevent infinite recurrence.
+            // The Plan is valid ONLY for this week.
+            const weekEndDate = endOfDay(addDays(currentWeekStart, 6)); // Sunday end of day
+
             if (patientId) {
                 await PatientService.update(patientId, {
-                    activePlan: weekPlan
+                    activePlan: {
+                        ...weekPlan,
+                        endDate: weekEndDate
+                    }
                 });
             }
 
