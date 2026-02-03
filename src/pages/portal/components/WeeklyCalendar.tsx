@@ -101,7 +101,7 @@ export function WeeklyCalendar({ selectedDate, onSelectDate, scheduledDays, comp
                         drag="x"
                         dragConstraints={{ left: 0, right: 0 }}
                         dragElastic={1}
-                        onDragEnd={(e, { offset, velocity }) => {
+                        onDragEnd={(_, { offset, velocity }) => {
                             const swipe = offset.x; // detected swipe distance
                             if (swipe < -50 || velocity.x < -500) {
                                 navigateWeek(1); // Next week
