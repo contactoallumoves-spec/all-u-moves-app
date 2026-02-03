@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useOutletContext, useNavigate, useParams, Link } from 'react-router-dom';
+import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
 import { Patient } from '../../types/patient';
 import { Button } from '../../components/ui/Button';
-import { ChevronLeft } from 'lucide-react';
 // import { useSession } from '../../context/SessionContext'; // DISABLED FOR DEBUGGING
 
 export default function SessionPlayer() {
