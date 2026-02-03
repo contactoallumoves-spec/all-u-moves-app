@@ -105,7 +105,12 @@ export default function SessionPlayer() {
     // [NEW] Fetch Full Exercise Details
     useEffect(() => {
         if (currentItem?.exerciseId) {
-            // Check if we have details already, if not fetch
+            // Optimization: If we already have this exercise loaded, do nothing
+            if (fullExercise && fullExercise.id === currentItem.exerciseId) {
+                return;
+            }
+
+            setFullExercise(null); // Clear only if changing ID
             ExerciseService.getById(currentItem.exerciseId).then(ex => {
                 setFullExercise(ex);
             }).catch(e => {
@@ -113,13 +118,13 @@ export default function SessionPlayer() {
                 setFullExercise(null);
             });
         }
-    }, [currentItem?.exerciseId]);
+    }, [currentItem?.exerciseId, fullExercise]);
 
     // Navigation
     const handleNext = () => {
         if (activeIndex < (planExercises?.length || 0) - 1) {
             setActiveIndex(prev => prev + 1);
-            setFullExercise(null); // Reset while loading
+            // setFullExercise(null); // [FIX] Don't clear here, let useEffect handle it
         } else {
             setIsFinished(true); // Show Finish Screen instead of just exiting
         }
@@ -128,7 +133,7 @@ export default function SessionPlayer() {
     const handlePrev = () => {
         if (activeIndex > 0) {
             setActiveIndex(prev => prev - 1);
-            setFullExercise(null);
+            // setFullExercise(null); // [FIX] Don't clear here
         }
     };
 
