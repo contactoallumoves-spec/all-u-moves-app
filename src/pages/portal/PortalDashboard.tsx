@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
 import { Patient, SessionLog } from '../../types/patient';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -18,6 +18,7 @@ const DAYS_MAP = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'frida
 export default function PortalDashboard() {
     const { patient } = useOutletContext<{ patient: Patient }>();
     const navigate = useNavigate();
+    const { token } = useParams<{ token: string }>();
 
     // State for selected day view (default to Today)
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -295,7 +296,7 @@ export default function PortalDashboard() {
                         {hasSession ? (
                             <Button
                                 className="w-full bg-brand-900 hover:bg-brand-800 text-white shadow-brand-900/20 shadow-lg h-12 text-sm font-medium flex justify-between items-center pl-6 pr-4 group transition-all"
-                                onClick={() => navigate(`/portal/session/${dayKey}`)}
+                                onClick={() => navigate(`/portal/${token}/session/${dayKey}`)}
                             >
                                 <span>Iniciar Sesión</span>
                                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
