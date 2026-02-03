@@ -56,7 +56,18 @@ export default function SessionPlayer() {
         // [Logic] Determine which Week Plan to use
         // 1. Try Annual Plan Specific Week
         if (annualPlan) {
-            const planStart = annualPlan.startDate instanceof Date ? annualPlan.startDate : (annualPlan.startDate as any).toDate();
+            // [FIX] Robust Date Parsing (Handle Timestamp vs String vs Date)
+            let planStart: Date;
+            const rawStart = annualPlan.startDate;
+            if (rawStart && typeof (rawStart as any).toDate === 'function') {
+                planStart = (rawStart as any).toDate();
+            } else if (typeof rawStart === 'string') {
+                planStart = parseISO(rawStart);
+            } else if (rawStart instanceof Date) {
+                planStart = rawStart;
+            } else {
+                planStart = new Date(); // Fallback
+            }
             const oneDay = 24 * 60 * 60 * 1000;
             const start = startOfWeek(planStart, { weekStartsOn: 1 });
             const current = startOfWeek(sessionDate, { weekStartsOn: 1 });
