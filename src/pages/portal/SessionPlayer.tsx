@@ -200,20 +200,35 @@ export default function SessionPlayer() {
 
                     {/* [NEW] Video / Visual Aid */}
                     <div className="aspect-video bg-black rounded-2xl shadow-lg overflow-hidden relative group">
-                        {fullExercise?.videoUrl ? (
-                            <iframe
-                                src={fullExercise.videoUrl.replace('watch?v=', 'embed/')}
-                                title="Exercise Video"
-                                className="w-full h-full object-cover"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                            />
-                        ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-white/50 bg-zinc-900">
-                                <Play className="w-12 h-12 mb-2 opacity-50" />
-                                <span className="text-xs">Sin Video Disponible</span>
-                            </div>
-                        )}
+                        {(() => {
+                            const url = fullExercise?.videoUrl;
+                            const isValidVideo = url && (url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo'));
+
+                            if (isValidVideo) {
+                                let embedUrl = url;
+                                if (url.includes('watch?v=')) embedUrl = url.replace('watch?v=', 'embed/');
+                                else if (url.includes('youtu.be/')) embedUrl = url.replace('youtu.be/', 'www.youtube.com/embed/');
+
+                                return (
+                                    <iframe
+                                        src={embedUrl}
+                                        title="Exercise Video"
+                                        className="w-full h-full object-cover"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    />
+                                );
+                            }
+
+                            return (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-white/50 bg-zinc-900">
+                                    <Play className="w-12 h-12 mb-2 opacity-50" />
+                                    <span className="text-xs">
+                                        {url ? "Formato de video no soportado" : "Sin Video Disponible"}
+                                    </span>
+                                </div>
+                            );
+                        })()}
                         {/* Overlay Instructions if toggled */}
                         {showInfo && (
                             <div className="absolute inset-0 bg-black/80 p-6 text-white overflow-auto backdrop-blur-sm z-20">
