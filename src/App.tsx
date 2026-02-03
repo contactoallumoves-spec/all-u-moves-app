@@ -130,7 +130,7 @@ function App() {
                     <Route path=":token" element={<PortalGuard />}>
                         <Route index element={<Navigate to="home" replace />} />
                         <Route path="home" element={<PortalDashboard />} />
-                        <Route path="session/:sessionId" element={<SessionPlayer />} /> {/* [NEW] Standardized Route */}
+                        <Route path="session/:dateStr" element={<SessionPlayer />} /> {/* [NEW] Standardized Route - Passing Date now */}
                     </Route>
                 </Route>
 

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate, useParams, Link } from 'react-router-dom';
+import { PlanService } from '../../services/planService';
+import { AnnualPlan } from '../../types/plan';
+import { startOfWeek, parseISO } from 'date-fns';
 import { Patient } from '../../types/patient';
 import { ExerciseService } from '../../services/exerciseService';
 import { useSession } from '../../context/SessionContext';
@@ -23,18 +26,55 @@ import { motion } from 'framer-motion';
 export default function SessionPlayer() {
     const { patient } = useOutletContext<{ patient: Patient }>();
     const navigate = useNavigate();
-    const { sessionId } = useParams();
+    const { dateStr } = useParams<{ dateStr: string }>(); // [NEW] Read exact date
     const { dispatch, syncSession, loadHistory } = useSession();
 
-    // 1. Resolve Session ID (Date Key)
-    const todayIndex = new Date().getDay();
+    // 1. Resolve Session Context (Date & Day)
+    // Fallback to today if no date provided (should not happen with new routing)
+    const sessionDate = dateStr ? parseISO(dateStr) : new Date();
     const DAYS_MAP = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const todayKey = DAYS_MAP[todayIndex];
-    const targetDay = (sessionId || todayKey).toLowerCase();
+    const sessionDayIndex = sessionDate.getDay();
+    const targetDay = DAYS_MAP[sessionDayIndex]; // 'monday', etc.
+    const uniqueSessionId = `${dateStr || new Date().toISOString().split('T')[0]}_${targetDay}`;
 
-    // 2. Load Plan
-    const planExercises = patient.activePlan?.schedule?.[targetDay as keyof typeof patient.activePlan.schedule] || [];
-    const uniqueSessionId = `${new Date().toISOString().split('T')[0]}_${targetDay}`;
+    // 2. Load Plan (Multi-Cycle Logic)
+    const [annualPlan, setAnnualPlan] = useState<AnnualPlan | null>(null);
+    const [currentWeekExercises, setCurrentWeekExercises] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (patient.id) {
+            PlanService.getActivePlan(patient.id)
+                .then(plan => setAnnualPlan(plan))
+                .catch(err => console.error(err));
+        }
+    }, [patient.id]);
+
+    useEffect(() => {
+        // [Logic] Determine which Week Plan to use
+        // 1. Try Annual Plan Specific Week
+        if (annualPlan) {
+            const planStart = annualPlan.startDate instanceof Date ? annualPlan.startDate : (annualPlan.startDate as any).toDate();
+            const oneDay = 24 * 60 * 60 * 1000;
+            const start = startOfWeek(planStart, { weekStartsOn: 1 });
+            const current = startOfWeek(sessionDate, { weekStartsOn: 1 });
+            const diffDays = Math.round(Math.abs((current.getTime() - start.getTime()) / oneDay));
+            const weekNum = Math.floor(diffDays / 7) + 1;
+
+            if (annualPlan.weeks && annualPlan.weeks[weekNum]) {
+                const weekPlan = annualPlan.weeks[weekNum];
+                const exercises = weekPlan.schedule?.[targetDay as keyof typeof weekPlan.schedule] || [];
+                setCurrentWeekExercises(exercises);
+                return;
+            }
+        }
+
+        // 2. Fallback to Legacy Active Plan (Single Week) if exists
+        const legacyExercises = patient.activePlan?.schedule?.[targetDay as keyof typeof patient.activePlan.schedule] || [];
+        setCurrentWeekExercises(legacyExercises);
+
+    }, [annualPlan, sessionDate, targetDay, patient.activePlan]);
+
+    const planExercises = currentWeekExercises;
 
     // 3. Initialize Context Session & Load History
     useEffect(() => {

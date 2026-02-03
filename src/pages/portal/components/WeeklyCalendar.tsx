@@ -163,7 +163,7 @@ export function WeeklyCalendar({ selectedDate, onSelectDate, scheduledDays, comp
                                     <div className="h-2 flex items-center justify-center">
                                         {isCompleted ? (
                                             <div className={cn("w-4 h-4 rounded-full flex items-center justify-center", isSelected ? "bg-white/20" : "bg-green-100")}>
-                                                <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-white" : "bg-green-500")} />
+                                                <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-green-400" : "bg-green-500")} />
                                             </div>
                                         ) : isMissed ? (
                                             <div className="w-1.5 h-1.5 rounded-full bg-orange-300" title="Sesión no realizada" />
