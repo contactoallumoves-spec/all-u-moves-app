@@ -56,8 +56,8 @@ export default function PortalDashboard() {
 
     {/* TEMP DEBUG: Verify Plan Dates */ }
     <div className="text-[10px] text-zinc-300 p-2 text-center font-mono overflow-hidden text-ellipsis whitespace-nowrap">
-        RAW: {JSON.stringify(activePlan?.startDate).slice(0, 50)} |
-        Safe: {safeDate(activePlan?.startDate) ? format(safeDate(activePlan?.startDate)!, 'yyyy-MM-dd') : 'INVALID'}
+        Start: {safeDate(activePlan?.startDate) ? format(safeDate(activePlan?.startDate)!, 'yyyy-MM-dd') : 'INVALID'} |
+        End: {safeDate(activePlan?.endDate) ? format(safeDate(activePlan?.endDate)!, 'yyyy-MM-dd') : 'OPEN'}
     </div>
 
     // [NEW] Check if Selected Date is within Plan Duration
