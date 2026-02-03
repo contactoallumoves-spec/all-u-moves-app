@@ -5,14 +5,13 @@ import { Card, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Clock, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { WeeklyCalendar } from './components/WeeklyCalendar';
-import { format, isBefore, startOfDay, isAfter, endOfDay } from 'date-fns';
+import { format, isBefore, startOfDay, isAfter, endOfDay, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SessionLogService } from '../../services/sessionLogService';
 import { ExerciseService } from '../../services/exerciseService';
 
 import { PlanService } from '../../services/planService';
 import { AnnualPlan } from '../../types/plan';
-import { format, isBefore, startOfDay, isAfter, endOfDay, startOfWeek } from 'date-fns';
 
 const DAYS_MAP = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
