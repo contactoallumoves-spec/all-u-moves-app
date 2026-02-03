@@ -115,6 +115,11 @@ export default function SessionPlayer() {
     // 4. Local UI State
     const [activeIndex, setActiveIndex] = useState(0);
 
+    // [FIX] Reset Index on Session Change to prevent out-of-bounds crash
+    useEffect(() => {
+        setActiveIndex(0);
+    }, [uniqueSessionId]);
+
     // Skip Logic (Moved inside component)
     const [isSkipModalOpen, setIsSkipModalOpen] = useState(false);
 
@@ -413,6 +418,21 @@ export default function SessionPlayer() {
                     </Button>
                 </div>
             </motion.div>
+        );
+    }
+
+    // Safety Guard for Main Render
+    if (!currentItem) {
+        return (
+            <div className="fixed inset-0 bg-white z-50 flex items-center justify-center flex-col p-4">
+                <Loader2 className="w-8 h-8 text-brand-600 animate-spin mb-4" />
+                <p className="text-sm text-zinc-500">Cargando ejercicio...</p>
+                {/* Debug Info */}
+                <div className="mt-4 p-2 bg-zinc-100 text-[10px] text-zinc-400 font-mono rounded max-w-full overflow-auto">
+                    Index: {activeIndex} / Len: {planExercises?.length} / ID: {uniqueSessionId}
+                </div>
+                <Button className="mt-4" variant="outline" onClick={() => navigate('../home')}>Salir</Button>
+            </div>
         );
     }
 
