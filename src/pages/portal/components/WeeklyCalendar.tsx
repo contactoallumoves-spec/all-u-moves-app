@@ -97,8 +97,19 @@ export function WeeklyCalendar({ selectedDate, onSelectDate, scheduledDays, comp
                         initial="enter"
                         animate="center"
                         exit="exit"
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="grid grid-cols-7 gap-2 w-full"
+                        transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={1}
+                        onDragEnd={(e, { offset, velocity }) => {
+                            const swipe = offset.x; // detected swipe distance
+                            if (swipe < -50 || velocity.x < -500) {
+                                navigateWeek(1); // Next week
+                            } else if (swipe > 50 || velocity.x > 500) {
+                                navigateWeek(-1); // Prev week
+                            }
+                        }}
+                        className="grid grid-cols-7 gap-2 w-full touch-pan-y"
                     >
                         {weekDays.map((date, i) => {
                             const dIndex = date.getDay();
