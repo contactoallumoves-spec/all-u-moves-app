@@ -499,8 +499,8 @@ export default function SessionPlayer() {
                             {(() => {
                                 // Determine card type
                                 const explicitType = currentItem.details?.cardType;
-                                const cat = currentDetails?.category || 'Fuerza';
-                                const system = currentDetails?.system;
+                                // const cat = currentDetails?.category || 'Fuerza';
+                                // const system = currentDetails?.system;
 
                                 // 1. Explicit Selection (Overrides everything)
                                 if (explicitType === 'pelvic') {
