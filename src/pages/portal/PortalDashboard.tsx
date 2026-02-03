@@ -235,6 +235,12 @@ export default function PortalDashboard() {
                     )}
                 </CardContent>
             </Card >
+
+            {/* TEMP DEBUG: Verify Plan Dates */}
+            <div className="text-[10px] text-zinc-300 p-2 text-center font-mono">
+                DEBUG: Plan Start: {activePlan?.startDate ? String(activePlan.startDate) : 'None'} |
+                Computed: {activePlan?.startDate ? format((activePlan.startDate as any)?.toDate ? (activePlan.startDate as any).toDate() : new Date(activePlan.startDate), 'yyyy-MM-dd') : 'N/A'}
+            </div>
         </div >
     );
 }
