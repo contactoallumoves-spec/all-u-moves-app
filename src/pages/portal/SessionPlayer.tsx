@@ -7,7 +7,7 @@ import { Patient } from '../../types/patient';
 // import { ExerciseService } from '../../services/exerciseService';
 import { useSession } from '../../context/SessionContext';
 import { Button } from '../../components/ui/Button';
-import { ChevronLeft, Info, Loader2, CheckCircle2, SkipForward } from 'lucide-react';
+import { ChevronLeft, Info, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 // import { motion } from 'framer-motion'; // [FIX] Disabled Animation to prevent crash
 
@@ -91,10 +91,10 @@ export default function SessionPlayer() {
     useEffect(() => {
         setActiveIndex(0);
         // Init Session Log if needed
-        if (planExercises && planExercises.length > 0) {
+        if (planExercises && planExercises.length > 0 && patient.id) {
             dispatch({ type: 'INIT_SESSION', payload: { sessionId: uniqueSessionId, patientId: patient.id } });
         }
-    }, [uniqueSessionId, patient.id, planExercises?.length]); // Added dependency
+    }, [uniqueSessionId, patient.id, planExercises?.length]);
 
     // Navigation
     const handleNext = () => {
