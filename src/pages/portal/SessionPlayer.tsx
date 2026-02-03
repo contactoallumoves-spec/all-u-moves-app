@@ -517,34 +517,29 @@ export default function SessionPlayer() {
                                 }
 
                                 // 2. Fallback to Category/System Logic
-                                if (cat === 'Suelo Pélvico' || system === 'Suelo Pélvico') {
-                                    return (
-                                        <PelvicCard
-                                            exercise={currentItem}
-                                            sessionId={uniqueSessionId}
-                                            onSetComplete={handleSetComplete}
-                                        />
-                                    );
-                                }
-
-                                if (cat === 'Movilidad' || cat === 'Relajación' || cat === 'Respiración') {
-                                    return (
-                                        <TimerCard
-                                            exercise={currentItem}
-                                            sessionId={uniqueSessionId}
-                                            onSetComplete={handleSetComplete}
-                                        />
-                                    );
-                                }
-
-                                // Default Strength
+                                // DEBUG MODE: REPLACED CARDS WITH JSON DUMP
+                                // If this renders, the crash was inside a Card Component.
                                 return (
-                                    <StrengthCard
-                                        exercise={currentItem}
-                                        sessionId={uniqueSessionId}
-                                        onSetComplete={handleSetComplete}
-                                    />
+                                    <div className="p-4 bg-zinc-100 rounded-xl font-mono text-xs overflow-auto border border-red-200">
+                                        <h3 className="text-red-500 font-bold mb-2">DEBUG MODE ACTIVATED</h3>
+                                        <p className="mb-2">If you see this, the white screen crash is inside the Exercise Card (Strength/Pelvic/Timer).</p>
+                                        <p className="mb-2">Data being passed:</p>
+                                        <pre className="whitespace-pre-wrap text-zinc-600">
+                                            {JSON.stringify(currentItem, null, 2)}
+                                        </pre>
+                                    </div>
                                 );
+
+                                /* COMMENTED OUT FOR DEBUGGING
+                                switch (true) {
+                                    case cat === 'Suelo Pélvico' || system === 'Suelo Pélvico':
+                                        return <PelvicCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
+                                    case ['Movilidad', 'Relajación', 'Respiración'].includes(cat || ''):
+                                        return <TimerCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
+                                    default:
+                                        return <StrengthCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
+                                }
+                                */
                             })()}
                         </div>
 
