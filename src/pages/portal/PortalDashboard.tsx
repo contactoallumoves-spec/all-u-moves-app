@@ -6,9 +6,10 @@ import { Button } from '../../components/ui/Button';
 import { PlayCircle, Clock, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { WeeklyCalendar } from './components/WeeklyCalendar';
-import { format, isBefore, startOfDay } from 'date-fns';
+import { format, isBefore, startOfDay, isAfter, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SessionLogService } from '../../services/sessionLogService';
+import { ExerciseService } from '../../services/exerciseService';
 
 const DAYS_MAP = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -18,7 +19,8 @@ export default function PortalDashboard() {
 
     // State for selected day view (default to Today)
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]); // [NEW] Store logs for calendar
+    const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
+    const [equipmentList, setEquipmentList] = useState<string[]>([]);
 
     // Derived State
     const dayIndex = selectedDate.getDay();
@@ -28,6 +30,20 @@ export default function PortalDashboard() {
     // Plan Data
     const activePlan = patient.activePlan;
 
+    // [NEW] Check if Selected Date is within Plan Duration
+    const isPlanActiveForDate = activePlan && activePlan.startDate ? (() => {
+        const planStart = (activePlan.startDate as any)?.toDate ? (activePlan.startDate as any).toDate() : new Date(activePlan.startDate);
+        // Start of plan is inclusive
+        if (isBefore(selectedDate, startOfDay(planStart))) return false;
+
+        // If end date exists
+        if (activePlan.endDate) {
+            const planEnd = (activePlan.endDate as any)?.toDate ? (activePlan.endDate as any).toDate() : new Date(activePlan.endDate);
+            if (isAfter(selectedDate, endOfDay(planEnd))) return false;
+        }
+        return true;
+    })() : false;
+
     // Calculate Scheduled Days (e.g. ['monday', 'wednesday'])
     const scheduledDays = activePlan && activePlan.schedule
         ? Object.entries(activePlan.schedule)
@@ -35,26 +51,54 @@ export default function PortalDashboard() {
             .map(([day]) => day)
         : [];
 
-    // [NEW] Fetch Session Logs on Mount to populate Calendar
+    // Fetch Session Logs on Mount
     useEffect(() => {
         if (patient.id) {
             SessionLogService.getByPatientId(patient.id)
-                .then(logs => {
-                    setSessionLogs(logs);
-                })
-                .catch(err => console.error("Error fetching logs for dashboard", err));
+                .then(logs => setSessionLogs(logs))
+                .catch(err => console.error("Error fetching logs", err));
         }
     }, [patient.id]);
 
-    // [NEW] Compute Completed Dates from Logs
+    // [NEW] Fetch Equipment for Selected Exercises
+    useEffect(() => {
+        const fetchEquipment = async () => {
+            if (!activePlan?.schedule || !(dayKey in activePlan.schedule)) {
+                setEquipmentList([]);
+                return;
+            }
+
+            const exercises = activePlan.schedule[dayKey as keyof typeof activePlan.schedule] || [];
+            if (exercises.length === 0) {
+                setEquipmentList([]);
+                return;
+            }
+
+            // Optimization: Maybe cache this in a real app, but for V1 we fetch
+            try {
+                const equipmentSet = new Set<string>();
+                await Promise.all(exercises.map(async (ex) => {
+                    const fullExercise = await ExerciseService.getById(ex.exerciseId);
+                    if (fullExercise && fullExercise.equipment) {
+                        fullExercise.equipment.forEach(eq => {
+                            if (eq && eq !== 'Sin Implemento') equipmentSet.add(eq);
+                        });
+                    }
+                }));
+                setEquipmentList(Array.from(equipmentSet));
+            } catch (error) {
+                console.error("Error fetching equipment", error);
+            }
+        };
+
+        fetchEquipment();
+    }, [dayKey, activePlan]);
+
+    // Compute Completed Dates
     const completedDates = sessionLogs.map(log => {
-        // Handle Firestore Timestamp or JS Date
         let dateObj = log.date;
-        if ((log.date as any)?.toDate) {
-            dateObj = (log.date as any).toDate();
-        } else if (!(log.date instanceof Date)) {
-            dateObj = new Date(log.date);
-        }
+        if ((log.date as any)?.toDate) dateObj = (log.date as any).toDate();
+        else if (!(log.date instanceof Date)) dateObj = new Date(log.date);
         return format(dateObj, 'yyyy-MM-dd');
     });
 
@@ -64,17 +108,16 @@ export default function PortalDashboard() {
         : [];
 
     // Check if the SELECTED date is completed
-    // We compare formatting selectedDate to YYYY-MM-DD with our completedDates list
     const isSelectedDateCompleted = completedDates.includes(format(selectedDate, 'yyyy-MM-dd'));
-    const hasSession = selectedExercises && selectedExercises.length > 0;
 
-    // [NEW] Missed Logic (Past date + Has Session + Not Completed)
+    // [FIX] Has Session: Must be scheduled AND within plan dates
+    const hasSession = isPlanActiveForDate && selectedExercises && selectedExercises.length > 0;
+
+    // Missed Logic
     const isMissed = hasSession && !isSelectedDateCompleted && isBefore(selectedDate, startOfDay(new Date()));
 
-    // [NEW] Equipment Summary (Mocked or Basic for now)
-    const uniqueEquipment = Array.from(new Set(selectedExercises.map((ex: any) => ex.details?.equipment || 'Sin equipo').flat()));
-    // Clean up 'Sin equipo' if mixed
-    const equipmentSummary = uniqueEquipment.filter(e => e !== 'Sin equipo').join(', ') || (uniqueEquipment.includes('Sin equipo') ? 'Sin implementos' : '');
+    // Equipment Summary
+    const equipmentSummary = equipmentList.join(', ') || ((hasSession && equipmentList.length === 0) ? '' : '');
 
     // Formatting
     const dayName = format(selectedDate, 'EEEE', { locale: es }); // "lunes"
