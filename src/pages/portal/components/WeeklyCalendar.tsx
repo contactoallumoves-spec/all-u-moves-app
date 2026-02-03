@@ -48,8 +48,14 @@ export function WeeklyCalendar({ selectedDate, onSelectDate, scheduledDays, comp
     // Navigation
     const navigateWeek = (newDirection: number) => {
         setDirection(newDirection);
+        // Move view by 7 days
         const newDate = newDirection > 0 ? addDays(viewDate, 7) : subDays(viewDate, 7);
         setViewDate(newDate);
+
+        // [FIX] Also update the selected date in Parent to refresh the Plan content immediately
+        // We defaults to the first day of that new week (Monday)
+        const newWeekStart = startOfWeek(newDate, { weekStartsOn: 1 });
+        onSelectDate(newWeekStart);
     };
 
     const variants = {
