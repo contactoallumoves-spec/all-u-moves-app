@@ -30,16 +30,31 @@ export default function PortalDashboard() {
     // Plan Data
     const activePlan = patient.activePlan;
 
+    // Helper for Firestore Timestamps or Strings
+    const safeDate = (d: any): Date | undefined => {
+        if (!d) return undefined;
+        try {
+            if (d?.toDate) return d.toDate(); // Firestore
+            if (d instanceof Date) return d;
+            const parsed = new Date(d);
+            return isNaN(parsed.getTime()) ? undefined : parsed;
+        } catch (e) {
+            return undefined;
+        }
+    };
+
     // [NEW] Check if Selected Date is within Plan Duration
-    const isPlanActiveForDate = activePlan && activePlan.startDate ? (() => {
-        const planStart = (activePlan.startDate as any)?.toDate ? (activePlan.startDate as any).toDate() : new Date(activePlan.startDate);
+    const isPlanActiveForDate = activePlan ? (() => {
+        const planStart = safeDate(activePlan.startDate);
+        if (!planStart) return true; // Safety: if no start date, assume active or handle as error? Assume active to avoid blocking.
+
         // Start of plan is inclusive
         if (isBefore(selectedDate, startOfDay(planStart))) return false;
 
         // If end date exists
         if (activePlan.endDate) {
-            const planEnd = (activePlan.endDate as any)?.toDate ? (activePlan.endDate as any).toDate() : new Date(activePlan.endDate);
-            if (isAfter(selectedDate, endOfDay(planEnd))) return false;
+            const planEnd = safeDate(activePlan.endDate);
+            if (planEnd && isAfter(selectedDate, endOfDay(planEnd))) return false;
         }
         return true;
     })() : false;
@@ -96,11 +111,9 @@ export default function PortalDashboard() {
 
     // Compute Completed Dates
     const completedDates = sessionLogs.map(log => {
-        let dateObj = log.date;
-        if ((log.date as any)?.toDate) dateObj = (log.date as any).toDate();
-        else if (!(log.date instanceof Date)) dateObj = new Date(log.date);
-        return format(dateObj, 'yyyy-MM-dd');
-    });
+        const d = safeDate(log.date);
+        return d ? format(d, 'yyyy-MM-dd') : '';
+    }).filter(d => d !== '');
 
     // Selected Date Content
     const selectedExercises = activePlan && activePlan.schedule && (dayKey in activePlan.schedule)
@@ -121,18 +134,19 @@ export default function PortalDashboard() {
 
     // Formatting
     const dayName = format(selectedDate, 'EEEE', { locale: es }); // "lunes"
-    const formattedDate = format(selectedDate, "d 'de' MMMM", { locale: es }); // "2 de febrero"
+    const displayDate = format(selectedDate, "d 'de' MMMM", { locale: es }); // "3 de Febrero"
+    const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
     return (
-        <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-20 max-w-md mx-auto">
-            {/* Header / Greeting */}
-            <div className="space-y-1">
-                <h1 className="text-2xl font-serif font-bold text-brand-900">
-                    Hola, {patient.firstName}
-                </h1>
-                <p className="text-brand-500 text-sm capitalize">
-                    {dayName}, {formattedDate}
-                </p>
+        <div className="flex flex-col h-full bg-white relative">
+            {/* Header / Nav */}
+            <div className="px-4 pt-4 pb-2">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h1 className="text-2xl font-serif text-brand-900">Hola, {patient.firstName}</h1>
+                        <p className="text-xs text-brand-500 capitalize">{capitalizedDay}, {displayDate}</p>
+                    </div>
+                </div>
             </div>
 
             {/* Weekly Calendar (Interactive) */}
@@ -141,105 +155,118 @@ export default function PortalDashboard() {
                 onSelectDate={setSelectedDate}
                 scheduledDays={scheduledDays}
                 completedDates={completedDates}
-                planStartDate={activePlan?.startDate ? ((activePlan.startDate as any)?.toDate ? (activePlan.startDate as any).toDate() : new Date(activePlan.startDate)) : undefined}
-                planEndDate={activePlan?.endDate ? ((activePlan.endDate as any)?.toDate ? (activePlan.endDate as any).toDate() : new Date(activePlan.endDate)) : undefined}
+                planStartDate={safeDate(activePlan?.startDate)}
+                planEndDate={safeDate(activePlan?.endDate)}
             />
 
             {/* Selected Day Card */}
-            <Card className="border-brand-100 shadow-xl bg-white overflow-hidden relative transition-all duration-300 ring-1 ring-brand-50">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-brand-50 to-brand-100 rounded-bl-[100px] -mr-10 -mt-10 opacity-60 z-0 pointer-events-none" />
+            <Card className="mx-4 mt-4 border-none shadow-xl bg-white/80 backdrop-blur-sm relative overflow-hidden flex-1 mb-20">
+                {/* Decorative Background Blob */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-50 rounded-full blur-2xl -mr-10 -mt-10 opacity-50 pointer-events-none" />
 
-                <CardContent className="p-6 relative z-10 space-y-5">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="uppercase text-[10px] font-bold tracking-widest text-brand-400 bg-brand-50 px-2 py-0.5 rounded-full">
-                                    {isToday ? "Hoy" : dayName}
+                <CardContent className="p-0 h-full flex flex-col justify-between relative z-10">
+                    <div className="p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <span className="px-2 py-0.5 bg-brand-50 text-[10px] uppercase tracking-wider font-bold text-brand-600 rounded-sm">
+                                {isToday ? 'HOY' : capitalizedDay}
+                            </span>
+                            {/* Visual Status Badge */}
+                            {isSelectedDateCompleted ? (
+                                <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                    <CheckCircle2 className="w-3 h-3" /> COMPLETADA
                                 </span>
-                            </div>
-                            <h2 className="text-xl font-bold text-brand-900 leading-tight">
-                                {hasSession
-                                    ? (isSelectedDateCompleted ? "¡Sesión Completada!" : (isMissed ? "Sesión Pendiente" : "Tu Sesión"))
-                                    : "Día de Descanso"}
-                            </h2>
-                            {hasSession && (
-                                <div className="space-y-1 mt-1">
-                                    <p className="text-brand-500 text-xs font-medium">
-                                        {selectedExercises.length} ejercicios • ~45 min
-                                    </p>
+                            ) : isMissed ? (
+                                <span className="flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full animate-pulse">
+                                    RECUPERAR SESIÓN
+                                </span>
+                            ) : null}
+                        </div>
+
+                        <div>
+                            {hasSession ? (
+                                <>
+                                    <h2 className="text-xl font-bold text-brand-900 leading-tight">
+                                        {activePlan?.name || "Tu Sesión"}
+                                    </h2>
+                                    {/* Equipment Summary Line */}
                                     {equipmentSummary && (
-                                        <p className="text-xs text-brand-400 font-medium flex items-center gap-1">
-                                            <span className="w-1 h-1 rounded-full bg-brand-300" />
-                                            {equipmentSummary}
+                                        <p className="text-xs text-brand-500 mt-1 flex items-center gap-1">
+                                            <span className="font-semibold">+</span> {equipmentSummary}
                                         </p>
                                     )}
+                                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                                        <span className="flex items-center gap-1">
+                                            <div className="w-4 h-4 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-[9px]">
+                                                {selectedExercises.length}
+                                            </div>
+                                            ejercicios
+                                        </span>
+                                        <span>•</span>
+                                        <span className="flex items-center gap-1">
+                                            <Clock className="w-3 h-3" /> ~45 min
+                                        </span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div>
+                                    <h2 className="text-xl font-bold text-brand-900">Día de Descanso</h2>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        No hay ejercicios programados para hoy. ¡Aprovecha para recuperar energía!
+                                    </p>
                                 </div>
                             )}
                         </div>
-                        <div className={cn(
-                            "w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm",
-                            isSelectedDateCompleted
-                                ? "bg-green-500 text-white"
-                                : isMissed
-                                    ? "bg-orange-100 text-orange-600"
-                                    : (hasSession ? "bg-brand-900 text-white" : "bg-zinc-100 text-zinc-400")
-                        )}>
-                            {isSelectedDateCompleted ? <CheckCircle2 className="w-6 h-6" /> : (hasSession ? <PlayCircle className="w-6 h-6 ml-0.5" /> : <Clock className="w-6 h-6" />)}
-                        </div>
-                    </div>
 
-                    {hasSession ? (
-                        <div className="space-y-4">
-                            {/* Exercise Preview List (Limited) */}
-                            <div className="space-y-2">
-                                <p className="text-xs font-bold text-brand-300 uppercase tracking-widest">Preview</p>
-                                {selectedExercises.slice(0, 3).map((ex: any, idx: number) => (
-                                    <div key={idx} className="flex items-center gap-3 text-sm text-brand-800 p-2.5 rounded-lg border border-brand-50 bg-brand-50/30">
-                                        <div className="w-6 h-6 bg-brand-200 rounded-full flex items-center justify-center text-[10px] font-bold text-brand-700">
-                                            {idx + 1}
+                        {/* Exercise Preview List (First 3) */}
+                        {hasSession && (
+                            <div className="space-y-2 mt-2">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">PREVIEW</p>
+                                {selectedExercises.slice(0, 3).map((ex: any, i: number) => (
+                                    <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50/50 border border-gray-100">
+                                        <div className="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center text-[10px] font-bold text-brand-700">
+                                            {i + 1}
                                         </div>
-                                        <span className="truncate flex-1 font-medium capitalize">{ex.name}</span>
+                                        <span className="text-sm font-medium text-gray-700 truncate">{ex.name}</span>
                                     </div>
                                 ))}
                                 {selectedExercises.length > 3 && (
-                                    <p className="text-xs text-brand-400 text-center italic">+ {selectedExercises.length - 3} más...</p>
+                                    <p className="text-xs text-center text-brand-400 pt-1">
+                                        + {selectedExercises.length - 3} ejercicios más
+                                    </p>
                                 )}
                             </div>
+                        )}
+                    </div>
 
+                    {/* Main CTA */}
+                    <div className="p-5 pt-0 mt-auto">
+                        {hasSession ? (
                             <Button
-                                className={cn(
-                                    "w-full text-white shadow-xl group h-12 text-base rounded-xl transition-colors",
-                                    isSelectedDateCompleted
-                                        ? "bg-green-600 hover:bg-green-700 shadow-green-900/20"
-                                        : isMissed
-                                            ? "bg-orange-500 hover:bg-orange-600 shadow-orange-500/20"
-                                            : "bg-brand-900 hover:bg-brand-800 shadow-brand-900/20"
-                                )}
-                                onClick={() => navigate(`../session/${dayKey}`)}
+                                className="w-full bg-brand-900 hover:bg-brand-800 text-white shadow-brand-900/20 shadow-lg h-12 text-sm font-medium flex justify-between items-center pl-6 pr-4 group transition-all"
+                                onClick={() => navigate(`/portal/session/${dayKey}`)}
                             >
-                                <span className="mr-2">
-                                    {isSelectedDateCompleted
-                                        ? "Ver Resumen / Repetir"
-                                        : isMissed
-                                            ? "Recuperar Sesión"
-                                            : "Iniciar Sesión"}
-                                </span>
-                                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                <span>Iniciar Sesión</span>
+                                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                                    <ChevronRight className="w-4 h-4" />
+                                </div>
                             </Button>
-                        </div>
-                    ) : (
-                        <div className="py-8 px-4 bg-zinc-50 rounded-xl text-center border-2 border-zinc-100 border-dashed">
-                            <CheckCircle2 className="w-8 h-8 text-zinc-200 mx-auto mb-2" />
-                            <p className="text-zinc-400 text-sm">Disfruta tu descanso. ¡Nos vemos mañana!</p>
-                        </div>
-                    )}
+                        ) : (
+                            <Button
+                                variant="outline"
+                                className="w-full border-dashed border-gray-300 text-gray-400 hover:bg-gray-50 hover:text-gray-500 h-12"
+                                disabled
+                            >
+                                Descanso Programado
+                            </Button>
+                        )}
+                    </div>
                 </CardContent>
             </Card >
 
             {/* TEMP DEBUG: Verify Plan Dates */}
             <div className="text-[10px] text-zinc-300 p-2 text-center font-mono">
                 DEBUG: Plan Start: {activePlan?.startDate ? String(activePlan.startDate) : 'None'} |
-                Computed: {activePlan?.startDate ? format((activePlan.startDate as any)?.toDate ? (activePlan.startDate as any).toDate() : new Date(activePlan.startDate), 'yyyy-MM-dd') : 'N/A'}
+                Safe: {safeDate(activePlan?.startDate) ? format(safeDate(activePlan?.startDate)!, 'yyyy-MM-dd') : 'INVALID'}
             </div>
         </div >
     );
