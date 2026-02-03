@@ -10,6 +10,10 @@ import { es } from 'date-fns/locale';
 import { SessionLogService } from '../../services/sessionLogService';
 import { ExerciseService } from '../../services/exerciseService';
 
+import { PlanService } from '../../services/planService';
+import { AnnualPlan } from '../../types/plan';
+import { format, isBefore, startOfDay, isAfter, endOfDay, startOfWeek } from 'date-fns';
+
 const DAYS_MAP = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 export default function PortalDashboard() {
@@ -27,7 +31,39 @@ export default function PortalDashboard() {
     const isToday = selectedDate.toDateString() === new Date().toDateString();
 
     // Plan Data
-    const activePlan = patient.activePlan;
+    const [annualPlan, setAnnualPlan] = useState<AnnualPlan | null>(null);
+
+    // Fetch Annual Plan
+    useEffect(() => {
+        if (patient.id) {
+            PlanService.getActivePlan(patient.id)
+                .then(plan => setAnnualPlan(plan))
+                .catch(err => console.error("Error fetching annual plan", err));
+        }
+    }, [patient.id]);
+
+    // Derived Week Logic
+    const getActiveWeekPlan = () => {
+        // 1. If we have an Annual Plan, try to find the specific week for the selected date
+        if (annualPlan) {
+            const planStart = annualPlan.startDate instanceof Date ? annualPlan.startDate : (annualPlan.startDate as any).toDate();
+            // Calculate relative week number manually to match ProgrammingPage logic
+            const oneDay = 24 * 60 * 60 * 1000;
+            const start = startOfWeek(planStart, { weekStartsOn: 1 });
+            const current = startOfWeek(selectedDate, { weekStartsOn: 1 });
+            const diffDays = Math.round(Math.abs((current.getTime() - start.getTime()) / oneDay));
+            const weekNum = Math.floor(diffDays / 7) + 1;
+
+            if (annualPlan.weeks && annualPlan.weeks[weekNum]) {
+                return annualPlan.weeks[weekNum];
+            }
+        }
+
+        // 2. Fallback to the generic activePlan on the patient (Legacy/Simplest)
+        return patient.activePlan;
+    };
+
+    const activePlan = getActiveWeekPlan();
 
     // Helper for Firestore Timestamps or Strings
     const safeDate = (d: any): Date | undefined => {
