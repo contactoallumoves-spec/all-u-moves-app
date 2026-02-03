@@ -7,7 +7,7 @@ import { AnnualPlan } from '../../types/plan';
 import { Patient, PrescribedPlan } from '../../types/patient';
 import { PlanBuilder } from '../../components/clinical/PlanBuilder';
 import { Timestamp } from 'firebase/firestore';
-import { format, startOfWeek, endOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, endOfDay } from 'date-fns';
+import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { cn } from '../../lib/utils';
