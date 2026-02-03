@@ -9,6 +9,7 @@ import { SmartTimer } from './components/SmartTimer';
 import { StrengthCard } from './components/StrengthCard';
 import { PelvicCard } from './components/PelvicCard';
 import { TimerCard } from './components/TimerCard';
+import { IntervalCard } from './components/IntervalCard';
 import { RPESelector, PainSelector } from '../../components/ui/PremiumInputs';
 import { cn } from '../../lib/utils';
 import { motion } from 'framer-motion';
@@ -391,6 +392,9 @@ export default function SessionPlayer() {
                                 }
                                 if (explicitType === 'strength') {
                                     return <StrengthCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
+                                }
+                                if (explicitType === 'interval') {
+                                    return <IntervalCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
                                 }
 
                                 // 2. Fallback to Category/System Logic

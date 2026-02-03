@@ -1171,6 +1171,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                                     {[
                                                         { id: 'strength', label: 'Fuerza / General', icon: '💪' },
                                                         { id: 'timer', label: 'Tiempo / Iso', icon: '⏱️' },
+                                                        { id: 'interval', label: 'Intervalos / HIIT', icon: '🔥' },
                                                         { id: 'pelvic', label: 'Suelo Pélvico', icon: '🌸' }
                                                     ].map(type => (
                                                         <button
@@ -1216,6 +1217,49 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                                                 />
                                                             </div>
                                                         </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* INTERVAL FIELDS */}
+                                            {(editForm.cardType === 'interval') && (
+                                                <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                                                    <div className="p-3 bg-orange-50/50 rounded-lg border border-orange-100 space-y-3">
+                                                        <h5 className="text-xs font-bold text-orange-700 flex items-center gap-1">
+                                                            🔥 Configuración HIIT / Intervalos
+                                                        </h5>
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-orange-700 uppercase">Rondas</label>
+                                                                <input
+                                                                    className="w-full p-2 bg-white border border-orange-200 rounded text-sm focus:border-orange-500 outline-none"
+                                                                    placeholder="3"
+                                                                    value={editForm.sets}
+                                                                    onChange={e => setEditForm({ ...editForm, sets: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-orange-700 uppercase">Trabajo (s)</label>
+                                                                <input
+                                                                    className="w-full p-2 bg-white border border-orange-200 rounded text-sm focus:border-orange-500 outline-none"
+                                                                    placeholder="30"
+                                                                    value={editForm.duration}
+                                                                    onChange={e => setEditForm({ ...editForm, duration: e.target.value })}
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-orange-700 uppercase">Descanso (s)</label>
+                                                                <input
+                                                                    className="w-full p-2 bg-white border border-orange-200 rounded text-sm focus:border-orange-500 outline-none"
+                                                                    placeholder="15"
+                                                                    value={editForm.rest}
+                                                                    onChange={e => setEditForm({ ...editForm, rest: e.target.value })}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-[10px] text-orange-600/80 italic">
+                                                            * El paciente verá un timer guiado: Prep → Trabajo → Descanso → Repetir.
+                                                        </p>
                                                     </div>
                                                 </div>
                                             )}

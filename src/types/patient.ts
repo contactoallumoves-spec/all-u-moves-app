@@ -109,7 +109,7 @@ export interface ExerciseParameters {
     relaxationTime?: string; // e.g. "10s" (Rest)
 
     // [NEW] Explicit Card Type Selection (Overrides category)
-    cardType?: 'strength' | 'timer' | 'pelvic';
+    cardType?: 'strength' | 'timer' | 'pelvic' | 'interval';
 }
 
 export interface PlanExercise {
