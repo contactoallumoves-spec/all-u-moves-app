@@ -37,9 +37,9 @@ export function IntervalCard({ exercise, sessionId, onSetComplete }: IntervalCar
 
     // Audio Cues (Simple Beep Simulation)
     // In a real app, use Howler.js or Audio API.
-    const playBeep = (type: 'short' | 'long') => {
+    const playBeep = (_type: 'short' | 'long') => {
         // Placeholder for audio
-        // console.log(`BEEP: ${type}`); 
+        // console.log(`BEEP: ${_type}`); 
     };
 
     // Timer Effect
