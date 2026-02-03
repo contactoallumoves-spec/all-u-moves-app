@@ -141,6 +141,8 @@ export default function PortalDashboard() {
                 onSelectDate={setSelectedDate}
                 scheduledDays={scheduledDays}
                 completedDates={completedDates}
+                planStartDate={activePlan?.startDate ? ((activePlan.startDate as any)?.toDate ? (activePlan.startDate as any).toDate() : new Date(activePlan.startDate)) : undefined}
+                planEndDate={activePlan?.endDate ? ((activePlan.endDate as any)?.toDate ? (activePlan.endDate as any).toDate() : new Date(activePlan.endDate)) : undefined}
             />
 
             {/* Selected Day Card */}

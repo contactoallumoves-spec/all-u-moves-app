@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import { addDays, subDays, startOfWeek, endOfWeek, format, isSameDay, isAfter } from 'date-fns';
+import { addDays, subDays, startOfWeek, endOfWeek, format, isSameDay, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface WeeklyCalendarProps {
@@ -10,11 +10,13 @@ interface WeeklyCalendarProps {
     onSelectDate: (date: Date) => void;
     scheduledDays: string[]; // ['monday', 'wednesday'] etc.
     completedDates: string[]; // ['2024-02-01', ...]
+    planStartDate?: Date; // [NEW] To hide ghost sessions before start
+    planEndDate?: Date; // [NEW] To hide ghost sessions after end
 }
 
 const DAYS_MAP = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
-export function WeeklyCalendar({ selectedDate, onSelectDate, scheduledDays, completedDates }: WeeklyCalendarProps) {
+export function WeeklyCalendar({ selectedDate, onSelectDate, scheduledDays, completedDates, planStartDate, planEndDate }: WeeklyCalendarProps) {
     // View state (which week are we looking at), separate from selectedDate
     const [viewDate, setViewDate] = useState(selectedDate);
     const [direction, setDirection] = useState(0);
@@ -119,7 +121,14 @@ export function WeeklyCalendar({ selectedDate, onSelectDate, scheduledDays, comp
                             const isToday = isSameDay(date, new Date());
 
                             // Status Logic
-                            const hasSession = scheduledDays.includes(dayKey);
+                            // Check if date is within plan range
+                            const isWithinPlan =
+                                (!planStartDate || !isBefore(date, startOfDay(planStartDate))) &&
+                                (!planEndDate || !isAfter(date, endOfDay(planEndDate)));
+
+                            // Only show planned session if it's the right day of week AND within plan dates
+                            const hasSession = scheduledDays.includes(dayKey) && isWithinPlan;
+
                             const dateStr = format(date, 'yyyy-MM-dd');
                             const isCompleted = completedDates.includes(dateStr);
                             const isMissed = hasSession && !isCompleted && isAfter(new Date(), date) && !isToday; // Lazy logic for missed
