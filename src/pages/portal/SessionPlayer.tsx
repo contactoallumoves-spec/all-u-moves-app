@@ -302,7 +302,10 @@ export default function SessionPlayer() {
                     <Button
                         size="lg"
                         className="w-full rounded-2xl h-14 text-lg bg-white text-black hover:bg-brand-100 shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 font-bold"
-                        onClick={handleSendFeedback}
+                        onClick={async () => {
+                            await handleSendFeedback();
+                            setIsSaved(true);
+                        }}
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
