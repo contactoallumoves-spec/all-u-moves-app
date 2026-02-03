@@ -15,6 +15,7 @@ interface SessionState {
 type Action =
     | { type: 'INIT_SESSION'; payload: { sessionId: string; patientId: string } }
     | { type: 'UPDATE_SET'; payload: { sessionId: string; exerciseId: string; setIndex: number; data: any } }
+    | { type: 'UPDATE_EXERCISE'; payload: { sessionId: string; exerciseId: string; data: any } }
     | { type: 'MARK_COMPLETED'; payload: { sessionId: string; exerciseId: string; completed: boolean } }
     | { type: 'SET_SYNC_STATUS'; payload: 'synced' | 'syncing' | 'offline' | 'error' }
     | { type: 'LOAD_FROM_STORAGE'; payload: SessionState }
@@ -78,6 +79,31 @@ function sessionReducer(state: SessionState, action: Action): SessionState {
 
             const exIndex = exercises.findIndex(e => e.exerciseId === exerciseId);
             exercises[exIndex] = exLog;
+
+            return {
+                ...state,
+                logs: { ...state.logs, [sessionId]: { ...log, exercises } },
+                syncStatus: 'offline',
+                lastSaved: Date.now()
+            };
+        }
+
+        case 'UPDATE_EXERCISE': {
+            const { sessionId, exerciseId, data } = action.payload;
+            const log = state.logs[sessionId];
+            if (!log) return state;
+
+            const exercises = [...log.exercises];
+            let exLog = exercises.find(e => e.exerciseId === exerciseId);
+
+            if (!exLog) {
+                exLog = { exerciseId, sets: [], skipped: false, notes: '' };
+                exercises.push(exLog);
+            }
+
+            // Update check
+            const exIndex = exercises.findIndex(e => e.exerciseId === exerciseId);
+            exercises[exIndex] = { ...exLog, ...data };
 
             return {
                 ...state,

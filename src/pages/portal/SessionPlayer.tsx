@@ -9,7 +9,42 @@ import { SmartTimer } from './components/SmartTimer';
 import { StrengthCard } from './components/StrengthCard';
 import { PelvicCard } from './components/PelvicCard';
 import { TimerCard } from './components/TimerCard';
-import { IntervalCard } from './components/IntervalCard';
+import { SkipExerciseModal } from './components/SkipExerciseModal';
+// ... (keep existing imports)
+
+// ... inside SessionPlayer component:
+
+// Skip Logic
+const [isSkipModalOpen, setIsSkipModalOpen] = useState(false);
+
+const handleSkip = (reason: string, note?: string) => {
+    // 1. Log the skip
+    dispatch({
+        type: 'UPDATE_EXERCISE',
+        payload: {
+            sessionId: uniqueSessionId,
+            exerciseId: currentItem.exerciseId,
+            data: {
+                skipped: true,
+                skipReason: reason,
+                notes: note
+            }
+        }
+    });
+
+    // 2. Advance
+    setIsSkipModalOpen(false);
+    handleComplete();
+};
+
+// Handle completion of specific item to auto-advance
+const handleComplete = () => {
+    if (activeIndex < planExercises.length - 1) {
+        setTimeout(() => setActiveIndex(prev => prev + 1), 500);
+    } else {
+        handleFinish();
+    }
+};
 import { RPESelector, PainSelector } from '../../components/ui/PremiumInputs';
 import { cn } from '../../lib/utils';
 import { motion } from 'framer-motion';
@@ -438,7 +473,13 @@ export default function SessionPlayer() {
                         )}
 
                         {/* Feedback / Util Buttons */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <button
+                                onClick={() => setIsSkipModalOpen(true)}
+                                className="col-span-2 flex items-center justify-center gap-2 bg-zinc-50 border border-zinc-200 text-zinc-500 py-3 rounded-xl text-sm font-bold hover:bg-zinc-100 transition-colors"
+                            >
+                                <SkipForward className="w-4 h-4" /> Omitir / Cambiar Ejercicio
+                            </button>
                             <button className="flex items-center justify-center gap-2 bg-white border border-zinc-200 text-zinc-500 py-3 rounded-xl text-sm font-bold hover:bg-zinc-50 disabled:opacity-50">
                                 <Flag className="w-4 h-4" /> Reportar Dolor
                             </button>
@@ -446,6 +487,12 @@ export default function SessionPlayer() {
                                 <MessageSquare className="w-4 h-4" /> Nota
                             </button>
                         </div>
+
+                        <SkipExerciseModal
+                            isOpen={isSkipModalOpen}
+                            onClose={() => setIsSkipModalOpen(false)}
+                            onConfirm={handleSkip}
+                        />
 
                     </motion.div>
                 </div>
