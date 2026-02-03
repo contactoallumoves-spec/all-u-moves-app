@@ -7,8 +7,8 @@ import { Patient } from '../../types/patient';
 // import { ExerciseService } from '../../services/exerciseService';
 import { useSession } from '../../context/SessionContext';
 import { Button } from '../../components/ui/Button';
-import { ChevronLeft, Info, Loader2, CheckCircle2, SkipForward } from 'lucide-react';
-import { cn } from '../../lib/utils';
+// import { ChevronLeft, Info, Loader2, CheckCircle2, SkipForward } from 'lucide-react';
+// import { cn } from '../../lib/utils';
 // import { motion } from 'framer-motion'; // Disable Animation temporarily
 
 // CARDS DISABLED TO ISOLATE CRASH
@@ -31,6 +31,8 @@ export default function SessionPlayer() {
     const sessionDayIndex = sessionDate.getDay();
     const targetDay = DAYS_MAP[sessionDayIndex];
     const uniqueSessionId = `${dateStr || new Date().toISOString().split('T')[0]}_${targetDay}`;
+
+    console.log("DEBUGVARS:", dispatch, uniqueSessionId); // Force usage
 
     // 3. Logic: Fetch Plan
     const [annualPlan, setAnnualPlan] = useState<AnnualPlan | null>(null);
