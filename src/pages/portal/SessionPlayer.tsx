@@ -4,7 +4,7 @@ import { Patient } from '../../types/patient';
 import { ExerciseService } from '../../services/exerciseService';
 import { useSession } from '../../context/SessionContext';
 import { Button } from '../../components/ui/Button';
-import { ChevronLeft, Info, Play, X, Flag, MessageSquare, Loader2 } from 'lucide-react';
+import { ChevronLeft, Info, Play, X, Flag, MessageSquare, Loader2, SkipForward } from 'lucide-react';
 import { SmartTimer } from './components/SmartTimer';
 import { StrengthCard } from './components/StrengthCard';
 import { PelvicCard } from './components/PelvicCard';
@@ -14,37 +14,7 @@ import { SkipExerciseModal } from './components/SkipExerciseModal';
 
 // ... inside SessionPlayer component:
 
-// Skip Logic
-const [isSkipModalOpen, setIsSkipModalOpen] = useState(false);
 
-const handleSkip = (reason: string, note?: string) => {
-    // 1. Log the skip
-    dispatch({
-        type: 'UPDATE_EXERCISE',
-        payload: {
-            sessionId: uniqueSessionId,
-            exerciseId: currentItem.exerciseId,
-            data: {
-                skipped: true,
-                skipReason: reason,
-                notes: note
-            }
-        }
-    });
-
-    // 2. Advance
-    setIsSkipModalOpen(false);
-    handleComplete();
-};
-
-// Handle completion of specific item to auto-advance
-const handleComplete = () => {
-    if (activeIndex < planExercises.length - 1) {
-        setTimeout(() => setActiveIndex(prev => prev + 1), 500);
-    } else {
-        handleFinish();
-    }
-};
 import { RPESelector, PainSelector } from '../../components/ui/PremiumInputs';
 import { cn } from '../../lib/utils';
 import { motion } from 'framer-motion';
@@ -80,6 +50,43 @@ export default function SessionPlayer() {
 
     // 4. Local UI State
     const [activeIndex, setActiveIndex] = useState(0);
+
+    // Skip Logic (Moved inside component)
+    const [isSkipModalOpen, setIsSkipModalOpen] = useState(false);
+
+    // Handle completion of specific item to auto-advance (Moved inside component)
+    const handleComplete = () => {
+        if (activeIndex < planExercises.length - 1) {
+            setTimeout(() => setActiveIndex(prev => prev + 1), 500);
+        } else {
+            handleFinish();
+        }
+    };
+
+    const currentItem = planExercises[activeIndex]; // Derived state needed for handlers
+
+    const handleSkip = (reason: string, note?: string) => {
+        if (!currentItem) return;
+
+        // 1. Log the skip
+        dispatch({
+            type: 'UPDATE_EXERCISE',
+            payload: {
+                sessionId: uniqueSessionId,
+                exerciseId: currentItem.exerciseId,
+                data: {
+                    skipped: true,
+                    skipReason: reason,
+                    notes: note
+                }
+            }
+        });
+
+        // 2. Advance
+        setIsSkipModalOpen(false);
+        handleComplete();
+    };
+
     const [exerciseCache, setExerciseCache] = useState<Record<string, any>>({});
     const [timerVisible, setTimerVisible] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
@@ -111,7 +118,6 @@ export default function SessionPlayer() {
     }, [planExercises.length, activeIndex]);
 
     // Current Item
-    const currentItem = planExercises[activeIndex];
     const currentDetails = currentItem ? exerciseCache[currentItem.exerciseId] : null;
 
     // Helpers
@@ -166,13 +172,7 @@ export default function SessionPlayer() {
     };
 
     // Handle completion of specific item to auto-advance
-    const handleComplete = () => {
-        if (activeIndex < planExercises.length - 1) {
-            setTimeout(() => setActiveIndex(prev => prev + 1), 500);
-        } else {
-            handleFinish();
-        }
-    };
+
 
 
     // --- Loading / Empty States ---

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '../../../components/ui/Button';
 
 interface SkipExerciseModalProps {
     isOpen: boolean;
@@ -69,8 +69,8 @@ export function SkipExerciseModal({ isOpen, onClose, onConfirm }: SkipExerciseMo
                                         key={reason}
                                         onClick={() => setSelectedReason(reason)}
                                         className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${selectedReason === reason
-                                                ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-500 ring-offset-1'
-                                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                            ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-500 ring-offset-1'
+                                            : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                                             }`}
                                     >
                                         {reason}
@@ -97,8 +97,8 @@ export function SkipExerciseModal({ isOpen, onClose, onConfirm }: SkipExerciseMo
                                     onClick={handleConfirm}
                                     disabled={!selectedReason}
                                     className={`w-full py-6 text-base font-bold rounded-2xl ${selectedReason
-                                            ? 'bg-zinc-900 text-white shadow-lg shadow-zinc-300'
-                                            : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+                                        ? 'bg-zinc-900 text-white shadow-lg shadow-zinc-300'
+                                        : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
                                         }`}
                                 >
                                     Confirmar y Saltar
