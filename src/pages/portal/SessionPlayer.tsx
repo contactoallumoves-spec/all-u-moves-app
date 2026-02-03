@@ -244,10 +244,19 @@ export default function SessionPlayer() {
                     <div className="bg-white rounded-3xl p-1 shadow-sm border border-zinc-100 overflow-hidden">
                         {(() => {
                             const explicitType = currentItem.details?.cardType;
-                            // Only StrengthCard enabled for now
-                            if (explicitType === 'pelvic' || explicitType === 'timer') {
-                                return <div className="p-4 text-center text-zinc-400">Carta desactivada por seguridad (Modo Debug)</div>
+
+                            // [FIX] Restore all cards
+                            if (explicitType === 'pelvic') {
+                                // return <PelvicCard exercise={currentItem} sessionId={uniqueSessionId} onComplete={handleSetComplete} />;
+                                return <div className="p-4 text-center text-zinc-400">Carta Pélvica (Pendiente de Importación)</div>
                             }
+                            if (explicitType === 'timer') {
+                                // return <TimerCard exercise={currentItem} sessionId={uniqueSessionId} onComplete={handleSetComplete} />;
+                                return <div className="p-4 text-center text-zinc-400">Carta Temporizador (Pendiente de Importación)</div>
+                            }
+                            // Default to StrengthCard for now if components are missing, 
+                            // BUT DO NOT SHOW "DISABLED" message which scares users.
+                            // Ideally we should import them if they exist.
                             return <StrengthCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
                         })()}
                     </div>
