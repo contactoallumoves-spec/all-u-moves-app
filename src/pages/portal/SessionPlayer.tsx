@@ -108,13 +108,13 @@ export default function SessionPlayer() {
             // 2. Trigger Cloud Sync (Pass feedback directly to avoid stale state)
             await syncSession(uniqueSessionId, { feedback });
 
-            // 3. Navigate back
-            navigate('../home');
+            // 3. Success state is handled by UI button now
+            // navigate('../home'); 
         } catch (error) {
             console.error("Sync failed", error);
             // Optionally show error toast
             alert("Error al guardar la sesión en la nube. Se guardó localmente. Por favor revisa tu conexión.");
-            navigate('../home'); // Exit anyway for now
+            // navigate('../home'); // Stay to show error? Or just let them retry.
         } finally {
             setIsSubmitting(false);
         }
@@ -151,6 +151,7 @@ export default function SessionPlayer() {
     // Duration State
     const [startTime] = useState<number>(Date.now());
     const [sessionDuration, setSessionDuration] = useState<string>('');
+    const [isSaved, setIsSaved] = useState(false); // Success state
 
     // Calculate duration on finish
     useEffect(() => {
@@ -164,6 +165,32 @@ export default function SessionPlayer() {
 
     // Feedback View (Unified Summary Screen)
     if (showFeedback) {
+        // Success / Saved State
+        if (isSaved) {
+            return (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col h-screen bg-black text-white items-center justify-center p-6 text-center"
+                >
+                    <div className="w-20 h-20 bg-brand-600/20 rounded-full flex items-center justify-center mb-6 ring-1 ring-brand-500/50 shadow-[0_0_30px_rgba(236,72,153,0.2)]">
+                        <Flag className="w-10 h-10 text-brand-500" />
+                    </div>
+                    <h1 className="text-3xl font-bold mb-2 text-white">¡Gracias!</h1>
+                    <p className="text-zinc-400 mb-8 max-w-xs">Tu sesión y feedback han sido guardados correctamente en tu historial.</p>
+
+                    <Button
+                        size="lg"
+                        onClick={() => navigate('../home')}
+                        className="w-full max-w-sm rounded-xl h-14 bg-zinc-100 text-black hover:bg-white font-bold"
+                    >
+                        Volver al Inicio
+                    </Button>
+                </motion.div>
+            );
+        }
+
+        // Summary Input State
         return (
             <motion.div
                 initial={{ opacity: 0, y: "100%" }}
@@ -172,57 +199,68 @@ export default function SessionPlayer() {
                 className="flex flex-col h-screen bg-black text-white overflow-hidden"
             >
 
-                {/* 1. Header & Stats Section (No confetti, clean) */}
-                <div className="bg-gradient-to-b from-brand-900/30 to-black p-6 pb-2">
-                    <div className="flex justify-between items-start mb-4">
-                        <div onClick={() => setShowFeedback(false)} className="text-zinc-500 text-sm flex items-center gap-1 cursor-pointer">
-                            <ChevronLeft className="w-4 h-4" /> Volver
-                        </div>
-                        <span className="text-zinc-600 text-xs font-mono">{new Date().toLocaleDateString()}</span>
-                    </div>
+                {/* 1. Header & Stats Section (Premium Glass) */}
+                <div className="relative overflow-hidden bg-brand-950 p-6 pb-8 border-b border-white/5">
+                    {/* Background Glow */}
+                    <div className="absolute top-[-50%] left-[-20%] w-[300px] h-[300px] bg-brand-600/20 blur-[100px] rounded-full pointer-events-none" />
 
-                    <h1 className="text-3xl font-bold mb-2 text-white">¡Sesión Completada!</h1>
-                    <p className="text-brand-200 text-sm mb-6">Gran trabajo hoy. Aquí está tu resumen.</p>
-
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold text-white mb-1">{sessionDuration || '0 min'}</span>
-                            <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Duración Tot.</span>
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-6">
+                            <div onClick={() => setShowFeedback(false)} className="text-brand-200/50 text-sm flex items-center gap-1 cursor-pointer hover:text-white transition-colors">
+                                <ChevronLeft className="w-4 h-4" /> Ajustar
+                            </div>
+                            <span className="text-brand-200/30 text-xs font-mono tracking-widest uppercase">{new Date().toLocaleDateString()}</span>
                         </div>
-                        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-bold text-brand-400 mb-1">{planExercises.length}</span>
-                            <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Ejercicios</span>
+
+                        <h1 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-brand-200">
+                            ¡Misión Cumplida!
+                        </h1>
+                        <p className="text-brand-200/70 text-sm mb-6 font-light">Has dado un paso más hacia tu recuperación.</p>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg">
+                                <span className="text-3xl font-bold text-white mb-1 tabular-nums">{sessionDuration || '0'}</span>
+                                <span className="text-[10px] uppercase tracking-widest text-brand-200/50 font-bold">Minutos</span>
+                            </div>
+                            <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg">
+                                <span className="text-3xl font-bold text-brand-400 mb-1 tabular-nums">{planExercises.length}</span>
+                                <span className="text-[10px] uppercase tracking-widest text-brand-200/50 font-bold">Ejercicios</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* 2. Scrollable Feedback Form */}
-                <div className="flex-1 overflow-y-auto px-6 pb-24">
-                    <div className="space-y-8 mt-4">
+                <div className="flex-1 overflow-y-auto px-6 pb-28 pt-6">
+                    <div className="space-y-10">
 
                         {/* Title for Feedback Section */}
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 pb-2 border-b border-white/10">
                             <MessageSquare className="w-4 h-4 text-brand-500" />
-                            <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wide">Registro Clínico</h3>
+                            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">¿Cómo te sentiste?</h3>
                         </div>
 
                         {/* RPE Scale (Premium) */}
-                        <RPESelector
-                            value={feedback.rpe}
-                            onChange={(val) => setFeedback({ ...feedback, rpe: val })}
-                        />
+                        <div className="space-y-3">
+                            <RPESelector
+                                value={feedback.rpe}
+                                onChange={(val) => setFeedback({ ...feedback, rpe: val })}
+                            />
+                        </div>
 
                         {/* Pain Scale (Premium) */}
-                        <PainSelector
-                            value={feedback.pain}
-                            onChange={(val) => setFeedback({ ...feedback, pain: val })}
-                        />
+                        <div className="space-y-3">
+                            <PainSelector
+                                value={feedback.pain}
+                                onChange={(val) => setFeedback({ ...feedback, pain: val })}
+                            />
+                        </div>
 
                         {/* Fatigue Scale */}
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <div className="flex justify-between items-center px-1">
-                                <span className="text-xs font-bold uppercase text-zinc-400">Fatiga General</span>
-                                <span className="text-xs font-bold bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{feedback.fatigue}/10</span>
+                                <span className="text-xs font-bold uppercase text-zinc-500 tracking-wider">Fatiga</span>
+                                <span className="text-xs font-bold bg-zinc-800 text-zinc-300 px-2 py-1 rounded-md min-w-[3rem] text-center">{feedback.fatigue}/10</span>
                             </div>
                             <input
                                 type="range" min="0" max="10" step="1"
@@ -230,25 +268,25 @@ export default function SessionPlayer() {
                                 onChange={(e) => setFeedback({ ...feedback, fatigue: parseInt(e.target.value) })}
                                 className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
                             />
-                            <div className="flex justify-between text-[10px] text-zinc-500">
-                                <span>Fresco</span>
-                                <span>Exhausto</span>
+                            <div className="flex justify-between text-[10px] text-zinc-600 uppercase font-bold tracking-wider">
+                                <span>Energía Total</span>
+                                <span>Agotamiento</span>
                             </div>
                         </div>
 
                         {/* Symptoms */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase text-zinc-400 block px-1">Sensaciones / Síntomas</label>
+                        <div className="space-y-4">
+                            <label className="text-xs font-bold uppercase text-zinc-500 tracking-wider block px-1">Síntomas Notables</label>
                             <div className="flex flex-wrap gap-2">
                                 {["Pesadez Pélvica", "Escape de orina", "Dolor Articular", "Mareo", "Falta de aire", "Calambre"].map(sym => (
                                     <button
                                         key={sym}
                                         onClick={() => toggleSymptom(sym)}
                                         className={cn(
-                                            "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all active:scale-95",
+                                            "px-4 py-2 rounded-full text-xs font-medium border transition-all active:scale-95",
                                             feedback.symptoms.includes(sym)
-                                                ? "bg-brand-900 border-brand-500 text-brand-100 shadow-[0_0_10px_rgba(236,72,153,0.3)]"
-                                                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                                                ? "bg-brand-900/50 border-brand-500 text-brand-100 shadow-[0_0_15px_rgba(236,72,153,0.15)]"
+                                                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:bg-zinc-800"
                                         )}
                                     >
                                         {sym}
@@ -260,15 +298,15 @@ export default function SessionPlayer() {
                 </div>
 
                 {/* 3. Footer Action */}
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur border-t border-zinc-900 z-50">
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent z-50 pt-12">
                     <Button
                         size="lg"
-                        className="w-full rounded-xl h-14 text-lg bg-brand-600 hover:bg-brand-700 text-white shadow-xl shadow-brand-900/20"
+                        className="w-full rounded-2xl h-14 text-lg bg-white text-black hover:bg-brand-100 shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 font-bold"
                         onClick={handleSendFeedback}
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : null}
-                        {isSubmitting ? 'Guardando...' : 'Guardar y Finalizar'}
+                        {isSubmitting ? 'Guardando...' : 'Finalizar Sesión'}
                     </Button>
                 </div>
             </motion.div>
