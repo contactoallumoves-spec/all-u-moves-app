@@ -106,86 +106,89 @@ export default function PortalDashboard() {
 
                 <CardContent className="p-6 relative z-10 space-y-5">
                     <div className="flex justify-between items-start">
-                    </div>
-                    <h2 className="text-xl font-bold text-brand-900 leading-tight">
-                        {hasSession
-                            ? (isSelectedDateCompleted ? "¡Sesión Completada!" : (isMissed ? "Sesión Pendiente" : "Tu Sesión"))
-                            : "Día de Descanso"}
-                    </h2>
-                    {hasSession && (
-                        <div className="space-y-1 mt-1">
-                            <p className="text-brand-500 text-xs font-medium">
-                                {selectedExercises.length} ejercicios • ~45 min
-                            </p>
-                            {equipmentSummary && (
-                                <p className="text-xs text-brand-400 font-medium flex items-center gap-1">
-                                    <span className="w-1 h-1 rounded-full bg-brand-300" />
-                                    {equipmentSummary}
-                                </p>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="uppercase text-[10px] font-bold tracking-widest text-brand-400 bg-brand-50 px-2 py-0.5 rounded-full">
+                                    {isToday ? "Hoy" : dayName}
+                                </span>
+                            </div>
+                            <h2 className="text-xl font-bold text-brand-900 leading-tight">
+                                {hasSession
+                                    ? (isSelectedDateCompleted ? "¡Sesión Completada!" : (isMissed ? "Sesión Pendiente" : "Tu Sesión"))
+                                    : "Día de Descanso"}
+                            </h2>
+                            {hasSession && (
+                                <div className="space-y-1 mt-1">
+                                    <p className="text-brand-500 text-xs font-medium">
+                                        {selectedExercises.length} ejercicios • ~45 min
+                                    </p>
+                                    {equipmentSummary && (
+                                        <p className="text-xs text-brand-400 font-medium flex items-center gap-1">
+                                            <span className="w-1 h-1 rounded-full bg-brand-300" />
+                                            {equipmentSummary}
+                                        </p>
+                                    )}
+                                </div>
                             )}
                         </div>
-                    )}
-                </div>
-                <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm",
-                    isSelectedDateCompleted
-                        ? "bg-green-500 text-white"
-                        : isMissed
-                            ? "bg-orange-100 text-orange-600"
-                            : (hasSession ? "bg-brand-900 text-white" : "bg-zinc-100 text-zinc-400")
-                )}>
-                    {isSelectedDateCompleted ? <CheckCircle2 className="w-6 h-6" /> : (hasSession ? <PlayCircle className="w-6 h-6 ml-0.5" /> : <Clock className="w-6 h-6" />)}
-                </div>
-        </div>
-
-                    {
-        hasSession ? (
-            <div className="space-y-4">
-                {/* Exercise Preview List (Limited) */}
-                <div className="space-y-2">
-                    <p className="text-xs font-bold text-brand-300 uppercase tracking-widest">Preview</p>
-                    {selectedExercises.slice(0, 3).map((ex: any, idx: number) => (
-                        <div key={idx} className="flex items-center gap-3 text-sm text-brand-800 p-2.5 rounded-lg border border-brand-50 bg-brand-50/30">
-                            <div className="w-6 h-6 bg-brand-200 rounded-full flex items-center justify-center text-[10px] font-bold text-brand-700">
-                                {idx + 1}
-                            </div>
-                            <span className="truncate flex-1 font-medium capitalize">{ex.name}</span>
+                        <div className={cn(
+                            "w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm",
+                            isSelectedDateCompleted
+                                ? "bg-green-500 text-white"
+                                : isMissed
+                                    ? "bg-orange-100 text-orange-600"
+                                    : (hasSession ? "bg-brand-900 text-white" : "bg-zinc-100 text-zinc-400")
+                        )}>
+                            {isSelectedDateCompleted ? <CheckCircle2 className="w-6 h-6" /> : (hasSession ? <PlayCircle className="w-6 h-6 ml-0.5" /> : <Clock className="w-6 h-6" />)}
                         </div>
-                    ))}
-                    {selectedExercises.length > 3 && (
-                        <p className="text-xs text-brand-400 text-center italic">+ {selectedExercises.length - 3} más...</p>
-                    )}
-                </div>
+                    </div>
 
-                <Button
-                    className={cn(
-                        "w-full text-white shadow-xl group h-12 text-base rounded-xl transition-colors",
-                        isSelectedDateCompleted
-                            ? "bg-green-600 hover:bg-green-700 shadow-green-900/20"
-                            : isMissed
-                                ? "bg-orange-500 hover:bg-orange-600 shadow-orange-500/20"
-                                : "bg-brand-900 hover:bg-brand-800 shadow-brand-900/20"
+                    {hasSession ? (
+                        <div className="space-y-4">
+                            {/* Exercise Preview List (Limited) */}
+                            <div className="space-y-2">
+                                <p className="text-xs font-bold text-brand-300 uppercase tracking-widest">Preview</p>
+                                {selectedExercises.slice(0, 3).map((ex: any, idx: number) => (
+                                    <div key={idx} className="flex items-center gap-3 text-sm text-brand-800 p-2.5 rounded-lg border border-brand-50 bg-brand-50/30">
+                                        <div className="w-6 h-6 bg-brand-200 rounded-full flex items-center justify-center text-[10px] font-bold text-brand-700">
+                                            {idx + 1}
+                                        </div>
+                                        <span className="truncate flex-1 font-medium capitalize">{ex.name}</span>
+                                    </div>
+                                ))}
+                                {selectedExercises.length > 3 && (
+                                    <p className="text-xs text-brand-400 text-center italic">+ {selectedExercises.length - 3} más...</p>
+                                )}
+                            </div>
+
+                            <Button
+                                className={cn(
+                                    "w-full text-white shadow-xl group h-12 text-base rounded-xl transition-colors",
+                                    isSelectedDateCompleted
+                                        ? "bg-green-600 hover:bg-green-700 shadow-green-900/20"
+                                        : isMissed
+                                            ? "bg-orange-500 hover:bg-orange-600 shadow-orange-500/20"
+                                            : "bg-brand-900 hover:bg-brand-800 shadow-brand-900/20"
+                                )}
+                                onClick={() => navigate(`../session/${dayKey}`)}
+                            >
+                                <span className="mr-2">
+                                    {isSelectedDateCompleted
+                                        ? "Ver Resumen / Repetir"
+                                        : isMissed
+                                            ? "Recuperar Sesión"
+                                            : "Iniciar Sesión"}
+                                </span>
+                                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="py-8 px-4 bg-zinc-50 rounded-xl text-center border-2 border-zinc-100 border-dashed">
+                            <CheckCircle2 className="w-8 h-8 text-zinc-200 mx-auto mb-2" />
+                            <p className="text-zinc-400 text-sm">Disfruta tu descanso. ¡Nos vemos mañana!</p>
+                        </div>
                     )}
-                    onClick={() => navigate(`../session/${dayKey}`)}
-                >
-                    <span className="mr-2">
-                        {isSelectedDateCompleted
-                            ? "Ver Resumen / Repetir"
-                            : isMissed
-                                ? "Recuperar Sesión"
-                                : "Iniciar Sesión"}
-                    </span>
-                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-            </div>
-        ) : (
-            <div className="py-8 px-4 bg-zinc-50 rounded-xl text-center border-2 border-zinc-100 border-dashed">
-                <CheckCircle2 className="w-8 h-8 text-zinc-200 mx-auto mb-2" />
-                <p className="text-zinc-400 text-sm">Disfruta tu descanso. ¡Nos vemos mañana!</p>
-            </div>
-        )
-    }
-                </CardContent >
+                </CardContent>
             </Card >
         </div >
     );
