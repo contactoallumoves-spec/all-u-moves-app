@@ -14,8 +14,8 @@ import { cn } from '../../lib/utils';
 // CARDS
 import { SmartTimer } from './components/SmartTimer';
 import { StrengthCard } from './components/StrengthCard';
-// import { PelvicCard } from './components/PelvicCard';
-// import { TimerCard } from './components/TimerCard';
+import { PelvicCard } from './components/PelvicCard';
+import { TimerCard } from './components/TimerCard';
 // import { IntervalCard } from './components/IntervalCard';
 
 export default function SessionPlayer() {
