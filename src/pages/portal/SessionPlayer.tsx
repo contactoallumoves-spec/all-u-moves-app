@@ -252,6 +252,9 @@ export default function SessionPlayer() {
                             if (explicitType === 'timer') {
                                 return <TimerCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
                             }
+                            if (explicitType === 'interval' || explicitType === 'hiit') {
+                                return <IntervalCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
+                            }
                             // Default to StrengthCard for now if components are missing, 
                             // BUT DO NOT SHOW "DISABLED" message which scares users.
                             // Ideally we should import them if they exist.

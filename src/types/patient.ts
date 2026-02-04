@@ -77,6 +77,7 @@ export interface PrescribedPlan {
         saturday: string[];
         sunday: string[];
     };
+    weeks?: { [key: number]: PrescribedPlan }; // [NEW] For Annual Programming (index -> Plan for that week)
 }
 
 export interface ExerciseParameters {
