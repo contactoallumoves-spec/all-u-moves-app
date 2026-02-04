@@ -207,9 +207,14 @@ export default function PortalDashboard() {
                 selectedDate={selectedDate}
                 onSelectDate={setSelectedDate}
                 scheduledDays={scheduledDays}
-                completedDates={completedDates}
-                planStartDate={safeDate(activePlan?.startDate)}
-                planEndDate={safeDate(activePlan?.endDate)}
+                completedDates={sessionLogs.map(log => {
+                    // Ensure we parse date correctly for completed logs
+                    if (!log.date) return '';
+                    const date = safeDate(log.date);
+                    return date ? format(date, 'yyyy-MM-dd') : '';
+                })}
+                planStartDate={activePlan ? safeDate(activePlan.startDate) : undefined}
+                planEndDate={activePlan ? safeDate(activePlan.endDate) : undefined}
             />
 
             {/* Selected Day Card */}

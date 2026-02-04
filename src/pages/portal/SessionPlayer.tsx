@@ -247,12 +247,10 @@ export default function SessionPlayer() {
 
                             // [FIX] Restore all cards
                             if (explicitType === 'pelvic') {
-                                // return <PelvicCard exercise={currentItem} sessionId={uniqueSessionId} onComplete={handleSetComplete} />;
-                                return <div className="p-4 text-center text-zinc-400">Carta Pélvica (Pendiente de Importación)</div>
+                                return <PelvicCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
                             }
                             if (explicitType === 'timer') {
-                                // return <TimerCard exercise={currentItem} sessionId={uniqueSessionId} onComplete={handleSetComplete} />;
-                                return <div className="p-4 text-center text-zinc-400">Carta Temporizador (Pendiente de Importación)</div>
+                                return <TimerCard exercise={currentItem} sessionId={uniqueSessionId} onSetComplete={handleSetComplete} />;
                             }
                             // Default to StrengthCard for now if components are missing, 
                             // BUT DO NOT SHOW "DISABLED" message which scares users.

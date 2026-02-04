@@ -3,7 +3,7 @@ import { PlanExercise, SessionExerciseLog } from '../../../types/patient';
 import { Play, Pause, Check, Zap } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { useSession } from '../../../context/SessionContext';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 
 interface PelvicCardProps {
@@ -139,27 +139,27 @@ export function PelvicCard({ exercise, sessionId, onSetComplete }: PelvicCardPro
                 </div>
             </div>
 
-            {/* 2. The Visualizer (Only visible if active set or just display 1st?) */}
+            {/* 2. The Visualizer (CSS Transitions) */}
             <div className="aspect-square w-full max-w-[280px] mx-auto bg-white rounded-full shadow-[0_0_40px_rgba(236,72,153,0.1)] border border-pink-50 relative flex items-center justify-center overflow-hidden">
 
-                {/* Background ripples */}
+                {/* Background ripples (CSS Animation) */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.div
-                        animate={{ scale: phase === 'REST' ? [1, 1.1, 1] : 1 }}
-                        transition={{ repeat: Infinity, duration: 3 }}
-                        className="w-48 h-48 rounded-full bg-pink-50/50"
+                    <div
+                        className={cn(
+                            "w-48 h-48 rounded-full bg-pink-50/50 transition-transform duration-[3000ms] ease-in-out",
+                            phase === 'REST' ? "scale-110" : "scale-100"
+                        )}
                     />
                 </div>
 
                 {/* Main Bloom Circle */}
-                <motion.div
-                    className="w-40 h-40 rounded-full shadow-lg backdrop-blur-sm z-10 flex items-center justify-center"
-                    animate={{
-                        scale: visual.scale,
+                <div
+                    className="w-40 h-40 rounded-full shadow-lg backdrop-blur-sm z-10 flex items-center justify-center transition-all duration-1000 ease-in-out"
+                    style={{
+                        transform: `scale(${visual.scale})`,
                         backgroundColor: visual.color,
                         opacity: visual.opacity
                     }}
-                    transition={{ duration: 1, ease: "easeInOut" }}
                 >
                     <div className="text-white text-center">
                         <span className="text-3xl font-bold block">{phase === 'IDLE' ? 'Ready' : phase === 'DONE' ? 'Bien!' : secondsLeft}</span>
@@ -167,7 +167,7 @@ export function PelvicCard({ exercise, sessionId, onSetComplete }: PelvicCardPro
                             {phase === 'WORK' ? 'CONTRAE' : phase === 'REST' ? 'RELAJA' : phase === 'DONE' ? 'Listo' : 'Inicio'}
                         </span>
                     </div>
-                </motion.div>
+                </div>
 
                 {/* Rep Counter Badge */}
                 {phase !== 'IDLE' && (
