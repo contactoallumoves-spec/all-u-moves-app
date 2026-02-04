@@ -18,6 +18,9 @@ import { PelvicCard } from './components/PelvicCard';
 import { TimerCard } from './components/TimerCard';
 import { IntervalCard } from './components/IntervalCard';
 
+// [NEW] Import SessionFeedback
+import { SessionFeedback } from './components/SessionFeedback';
+
 export default function SessionPlayer() {
     const { patient } = useOutletContext<{ patient: Patient }>();
     const navigate = useNavigate();
@@ -91,9 +94,13 @@ export default function SessionPlayer() {
     const [isTimerVisible, setIsTimerVisible] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
 
+    // [NEW] Feedback State
+    const [showFeedback, setShowFeedback] = useState(false);
+
     useEffect(() => {
         setActiveIndex(0);
         setIsFinished(false);
+        setShowFeedback(false);
         // Init Session Log if needed
         if (planExercises && planExercises.length > 0 && patient.id) {
             dispatch({ type: 'INIT_SESSION', payload: { sessionId: uniqueSessionId, patientId: patient.id } });
@@ -126,7 +133,8 @@ export default function SessionPlayer() {
             setActiveIndex(prev => prev + 1);
             // setFullExercise(null); // [FIX] Don't clear here, let useEffect handle it
         } else {
-            setIsFinished(true); // Show Finish Screen instead of just exiting
+            // [NEW] Trigger Feedback instead of direct finish
+            setShowFeedback(true);
         }
     };
 
@@ -141,6 +149,15 @@ export default function SessionPlayer() {
         setIsTimerVisible(true);
     };
 
+    const handleFeedbackSubmit = (data: { rpe: number; notes: string; pain?: boolean }) => {
+        // Here we would dispatch to update the session log with RPE/Notes
+        // dispatch({ type: 'UPDATE_SESSION_METADATA', payload: { ...data } });
+        console.log('Feedback submitted:', data);
+
+        setShowFeedback(false);
+        setIsFinished(true); // Show Finish Screen
+    };
+
     const handleFinishSession = () => {
         dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' }); // Force sync attempt
         navigate('../home');
@@ -148,6 +165,11 @@ export default function SessionPlayer() {
 
     // 5. Guards
     if (loadingPlan && !planExercises) return <div className="fixed inset-0 bg-white flex items-center justify-center"><Loader2 className="animate-spin text-brand-600" /></div>;
+
+    // [NEW] Feedback Screen
+    if (showFeedback) {
+        return <SessionFeedback onComplete={handleFeedbackSubmit} />;
+    }
 
     // [NEW] Finish Screen
     if (isFinished) {

@@ -218,19 +218,17 @@ export default function PortalDashboard() {
                 planEndDate={(() => {
                     const explicitEnd = activePlan ? safeDate(activePlan.endDate) : undefined;
 
-                    if (activePlan && activePlan.weeks) {
+                    // [FIX] Use ANNUAL PLAN weeks if available to determine effective end
+                    if (annualPlan && annualPlan.weeks) {
                         // Find the last week number with content
-                        const weekNums = Object.keys(activePlan.weeks).map(Number).filter(n => !isNaN(n));
+                        const weekNums = Object.keys(annualPlan.weeks).map(Number).filter(n => !isNaN(n));
                         if (weekNums.length > 0) {
                             const lastWeek = Math.max(...weekNums);
-                            const planStart = safeDate(activePlan.startDate);
+                            const planStart = safeDate(annualPlan.startDate);
                             if (planStart) {
                                 // Calculate end of that week
                                 const effectiveEnd = endOfDay(addDays(startOfWeek(planStart, { weekStartsOn: 1 }), (lastWeek * 7) + 6));
-                                // If explicit end is missing OR effective end is earlier/more relevant, use it?
-                                // Actually, if we have explicit end, we usually trust it. 
-                                // But if explicit end is 1 year out, we prefer effective end for visualization?
-                                // Let's use the Minimum of the two if both exist, or effective if explicit missing.
+
                                 if (explicitEnd) {
                                     return isBefore(effectiveEnd, explicitEnd) ? effectiveEnd : explicitEnd;
                                 }
