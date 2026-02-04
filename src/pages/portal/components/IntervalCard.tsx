@@ -3,7 +3,6 @@ import { PlanExercise, SessionExerciseLog } from '../../../types/patient';
 import { Play, Pause, RotateCcw, Check, SkipForward, Timer } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { useSession } from '../../../context/SessionContext';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface IntervalCardProps {
     exercise: PlanExercise;
@@ -158,7 +157,7 @@ export function IntervalCard({ exercise, sessionId, onSetComplete }: IntervalCar
                 {/* SVG Progress Ring */}
                 <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-zinc-100" />
-                    <motion.circle
+                    <circle
                         cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"
                         className={cn("transition-colors duration-500",
                             phase === 'work' ? 'text-brand-500' :
@@ -167,30 +166,26 @@ export function IntervalCard({ exercise, sessionId, onSetComplete }: IntervalCar
                         )}
                         strokeDasharray="283"
                         strokeDashoffset={283 - (283 * progress) / 100}
-                        animate={{ strokeDashoffset: 283 - (283 * progress) / 100 }}
-                        transition={{ duration: 1, ease: 'linear' }} // Smooth second ticks
+                        style={{ transition: 'stroke-dashoffset 1s linear' }}
                         strokeLinecap="round"
                     />
                 </svg>
 
                 {/* Inner Content */}
                 <div className="relative z-10 flex flex-col items-center">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={phase}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="text-center"
-                        >
-                            <span className={cn("text-5xl font-black tabular-nums tracking-tighter", getPhaseColor())}>
-                                {timeLeft}
-                            </span>
-                            <span className="block text-xs font-bold text-zinc-400 mt-2 uppercase tracking-[0.2em]">
-                                {getPhaseLabel()}
-                            </span>
-                        </motion.div>
-                    </AnimatePresence>
+                    <div
+                        key={phase}
+                        className={cn("text-center transition-all duration-300",
+                            phase === 'finished' ? "scale-110" : "scale-100"
+                        )}
+                    >
+                        <span className={cn("text-5xl font-black tabular-nums tracking-tighter transition-colors duration-300", getPhaseColor())}>
+                            {timeLeft}
+                        </span>
+                        <span className="block text-xs font-bold text-zinc-400 mt-2 uppercase tracking-[0.2em]">
+                            {getPhaseLabel()}
+                        </span>
+                    </div>
                 </div>
             </div>
 

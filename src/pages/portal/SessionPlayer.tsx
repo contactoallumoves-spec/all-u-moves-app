@@ -16,7 +16,7 @@ import { SmartTimer } from './components/SmartTimer';
 import { StrengthCard } from './components/StrengthCard';
 import { PelvicCard } from './components/PelvicCard';
 import { TimerCard } from './components/TimerCard';
-// import { IntervalCard } from './components/IntervalCard';
+import { IntervalCard } from './components/IntervalCard';
 
 export default function SessionPlayer() {
     const { patient } = useOutletContext<{ patient: Patient }>();

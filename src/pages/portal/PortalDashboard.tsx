@@ -5,7 +5,7 @@ import { Card, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Clock, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { WeeklyCalendar } from './components/WeeklyCalendar';
-import { format, isBefore, startOfDay, isAfter, endOfDay, startOfWeek } from 'date-fns';
+import { format, isBefore, startOfDay, isAfter, endOfDay, startOfWeek, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SessionLogService } from '../../services/sessionLogService';
 import { ExerciseService } from '../../services/exerciseService';
@@ -214,7 +214,32 @@ export default function PortalDashboard() {
                     return date ? format(date, 'yyyy-MM-dd') : '';
                 })}
                 planStartDate={activePlan ? safeDate(activePlan.startDate) : undefined}
-                planEndDate={activePlan ? safeDate(activePlan.endDate) : undefined}
+                // [FIX] Calculate effective End Date (based on configured weeks if annual)
+                planEndDate={(() => {
+                    const explicitEnd = activePlan ? safeDate(activePlan.endDate) : undefined;
+
+                    if (activePlan && activePlan.weeks) {
+                        // Find the last week number with content
+                        const weekNums = Object.keys(activePlan.weeks).map(Number).filter(n => !isNaN(n));
+                        if (weekNums.length > 0) {
+                            const lastWeek = Math.max(...weekNums);
+                            const planStart = safeDate(activePlan.startDate);
+                            if (planStart) {
+                                // Calculate end of that week
+                                const effectiveEnd = endOfDay(addDays(startOfWeek(planStart, { weekStartsOn: 1 }), (lastWeek * 7) + 6));
+                                // If explicit end is missing OR effective end is earlier/more relevant, use it?
+                                // Actually, if we have explicit end, we usually trust it. 
+                                // But if explicit end is 1 year out, we prefer effective end for visualization?
+                                // Let's use the Minimum of the two if both exist, or effective if explicit missing.
+                                if (explicitEnd) {
+                                    return isBefore(effectiveEnd, explicitEnd) ? effectiveEnd : explicitEnd;
+                                }
+                                return effectiveEnd;
+                            }
+                        }
+                    }
+                    return explicitEnd;
+                })()}
             />
 
             {/* Selected Day Card */}
