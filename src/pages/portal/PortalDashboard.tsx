@@ -227,7 +227,7 @@ export default function PortalDashboard() {
                             const planStart = safeDate(annualPlan.startDate);
                             if (planStart) {
                                 // Calculate end of that week
-                                const effectiveEnd = endOfDay(addDays(startOfWeek(planStart, { weekStartsOn: 1 }), (lastWeek * 7) + 6));
+                                const effectiveEnd = endOfDay(addDays(startOfWeek(planStart, { weekStartsOn: 1 }), ((lastWeek - 1) * 7) + 6));
 
                                 if (explicitEnd) {
                                     return isBefore(effectiveEnd, explicitEnd) ? effectiveEnd : explicitEnd;

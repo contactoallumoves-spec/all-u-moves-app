@@ -27,7 +27,7 @@ export default function SessionPlayer() {
     const { dateStr } = useParams<{ dateStr: string }>();
 
     // 1. RE-ENABLE SESSION CONTEXT
-    const { dispatch } = useSession();
+    const { dispatch, syncSession } = useSession();
 
     // 2. Logic: Date & IDs
     const sessionDate = dateStr ? parseISO(dateStr) : new Date();
@@ -149,14 +149,26 @@ export default function SessionPlayer() {
         setIsTimerVisible(true);
     };
 
-    const handleFeedbackSubmit = (data: { rpe: number; notes: string; pain?: boolean }) => {
-        // Here we would dispatch to update the session log with RPE/Notes
-        // dispatch({ type: 'UPDATE_SESSION_METADATA', payload: { ...data } });
-        console.log('Feedback submitted:', data);
+    const handleFeedbackSubmit = async (data: { rpe: number; notes: string; pain?: boolean }) => {
+        // 1. Dispatch Feedback to Local Reducer
+        dispatch({ type: 'UPDATE_FEEDBACK', payload: { sessionId: uniqueSessionId, feedback: data } });
+
+        // 2. [FIX] FORCE SYNC TO FIRESTORE with new data
+        try {
+            await syncSession(uniqueSessionId, {
+                status: 'completed', // Ensure we mark it completed
+                feedback: data
+            });
+            console.log('Session Synced Successfully');
+        } catch (e) {
+            console.error('Failed to sync session on finish', e);
+        }
 
         setShowFeedback(false);
         setIsFinished(true); // Show Finish Screen
     };
+
+    // [END] handleFeedbackSubmit
 
     const handleFinishSession = () => {
         dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' }); // Force sync attempt
