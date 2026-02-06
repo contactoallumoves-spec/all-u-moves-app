@@ -9,7 +9,7 @@ import { useSession } from '../../context/SessionContext';
 import { Button } from '../../components/ui/Button';
 import { ChevronLeft, Info, Loader2, CheckCircle2, Play, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
-// import { motion } from 'framer-motion'; // [FIX] Disabled Animation to prevent crash
+
 
 // CARDS
 import { SmartTimer } from './components/SmartTimer';
@@ -131,19 +131,15 @@ export default function SessionPlayer() {
     const handleNext = () => {
         if (activeIndex < (planExercises?.length || 0) - 1) {
             setActiveIndex(prev => prev + 1);
-            // setFullExercise(null); // [FIX] Don't clear here, let useEffect handle it
         } else {
             // [NEW] Trigger Feedback instead of direct finish
             setShowFeedback(true);
         }
     };
 
-    const handlePrev = () => {
-        if (activeIndex > 0) {
-            setActiveIndex(prev => prev - 1);
-            // setFullExercise(null); // [FIX] Don't clear here
-        }
-    };
+    if (activeIndex > 0) {
+        setActiveIndex(prev => prev - 1);
+    }
 
     const handleSetComplete = () => {
         setIsTimerVisible(true);
