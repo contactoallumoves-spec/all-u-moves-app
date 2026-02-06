@@ -57,6 +57,9 @@ export default function PortalDashboard() {
             if (annualPlan.weeks && annualPlan.weeks[weekNum]) {
                 return annualPlan.weeks[weekNum];
             }
+            // [FIX] If we are in an Annual Plan but the specific week is missing, 
+            // DO NOT fallback to the generic plan. Return null (Day off).
+            return null;
         }
 
         // 2. Fallback to the generic activePlan on the patient (Legacy/Simplest)
