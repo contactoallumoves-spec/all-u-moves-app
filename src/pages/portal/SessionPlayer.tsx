@@ -137,23 +137,41 @@ export default function SessionPlayer() {
         }
     };
 
-    if (activeIndex > 0) {
-        setActiveIndex(prev => prev - 1);
-    }
+    const handlePrev = () => {
+        if (activeIndex > 0) {
+            setActiveIndex(prev => prev - 1);
+        }
+    };
 
     const handleSetComplete = () => {
         setIsTimerVisible(true);
     };
 
     const handleFeedbackSubmit = async (data: { rpe: number; notes: string; pain?: boolean }) => {
+        // Convert boolean pain to number (0 or 1) for the SessionFeedback type
+        // Assuming true = 10 (pain present) or just using 1 as a flag, or 0 if no pain.
+        // Actually, let's adapt the data object to match SessionFeedback interface which expects 'pain?: number'
+        // If the UI is sending a boolean, we should probably convert it to a number or ask user for intensity.
+        // For now, let's map true -> 5 (medium) or keeps it simple if it's just a binary flag in current UI.
+        // However, looking at the type definition: pain?: number; // 0-10
+        // We will map boolean true to a number, e.g., 1 (meaning "yes pain" but strictly it should be intensity).
+        // Let's assume 1 for now or cast if logic supports it.
+        // Better yet, let's cast it to satisfy TS if we don't have intensity.
+
+        const feedbackPayload: import('../../types/patient').SessionFeedback = {
+            rpe: data.rpe,
+            comments: data.notes,
+            pain: data.pain ? 5 : 0 // Default 'yes' to 5/10 if no intensity slider available yet
+        };
+
         // 1. Dispatch Feedback to Local Reducer
-        dispatch({ type: 'UPDATE_FEEDBACK', payload: { sessionId: uniqueSessionId, feedback: data } });
+        dispatch({ type: 'UPDATE_FEEDBACK', payload: { sessionId: uniqueSessionId, feedback: feedbackPayload } });
 
         // 2. [FIX] FORCE SYNC TO FIRESTORE with new data
         try {
             await syncSession(uniqueSessionId, {
                 status: 'completed', // Ensure we mark it completed
-                feedback: data
+                feedback: feedbackPayload
             });
             console.log('Session Synced Successfully');
         } catch (e) {
