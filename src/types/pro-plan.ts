@@ -83,3 +83,31 @@ export interface ProDayPlan {
     id: string; // Day ID or Date String
     sections: ProSectionBlock[];
 }
+
+// --- Library / Template Structure ---
+
+export interface ProProgramWeek {
+    id: string;
+    order: number; // 1, 2, 3...
+    name: string; // "Semana de Carga", "Descarga"
+    days: {
+        monday: ProDayPlan | any;
+        tuesday: ProDayPlan | any;
+        wednesday: ProDayPlan | any;
+        thursday: ProDayPlan | any;
+        friday: ProDayPlan | any;
+        saturday: ProDayPlan | any;
+        sunday: ProDayPlan | any;
+    };
+}
+
+export interface ProProgram {
+    id: string;
+    name: string;
+    description?: string;
+    tags: string[]; // "Hipertrofia", "Fuerza", "Glúteos"
+    authorId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    weeks: ProProgramWeek[];
+}

@@ -8,7 +8,12 @@ import FastEvaluationWizard from './pages/FastEvaluationWizard';
 import CompleteEvaluation from './pages/CompleteEvaluation';
 import PatientDetailPage from './pages/PatientDetailPage'; // [NEW]
 import EvolutionPage from './pages/EvolutionPage';
-import ExercisesPage from './pages/ExercisesPage'; // [NEW]
+import ExercisesPage from './pages/ExercisesPage';
+import ProgramLibraryPage from './pages/programs/ProgramLibraryPage'; // [NEW]
+import PlannerSelectorPage from './pages/planning/PlannerSelectorPage'; // [NEW]
+import ProgramBuilderV2 from './pages/programs/ProgramBuilderV2'; // [NEW]
+
+
 import { Button } from './components/ui/Button';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, User } from 'firebase/auth';
@@ -107,6 +112,7 @@ function App() {
 
                 {/* Protected Routes */}
                 <Route path="/" element={user ? <MainLayout><DashboardPage /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/planner" element={user ? <MainLayout><PlannerSelectorPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] Option 2 Direct Planner */}
                 <Route path="/users" element={user ? <MainLayout><PatientsPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/new/:patientId" element={user ? <MainLayout><NewEvaluationPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/fast/:patientId" element={user ? <MainLayout><FastEvaluationWizard /></MainLayout> : <Navigate to="/login" />} />
@@ -115,8 +121,13 @@ function App() {
                 {/* Hub & Sessions */}
                 <Route path="/users/:id" element={user ? <MainLayout><PatientDetailPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/users/:patientId/sessions/new" element={user ? <MainLayout><EvolutionPage /></MainLayout> : <Navigate to="/login" />} />
-                <Route path="/exercises" element={user ? <MainLayout><ExercisesPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] */}
-                <Route path="/users/:patientId/planning" element={user ? <MainLayout><ProgrammingPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] Unified View */}
+                <Route path="/exercises" element={user ? <MainLayout><ExercisesPage /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/users/:patientId/planning" element={user ? <MainLayout><ProgrammingPage /></MainLayout> : <Navigate to="/login" />} />
+
+                {/* [NEW] Program Library */}
+                <Route path="/programs" element={user ? <MainLayout><ProgramLibraryPage /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/programs/new" element={user ? <MainLayout><ProgramBuilderV2 /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/programs/:programId" element={user ? <MainLayout><ProgramBuilderV2 /></MainLayout> : <Navigate to="/login" />} />
 
                 {/* Public Routes */}
                 <Route path="/" element={<PublicLayout />}>

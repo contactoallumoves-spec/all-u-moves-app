@@ -9,9 +9,10 @@ import { PlanBuilder } from '../../components/clinical/PlanBuilder';
 import { Timestamp } from 'firebase/firestore';
 import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Save } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/Button';
+import { SaveWeekAsTemplateModal } from '../../components/programs/SaveWeekAsTemplateModal'; // [NEW]
 
 export default function ProgrammingPage() {
     const { patientId } = useParams<{ patientId: string }>();
@@ -20,6 +21,7 @@ export default function ProgrammingPage() {
     const [patient, setPatient] = useState<Patient | null>(null);
     const [loading, setLoading] = useState(true);
     const [completedDates, setCompletedDates] = useState<Set<string>>(new Set());
+    const [saveTemplateOpen, setSaveTemplateOpen] = useState(false); // [NEW]
 
     // Date State
     const [selectedDate, setSelectedDate] = useState(new Date()); // The specific day selected or today
@@ -161,6 +163,8 @@ export default function ProgrammingPage() {
     if (loading) return <div className="p-8 text-brand-500 animate-pulse">Cargando Programación...</div>;
     if (!annualPlan || !patient) return <div className="p-8 text-red-500">Error: No se pudo cargar los datos.</div>;
 
+    const currentWeekPlan = getWeekInitialPlan();
+
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
             {/* Sidebar Calendar */}
@@ -246,6 +250,13 @@ export default function ProgrammingPage() {
                             Semana del {format(currentWeekStart, 'd')} al {format(addDays(currentWeekStart, 6), 'd MMM')}
                         </p>
                     </div>
+                    {/* [NEW] Save as Template Button */}
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setSaveTemplateOpen(true)}>
+                            <Save className="w-4 h-4 mr-2" />
+                            Guardar como Plantilla
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Plan Builder (Week Editor) */}
@@ -254,12 +265,19 @@ export default function ProgrammingPage() {
                     <PlanBuilder
                         key={currentWeekNumber}
                         patient={patient}
-                        initialPlan={getWeekInitialPlan()}
+                        initialPlan={currentWeekPlan}
                         customSaveHandler={handleSaveWeek}
                         weekDates={weekDates}
                     />
                 </div>
             </div>
+
+            {/* [NEW] Modal */}
+            <SaveWeekAsTemplateModal
+                weekPlan={currentWeekPlan}
+                open={saveTemplateOpen}
+                onClose={() => setSaveTemplateOpen(false)}
+            />
         </div>
     );
 }

@@ -39,7 +39,6 @@ export function ProSetGrid({ cardType, sets, onChange }: ProSetGridProps) {
     };
 
     // Update Field
-    // Casting field to 'any' to allow updating specific union members keys like 'reps' or 'workSec'
     const updateSet = (index: number, field: any, value: any) => {
         const newSets = [...sets];
         newSets[index] = { ...newSets[index], [field]: value };
@@ -49,78 +48,80 @@ export function ProSetGrid({ cardType, sets, onChange }: ProSetGridProps) {
     const isStrength = cardType === 'strength';
 
     return (
-        <div className="w-full">
+        <div className="w-full bg-white">
             {/* Table Header */}
-            <div className="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-2 mb-2 text-[10px] items-center font-bold text-slate-400 uppercase tracking-wider text-center">
+            <div className="grid grid-cols-[32px_1fr_1fr_1fr_1fr_32px] gap-2 py-2 px-2 bg-slate-50 border-b border-slate-100 text-[10px] items-center font-bold text-slate-400 uppercase tracking-wider text-center">
                 <div>#</div>
-                <div>{isStrength ? 'Reps' : 'Trabajo (s)'}</div>
-                <div>{isStrength ? 'Carga (kg)' : 'Pausa (s)'}</div>
-                <div>{isStrength ? 'RPE / RIR' : 'Ciclos'}</div>
+                <div>{isStrength ? 'Reps' : 'Trabajo'}</div>
+                <div>{isStrength ? 'Carga' : 'Pausa'}</div>
+                <div>{isStrength ? 'RPE' : 'Ciclos'}</div>
                 <div>Tipo</div>
                 <div></div>
             </div>
 
             {/* Sets Rows */}
-            <div className="space-y-1">
+            <div className="divide-y divide-slate-50">
                 {sets.map((set, i) => {
-                    const s = set as any; // Cast for easier access to union fields
+                    const s = set as any;
                     return (
-                        <div key={set.id} className="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-2 items-center group">
+                        <div key={set.id} className="grid grid-cols-[32px_1fr_1fr_1fr_1fr_32px] gap-2 items-center py-2 px-2 group hover:bg-slate-50/50 transition-colors">
                             {/* Set Number */}
-                            <div className="flex items-center justify-center font-mono text-xs font-bold text-slate-400 bg-slate-100 rounded h-8">
+                            <div className="flex items-center justify-center font-mono text-xs font-bold text-slate-400 bg-slate-100/50 rounded h-7 w-7 mx-auto">
                                 {i + 1}
                             </div>
 
                             {/* Column 1: Reps / Work */}
                             <input
                                 type="number"
-                                className="h-8 bg-slate-50 border border-slate-200 rounded text-center text-sm font-medium focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                                className="h-8 w-full bg-white border border-slate-200 rounded-md text-center text-sm font-bold text-slate-700 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all placeholder:font-normal placeholder:text-slate-300"
                                 value={isStrength ? s.reps : s.workSec}
                                 onChange={(e) => updateSet(i, isStrength ? 'reps' : 'workSec', Number(e.target.value))}
-                                placeholder={isStrength ? "10" : "30s"}
+                                placeholder={isStrength ? "10" : "30"}
                             />
 
                             {/* Column 2: Load / Rest */}
                             <input
                                 type="number"
-                                className="h-8 bg-slate-50 border border-slate-200 rounded text-center text-sm font-medium focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                                className="h-8 w-full bg-white border border-slate-200 rounded-md text-center text-sm font-bold text-slate-700 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all placeholder:font-normal placeholder:text-slate-300"
                                 value={isStrength ? s.loadKg : s.restSec}
                                 onChange={(e) => updateSet(i, isStrength ? 'loadKg' : 'restSec', Number(e.target.value))}
-                                placeholder={isStrength ? "kg" : "10s"}
+                                placeholder={isStrength ? "kg" : "s"}
                             />
 
                             {/* Column 3: RPE / Cycles */}
                             <input
-                                type="text" // Text to allow "2 RIR" or simple numbers
-                                className="h-8 bg-slate-50 border border-slate-200 rounded text-center text-sm font-medium focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                                type="text"
+                                className="h-8 w-full bg-white border border-slate-200 rounded-md text-center text-sm font-bold text-slate-700 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all placeholder:font-normal placeholder:text-slate-300"
                                 value={isStrength ? (s.rpeTarget || '') : s.reps}
                                 onChange={(e) => updateSet(i, isStrength ? 'rpeTarget' : 'reps', isStrength ? Number(e.target.value) : Number(e.target.value))}
-                                placeholder={isStrength ? "RPE" : "Ciclos"}
+                                placeholder={isStrength ? "-" : "1"}
                             />
 
                             {/* Column 4: Type Selector */}
-                            <select
-                                className={cn(
-                                    "h-8 border border-slate-200 rounded text-center text-[10px] font-bold uppercase outline-none cursor-pointer",
-                                    s.type === 'warmup' ? "bg-yellow-50 text-yellow-700" :
-                                        s.type === 'working' ? "bg-white text-slate-700" :
-                                            s.type === 'drop' ? "bg-red-50 text-red-700" :
-                                                "bg-slate-50"
-                                )}
-                                value={s.type}
-                                onChange={(e) => updateSet(i, 'type', e.target.value)}
-                            >
-                                <option value="working">Work</option>
-                                <option value="warmup">Warm</option>
-                                <option value="failure">Fail</option>
-                                <option value="drop">Drop</option>
-                            </select>
+                            <div className="relative">
+                                <select
+                                    className={cn(
+                                        "h-8 w-full appearance-none pl-2 pr-6 border border-slate-200 rounded-md text-xs font-bold uppercase outline-none cursor-pointer focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all text-center",
+                                        s.type === 'warmup' ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                            s.type === 'working' ? "bg-white text-slate-700" :
+                                                s.type === 'drop' ? "bg-red-50 text-red-700 border-red-200" :
+                                                    "bg-slate-50"
+                                    )}
+                                    value={s.type}
+                                    onChange={(e) => updateSet(i, 'type', e.target.value)}
+                                >
+                                    <option value="working">Work</option>
+                                    <option value="warmup">Warm</option>
+                                    <option value="failure">Fail</option>
+                                    <option value="drop">Drop</option>
+                                </select>
+                            </div>
 
                             {/* Delete Action */}
-                            <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => removeSet(i)}
-                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded"
+                                    className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
@@ -131,14 +132,14 @@ export function ProSetGrid({ cardType, sets, onChange }: ProSetGridProps) {
             </div>
 
             {/* Footer Actions */}
-            <div className="mt-2 flex justify-center">
+            <div className="p-2 bg-slate-50/50 border-t border-slate-100">
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={addSet}
-                    className="w-full border border-dashed border-slate-200 text-slate-400 hover:text-brand-600 hover:border-brand-200 h-8 text-xs gap-1"
+                    className="w-full bg-white border border-dashed border-slate-300 text-slate-500 hover:text-brand-600 hover:border-brand-300 hover:bg-brand-50 h-9 text-xs gap-2 font-medium shadow-sm"
                 >
-                    <Plus className="w-3 h-3" /> Añadir Serie
+                    <Plus className="w-3.5 h-3.5" /> Añadir Serie
                 </Button>
             </div>
         </div>
