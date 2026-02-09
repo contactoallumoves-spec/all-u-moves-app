@@ -80,7 +80,7 @@ export default function ProgramBuilderV2() {
             // Ensure weeks are properly formatted
 
             if (id === 'new') {
-                const newId = await ProgramService.create(data);
+                await ProgramService.create(data);
                 // navigate(`/programs/${newId}`); // Stay on page or go back?
                 navigate('/programs'); // Go back to library
             } else {

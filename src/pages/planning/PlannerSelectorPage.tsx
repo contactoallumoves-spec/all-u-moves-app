@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PatientService } from '../../services/patientService';
 import { Patient } from '../../types/patient';
 import { Card } from '../../components/ui/Card';
-import { Search, Calendar, User as UserIcon, ArrowRight } from 'lucide-react';
+import { Search, Calendar, ArrowRight } from 'lucide-react';
 
 export default function PlannerSelectorPage() {
     const navigate = useNavigate();
@@ -28,7 +28,7 @@ export default function PlannerSelectorPage() {
     };
 
     const filteredPatients = patients.filter(p =>
-        `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${p.firstName} ${p.lastName} `.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.rut?.includes(searchTerm)
     );
 
@@ -66,7 +66,7 @@ export default function PlannerSelectorPage() {
                         <Card
                             key={patient.id}
                             className="group hover:shadow-md transition-all cursor-pointer border-slate-200 hover:border-brand-300"
-                            onClick={() => navigate(`/users/${patient.id}/planning`)}
+                            onClick={() => navigate(`/ users / ${patient.id}/planning`)}
                         >
                             <div className="p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -84,14 +84,14 @@ export default function PlannerSelectorPage() {
                                 </div>
                                 <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
                             </div>
-                        </Card>
+                        </Card >
                     ))
                 ) : (
                     <div className="col-span-full text-center py-10 text-slate-400">
                         No se encontraron atletas.
                     </div>
                 )}
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

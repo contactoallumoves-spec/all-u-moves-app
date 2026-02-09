@@ -1,9 +1,5 @@
 import {
-    collection,
-    addDoc,
-    updateDoc,
     doc,
-    getDoc,
     writeBatch
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';

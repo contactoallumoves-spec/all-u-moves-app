@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { Plus, Search, Calendar, Users, MoreVertical, Dumbbell, Loader2 } from 'lucide-react';
+import { Plus, Search, Calendar, MoreVertical, Dumbbell, Loader2 } from 'lucide-react';
 import { ProProgram } from '../../types/pro-plan';
 import { ProgramService } from '../../services/programService'; // [NEW]
 import { AssignProgramModal } from '../../components/programs/AssignProgramModal'; // [NEW]

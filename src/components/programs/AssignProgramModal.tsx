@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
-import { Search, Calendar, User, Loader2, Check } from 'lucide-react';
+import { Search, Calendar, Loader2, Check } from 'lucide-react';
 import { PatientService } from '../../services/patientService';
 import { Patient } from '../../types/patient';
 import { ProProgram } from '../../types/pro-plan';
