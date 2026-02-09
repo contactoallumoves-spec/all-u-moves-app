@@ -8,6 +8,7 @@ import { Dialog } from '../ui/Dialog';
 import { ExerciseCreatorModal } from './ExerciseCreatorModal'; // [NEW]
 import { ProBuilderModal } from '../pro-builder/ProBuilderModal'; // [NEW] Import
 import { ProDayPlan } from '../../types/pro-plan'; // [NEW] Import
+import { WithTooltip } from '../ui/Tooltip'; // [NEW]
 import { Search, Plus, Save, Calendar, Link as LinkIcon, Copy, Play, Info as InfoIcon, X as XIcon, GripVertical } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Timestamp } from 'firebase/firestore';
@@ -759,13 +760,14 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                                     </span>
                                                 )}
                                                 {/* [NEW] Pro Trigger - ALWAYS VISIBLE */}
-                                                <button
-                                                    onClick={() => setProBuilderDay(day.key)}
-                                                    className="mt-2 text-[10px] font-bold text-white bg-brand-600 px-3 py-1 rounded-full shadow-sm hover:bg-brand-700 hover:shadow-md transition-all flex items-center gap-1 animate-in fade-in"
-                                                    title="Abrir Constructor Avanzado de Sesiones"
-                                                >
-                                                    ⚡ Constructor Pro
-                                                </button>
+                                                <WithTooltip text="Construye sesiones avanzadas con control de carga, tiempos y bloques">
+                                                    <button
+                                                        onClick={() => setProBuilderDay(day.key)}
+                                                        className="mt-2 text-[10px] font-bold text-white bg-brand-600 px-3 py-1 rounded-full shadow-sm hover:bg-brand-700 hover:shadow-md transition-all flex items-center gap-1 animate-in fade-in"
+                                                    >
+                                                        ⚡ Constructor Pro
+                                                    </button>
+                                                </WithTooltip>
                                             </div>
                                         </div>
                                         <DroppableDay id={day.key} className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar relative min-h-[200px]">

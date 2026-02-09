@@ -11,6 +11,7 @@ interface SectionBlockProps {
     index: number;
     onChange: (section: ProSectionBlock) => void;
     onDelete: () => void;
+    onAddExerciseRequest?: () => void; // [NEW] Callback to prompt parent to add exercise
 }
 
 const BLOCK_ICONS = {
@@ -21,7 +22,7 @@ const BLOCK_ICONS = {
     other: LayoutTemplate
 };
 
-export function SectionBlock({ section, index, onChange, onDelete }: SectionBlockProps) {
+export function SectionBlock({ section, index, onChange, onDelete, onAddExerciseRequest }: SectionBlockProps) {
     const Icon = BLOCK_ICONS[section.type] || LayoutTemplate;
     const [isRenaming, setIsRenaming] = useState(false);
 
@@ -37,23 +38,27 @@ export function SectionBlock({ section, index, onChange, onDelete }: SectionBloc
         onChange({ ...section, exercises: newExercises });
     };
 
-    const addExercise = () => {
-        // Create a blank/default exercise. In real app, this comes from a Picker.
-        const newEx: ProPlanExercise = {
-            id: crypto.randomUUID(),
-            exerciseId: 'placeholder_id', // Would be from library
-            cardType: 'strength',
-            monitoring: {
-                askRpe: true,
-                askPain: false,
-                askTechniqueVideo: false,
-                askNotes: false
-            },
-            sets: [
-                { id: crypto.randomUUID(), type: 'working', reps: 10, loadKg: 20, rpeTarget: 8, restSec: 60, completed: false } as StrengthSet
-            ]
-        };
-        onChange({ ...section, exercises: [...section.exercises, newEx] });
+    const handleAddClick = () => {
+        if (onAddExerciseRequest) {
+            onAddExerciseRequest();
+        } else {
+            // Fallback for demo/testing if no callback provided
+            const newEx: ProPlanExercise = {
+                id: crypto.randomUUID(),
+                exerciseId: 'placeholder_id',
+                cardType: 'strength',
+                monitoring: {
+                    askRpe: true,
+                    askPain: false,
+                    askTechniqueVideo: false,
+                    askNotes: false
+                },
+                sets: [
+                    { id: crypto.randomUUID(), type: 'working', reps: 10, loadKg: 20, rpeTarget: 8, restSec: 60, completed: false } as StrengthSet
+                ]
+            };
+            onChange({ ...section, exercises: [...section.exercises, newEx] });
+        }
     };
 
     return (
@@ -114,11 +119,11 @@ export function SectionBlock({ section, index, onChange, onDelete }: SectionBloc
             <div className="p-4 bg-slate-50 flex flex-col gap-4 min-h-[100px]">
                 {section.exercises.length === 0 ? (
                     <div
-                        onClick={addExercise}
+                        onClick={handleAddClick}
                         className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-slate-200 rounded-lg bg-white/50 text-slate-400 hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-600 transition-all cursor-pointer"
                     >
-                        <p className="text-xs font-medium">Arrastra ejercicios aquí</p>
-                        <p className="text-[10px]">o click para añadir Demo</p>
+                        <p className="text-xs font-medium">Click para buscar en Biblioteca</p>
+                        <p className="text-[10px] opacity-70">o arrastra ejercicios aquí</p>
                         <div className="mt-2 text-brand-600 text-xs font-bold flex items-center gap-1">
                             <Plus className="w-3 h-3" /> Añadir
                         </div>
@@ -137,7 +142,7 @@ export function SectionBlock({ section, index, onChange, onDelete }: SectionBloc
                         {/* Quick Add Button at bottom of list */}
                         <Button
                             variant="ghost"
-                            onClick={addExercise}
+                            onClick={handleAddClick}
                             className="self-center text-xs text-brand-600 hover:bg-brand-50 border border-transparent hover:border-brand-200"
                         >
                             <Plus className="w-3 h-3 mr-1" /> Añadir Ejercicio

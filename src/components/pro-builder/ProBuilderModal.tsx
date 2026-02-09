@@ -4,7 +4,8 @@ import { Card } from '../ui/Card';
 import { Plus, Save, LayoutTemplate } from 'lucide-react';
 import { ProDayPlan, ProSectionBlock } from '../../types/pro-plan';
 import { SectionBlock } from './SectionBlock';
-
+import { ExerciseSelectorModal } from './ExerciseSelectorModal';
+import { Exercise } from '../../types/exercise';
 
 interface ProBuilderModalProps {
     isOpen: boolean;
@@ -17,6 +18,10 @@ interface ProBuilderModalProps {
 export function ProBuilderModal({ isOpen, onClose, initialPlan, onSave, dayLabel }: ProBuilderModalProps) {
     // Canvas State
     const [sections, setSections] = useState<ProSectionBlock[]>(initialPlan?.sections || []);
+
+    // Selector State
+    const [selectorOpen, setSelectorOpen] = useState(false);
+    const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
     if (!isOpen) return null;
 
@@ -38,6 +43,49 @@ export function ProBuilderModal({ isOpen, onClose, initialPlan, onSave, dayLabel
             sections
         });
         onClose();
+    };
+
+    // Handlers for Exercise Selection
+    const handleOpenSelector = (sectionId: string) => {
+        setActiveSectionId(sectionId);
+        setSelectorOpen(true);
+    };
+
+    const handleExerciseSelected = (ex: Exercise) => {
+        if (!activeSectionId) return;
+
+        // Find section
+        const sectionIndex = sections.findIndex(s => s.id === activeSectionId);
+        if (sectionIndex === -1) return;
+
+        const section = sections[sectionIndex];
+
+        // Create ProExercise from Library Exercise
+        const newExercise: any = { // Type assertion for now, matching ProExercise structure roughly
+            id: crypto.randomUUID(),
+            name: ex.name,
+            // Map defaults from ex if available (placeholder logic for now)
+            settings: {
+                // Default settings based on category
+                // Fixed: Use 'Fuerza' to match ExerciseCategory type
+                cardType: ex.category === 'Fuerza' ? 'strength' : 'timer',
+                tracking: { rpe: true, video: false, pain: false, notes: false }
+            },
+            sets: [] // Empty sets to start
+        };
+
+        // Add to section
+        const updatedSection = {
+            ...section,
+            exercises: [...section.exercises, newExercise]
+        };
+
+        const newSections = [...sections];
+        newSections[sectionIndex] = updatedSection;
+        setSections(newSections);
+
+        setSelectorOpen(false);
+        setActiveSectionId(null);
     };
 
     return (
@@ -64,7 +112,7 @@ export function ProBuilderModal({ isOpen, onClose, initialPlan, onSave, dayLabel
 
                 {/* Main Canvas (Scrollable) */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 relative bg-slate-50/50">
-                    {/* Background Grid Pattern (Optional Aesthetic) */}
+                    {/* Background Grid Pattern */}
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-soft-light" />
 
                     {sections.length === 0 ? (
@@ -89,6 +137,7 @@ export function ProBuilderModal({ isOpen, onClose, initialPlan, onSave, dayLabel
                                 onDelete={() => {
                                     setSections(sections.filter(s => s.id !== section.id));
                                 }}
+                                onAddExerciseRequest={() => handleOpenSelector(section.id)}
                             />
                         ))
                     )}
@@ -109,6 +158,13 @@ export function ProBuilderModal({ isOpen, onClose, initialPlan, onSave, dayLabel
                     )}
                 </div>
             </Card>
+
+            {/* Selector Modal */}
+            <ExerciseSelectorModal
+                isOpen={selectorOpen}
+                onClose={() => setSelectorOpen(false)}
+                onSelect={handleExerciseSelected}
+            />
         </div>
     );
 }
