@@ -272,10 +272,7 @@ export default function PatientDetailPage() {
                     </Button>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="border-brand-200 text-brand-700 bg-brand-50 hover:bg-brand-100" onClick={() => navigate(`/users/${id}/planning`)}>
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Planificación
-                    </Button>
+
                     <Button variant="outline" onClick={() => pdfService.generateFullHistoryReport(patient!, history)}>
                         <FileText className="w-4 h-4 mr-2" />
                         Exportar Evoluciones

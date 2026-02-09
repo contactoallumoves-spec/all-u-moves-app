@@ -88,7 +88,8 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
     // Initialize plan state
     const [plan, setPlan] = useState<PrescribedPlan>(() => {
         if (initialPlan) return initialPlan;
-        if (patient.activePlan) return { ...patient.activePlan, activeBlocks: patient.activePlan.activeBlocks || {} };
+        if (initialPlan) return initialPlan;
+        if (patient?.activePlan) return { ...patient.activePlan, activeBlocks: patient.activePlan.activeBlocks || {} };
         return {
             startDate: Timestamp.now(), // We need Timestamp here actually for default? No, usually Date in Types, check type defs. Local Date is fine for now or Timestamp.fromDate(new Date()) 
             // actually the Type says Timestamp | Date usually. Let's use Date for safety if Timestamp is causing issues, or keep imported if needed.
@@ -179,7 +180,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                 if (initialPlan) {
                     isRemoteUpdate.current = true; // Mark as remote
                     setPlan(initialPlan);
-                } else if (patient.activePlan) {
+                } else if (patient?.activePlan) {
                     isRemoteUpdate.current = true; // Mark as remote
                     let activeBlocks = patient.activePlan.activeBlocks;
 
@@ -314,8 +315,9 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
     };
 
     const handleGenerateMockLink = async () => {
+        if (!patient?.id) return;
         try {
-            const token = await PatientService.generateMagicToken(patient.id!);
+            const token = await PatientService.generateMagicToken(patient.id);
             const baseUrl = window.location.origin;
             const fullLink = `${baseUrl}/portal/${token}`;
             setMagicLink(fullLink);
@@ -723,10 +725,12 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                 {isSaving ? 'Guardando...' : 'Guardar'}
                                 {isDirty && <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" title="Cambios sin guardar"></span>}
                             </Button>
-                            <Button onClick={handleGenerateMockLink} variant="outline" size="sm" title="Generar/Copiar Enlace para Paciente" className="border-brand-200 text-brand-700 hover:bg-brand-50">
-                                {magicLink ? <Copy className="w-4 h-4 mr-2" /> : <LinkIcon className="w-4 h-4 mr-2" />}
-                                {magicLink ? "Copiar Link" : "Generar Link"}
-                            </Button>
+                            {patient?.id && (
+                                <Button onClick={handleGenerateMockLink} variant="outline" size="sm" title="Generar/Copiar Enlace para Paciente" className="border-brand-200 text-brand-700 hover:bg-brand-50">
+                                    {magicLink ? <Copy className="w-4 h-4 mr-2" /> : <LinkIcon className="w-4 h-4 mr-2" />}
+                                    {magicLink ? "Copiar Link" : "Generar Link"}
+                                </Button>
+                            )}
                         </div>
                     </div>
 

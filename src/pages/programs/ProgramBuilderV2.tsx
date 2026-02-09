@@ -112,20 +112,38 @@ export default function ProgramBuilderV2() {
     };
 
     // Helper to map generic template structure to PrescribedPlan structure expected by PlanBuilder
-    // We reuse the visual component but feed it our template data
-    const templatePlan = {
-        startDate: Timestamp.now(), // Irrelevant
-        schedule: {}, // Legacy
-        activeBlocks: {
-            monday: currentWeek.days.monday.sections || [],
-            tuesday: currentWeek.days.tuesday.sections || [],
-            wednesday: currentWeek.days.wednesday.sections || [],
-            thursday: currentWeek.days.thursday.sections || [],
-            friday: currentWeek.days.friday.sections || [],
-            saturday: currentWeek.days.saturday.sections || [],
-            sunday: currentWeek.days.sunday.sections || [],
-        }
+    const getTemplatePlan = () => {
+        const schedule: any = {
+            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+        };
+        const activeBlocks: any = {
+            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+        };
+
+        // Flatten nested sections into flat schedule + block names
+        Object.entries(currentWeek.days).forEach(([dayKey, dayData]: [string, any]) => {
+            const sections = dayData.sections || [];
+            sections.forEach((section: any) => {
+                // Add block name
+                activeBlocks[dayKey].push(section.name);
+                // Add exercises with block tag
+                (section.exercises || []).forEach((ex: any) => {
+                    schedule[dayKey].push({
+                        ...ex,
+                        block: section.name
+                    });
+                });
+            });
+        });
+
+        return {
+            startDate: Timestamp.now(),
+            schedule,
+            activeBlocks
+        };
     };
+
+    const templatePlan = getTemplatePlan();
 
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-50 flex-col">
@@ -209,31 +227,57 @@ export default function ProgramBuilderV2() {
                         initialPlan={templatePlan as any}
                         weekDates={weekDates}
                         customSaveHandler={async (updatedPlan) => {
-                            // Map back from PrescribedPlan to ProProgramWeek
+                            // Map back from PrescribedPlan (Flat) to ProProgramWeek (Nested)
                             const updatedWeeks = [...program.weeks];
+                            const currentWeek = updatedWeeks[activeWeekIndex];
 
-                            // Safe access to activeBlocks
+                            // Re-nesting Logic
+                            const newDays: any = { ...currentWeek.days };
+
                             const blocks = updatedPlan.activeBlocks || {
                                 monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
                             };
 
+                            Object.keys(newDays).forEach(dayKey => {
+                                const dayBlocks: string[] = blocks[dayKey as keyof typeof blocks] || [];
+                                const dayExercises = updatedPlan.schedule[dayKey as keyof typeof updatedPlan.schedule] || [];
+
+                                // Create sections from blocks
+                                const newSections = dayBlocks.map((blockName, index) => {
+                                    // Find exercises for this block
+                                    const sectionExercises = dayExercises
+                                        .filter((ex: any) => ex.block === blockName)
+                                        .map((ex: any) => {
+                                            // Clean up the 'block' property we added for flattening
+                                            const { block, ...rest } = ex;
+                                            return rest;
+                                        });
+
+                                    return {
+                                        id: crypto.randomUUID(), // Or preserve if we tracked IDs
+                                        name: blockName,
+                                        type: 'strength', // Default
+                                        order: index + 1,
+                                        exercises: sectionExercises
+                                    };
+                                });
+
+                                newDays[dayKey] = {
+                                    ...newDays[dayKey],
+                                    sections: newSections
+                                };
+                            });
+
                             updatedWeeks[activeWeekIndex] = {
-                                ...updatedWeeks[activeWeekIndex],
-                                days: {
-                                    monday: { id: 'mon', sections: blocks.monday },
-                                    tuesday: { id: 'tue', sections: blocks.tuesday },
-                                    wednesday: { id: 'wed', sections: blocks.wednesday },
-                                    thursday: { id: 'thu', sections: blocks.thursday },
-                                    friday: { id: 'fri', sections: blocks.friday },
-                                    saturday: { id: 'sat', sections: blocks.saturday },
-                                    sunday: { id: 'sun', sections: blocks.sunday },
-                                }
-                            }
-                            setProgram({ ...program, weeks: updatedWeeks });
+                                ...currentWeek,
+                                days: newDays
+                            };
+
+                            setProgram(prev => ({ ...prev, weeks: updatedWeeks }));
                         }}
                     />
                 </div>
             </div>
-        </div>
+            );</div>
     );
 }

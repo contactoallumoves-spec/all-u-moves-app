@@ -66,7 +66,7 @@ export default function PlannerSelectorPage() {
                         <Card
                             key={patient.id}
                             className="group hover:shadow-md transition-all cursor-pointer border-slate-200 hover:border-brand-300"
-                            onClick={() => navigate(`/ users / ${patient.id}/planning`)}
+                            onClick={() => navigate(`/users/${patient.id}/planning`)}
                         >
                             <div className="p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
