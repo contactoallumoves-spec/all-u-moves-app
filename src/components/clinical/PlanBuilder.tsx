@@ -6,6 +6,8 @@ import { PatientService } from '../../services/patientService';
 import { Button } from '../ui/Button';
 import { Dialog } from '../ui/Dialog';
 import { ExerciseCreatorModal } from './ExerciseCreatorModal'; // [NEW]
+import { ProBuilderModal } from '../pro-builder/ProBuilderModal'; // [NEW] Import
+import { ProDayPlan } from '../../types/pro-plan'; // [NEW] Import
 import { Search, Plus, Save, Calendar, Link as LinkIcon, Copy, Play, Info as InfoIcon, X as XIcon, GripVertical } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Timestamp } from 'firebase/firestore';
@@ -80,6 +82,7 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
     const [magicLink, setMagicLink] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [activeDragItem, setActiveDragItem] = useState<Exercise | null>(null);
+    const [proBuilderDay, setProBuilderDay] = useState<string | null>(null); // [NEW] Track active day for Pro Builder
 
     // Initialize plan state
     const [plan, setPlan] = useState<PrescribedPlan>(() => {
@@ -142,6 +145,20 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
         setExercises(prev => [...prev, newEx]);
         setIsCreating(false);
         setSearchTerm(newEx.name);
+    };
+
+    // [NEW] Handle saving from Pro Builder
+    const handleSaveProPlan = (dayPlan: ProDayPlan) => {
+        if (!proBuilderDay) return;
+
+        setPlan(prev => ({
+            ...prev,
+            proSchedule: {
+                ...prev.proSchedule,
+                [proBuilderDay]: dayPlan
+            }
+        }));
+        // setProBuilderDay(null); // Keep modal open? No, close it.
     };
 
     // Initialize/Update when initialPlan or patient changes
@@ -741,6 +758,14 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                                                         {weekDates[day.key].getDate()} {weekDates[day.key].toLocaleDateString('es-ES', { month: 'short' })}
                                                     </span>
                                                 )}
+                                                {/* [NEW] Pro Trigger - ALWAYS VISIBLE */}
+                                                <button
+                                                    onClick={() => setProBuilderDay(day.key)}
+                                                    className="mt-2 text-[10px] font-bold text-white bg-brand-600 px-3 py-1 rounded-full shadow-sm hover:bg-brand-700 hover:shadow-md transition-all flex items-center gap-1 animate-in fade-in"
+                                                    title="Abrir Constructor Avanzado de Sesiones"
+                                                >
+                                                    ⚡ Constructor Pro
+                                                </button>
                                             </div>
                                         </div>
                                         <DroppableDay id={day.key} className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar relative min-h-[200px]">
@@ -1341,8 +1366,16 @@ export function PlanBuilder({ patient, onSave, initialPlan, customSaveHandler, w
                     </div>
                 ) : null}
             </DragOverlay>
-        </DndContext >
+            {/* Pro Builder Modal */}
+            {proBuilderDay && (
+                <ProBuilderModal
+                    isOpen={!!proBuilderDay}
+                    onClose={() => setProBuilderDay(null)}
+                    dayLabel={DAYS.find(d => d.key === proBuilderDay)?.label || ''}
+                    initialPlan={plan.proSchedule?.[proBuilderDay as keyof typeof plan.proSchedule]}
+                    onSave={handleSaveProPlan}
+                />
+            )}
+        </DndContext>
     );
 }
-
-

@@ -55,6 +55,8 @@ export interface Patient {
 }
 
 
+import { ProDayPlan } from './pro-plan';
+
 export interface PrescribedPlan {
     startDate: any; // Timestamp
     endDate?: any;
@@ -77,6 +79,18 @@ export interface PrescribedPlan {
         saturday: string[];
         sunday: string[];
     };
+
+    // [NEW] Pro Suite Architecture (Overrides 'schedule' if present)
+    proSchedule?: {
+        monday?: ProDayPlan;
+        tuesday?: ProDayPlan;
+        wednesday?: ProDayPlan;
+        thursday?: ProDayPlan;
+        friday?: ProDayPlan;
+        saturday?: ProDayPlan;
+        sunday?: ProDayPlan;
+    };
+
     weeks?: { [key: number]: PrescribedPlan }; // [NEW] For Annual Programming (index -> Plan for that week)
 }
 
