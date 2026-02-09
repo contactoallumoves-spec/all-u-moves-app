@@ -64,13 +64,9 @@ export function ProBuilderModal({ isOpen, onClose, initialPlan, onSave, dayLabel
         const newExercise: any = { // Type assertion for now, matching ProExercise structure roughly
             id: crypto.randomUUID(),
             name: ex.name,
-            // Map defaults from ex if available (placeholder logic for now)
-            settings: {
-                // Default settings based on category
-                // Fixed: Use 'Fuerza' to match ExerciseCategory type
-                cardType: ex.category === 'Fuerza' ? 'strength' : 'timer',
-                tracking: { rpe: true, video: false, pain: false, notes: false }
-            },
+            // Map defaults from ex if available
+            cardType: ex.category === 'Fuerza' ? 'strength' : 'timer',
+            monitoring: { askRpe: true, video: false, askPain: false, askNotes: false },
             sets: [] // Empty sets to start
         };
 

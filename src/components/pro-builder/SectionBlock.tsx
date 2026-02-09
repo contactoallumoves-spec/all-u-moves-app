@@ -46,6 +46,7 @@ export function SectionBlock({ section, index, onChange, onDelete, onAddExercise
             const newEx: ProPlanExercise = {
                 id: crypto.randomUUID(),
                 exerciseId: 'placeholder_id',
+                name: 'Ejercicio Nuevo', // [NEW]
                 cardType: 'strength',
                 monitoring: {
                     askRpe: true,

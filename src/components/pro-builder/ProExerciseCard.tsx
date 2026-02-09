@@ -36,7 +36,7 @@ export function ProExerciseCard({ exercise, onChange, onDelete, expanded = true 
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
                     <div>
-                        <h4 className="font-bold text-sm text-slate-800">Sentadilla Frontal (Placeholder)</h4>
+                        <h4 className="font-bold text-sm text-slate-800">{exercise.name}</h4>
                         <div className="flex gap-2 text-[10px] font-mono text-slate-500 mt-0.5">
                             <span className="bg-slate-200 px-1 rounded">{exercise.sets.length} series</span>
                             <span className="uppercase">{exercise.cardType}</span>

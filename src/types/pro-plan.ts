@@ -49,6 +49,7 @@ export type ProSet = StrengthSet | DurationSet | DistanceSet;
 export interface ProPlanExercise {
     id: string; // Instance ID
     exerciseId: string; // Ref to Exercise Library
+    name: string; // Snapshot Name
 
     // UI Logic: Determines which Grid/Builder to show
     cardType: 'strength' | 'pelvic' | 'timer' | 'breathing' | 'cardio';
