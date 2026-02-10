@@ -44,11 +44,17 @@ export default function ProgramBuilderV2() {
     const [activeWeekIndex, setActiveWeekIndex] = useState(0);
     const [isSidebarHovered, setIsSidebarHovered] = useState(false); // Hover state
 
-    // ... (useEffect and helper functions remain same)
+    // [NEW] Load program if ID exists (Mock)
+    useEffect(() => {
+        if (programId && programId !== 'new') {
+            console.log("Loading program:", programId);
+            // Simulate load
+            setProgram(prev => ({ ...prev, id: programId, name: "Programa Existente Mock" }));
+        }
+    }, [programId]);
 
     // Week Management
     const addWeek = () => {
-        // ... (existing addWeek logic)
         const newWeek: ProProgramWeek = {
             id: crypto.randomUUID(),
             order: program.weeks.length + 1,
@@ -88,20 +94,6 @@ export default function ProgramBuilderV2() {
     // Transforming ProProgramWeek to PrescribedPlan format for the PlanBuilder component
     // We need to "fake" the dates for the PlanBuilder visual generic component
     const currentWeek: ProProgramWeek = program.weeks[activeWeekIndex];
-
-    // Create generic "Week Dates" for the builder
-    const dummyDate = new Date();
-    // Monday of current week
-    const monday = new Date(dummyDate.setDate(dummyDate.getDate() - dummyDate.getDay() + 1));
-    const weekDates = {
-        monday: monday,
-        tuesday: new Date(new Date(monday).setDate(monday.getDate() + 1)),
-        wednesday: new Date(new Date(monday).setDate(monday.getDate() + 2)),
-        thursday: new Date(new Date(monday).setDate(monday.getDate() + 3)),
-        friday: new Date(new Date(monday).setDate(monday.getDate() + 4)),
-        saturday: new Date(new Date(monday).setDate(monday.getDate() + 5)),
-        sunday: new Date(new Date(monday).setDate(monday.getDate() + 6)),
-    };
 
     // Helper to map generic template structure to PrescribedPlan structure expected by PlanBuilder
     const getTemplatePlan = () => {
