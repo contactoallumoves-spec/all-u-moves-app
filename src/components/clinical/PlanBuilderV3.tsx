@@ -77,6 +77,8 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
     const [activeDay, setActiveDay] = useState<DayKey>('monday'); // [NEW] Focus Day
     const [activeDragItem, setActiveDragItem] = useState<any | null>(null); // For DragOverlay
+    const [isWeekView, setIsWeekView] = useState(false); // [NEW] Toggle View
+    const [sidebarOpen, setSidebarOpen] = useState(true); // [NEW] Sidebar Toggle
 
     // Initial Plan State
     const [plan, setPlan] = useState<PrescribedPlan>(() => initialPlan || {
@@ -120,23 +122,18 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
 
         if (!over) return;
 
-        // Where was it dropped?
-        // In V3, we only drop into the ACTIVE DAY canvas (which effectively is one container)
-        // Or reorder within the active day.
-
-        const droppedOnContainer = over.id === 'active-day-droppable';
         const activeData = active.data.current as any;
         const isLibraryItem = activeData?.type === 'LibraryExercise';
 
         // 1. Library -> Active Day
-        if (isLibraryItem && droppedOnContainer) {
+        // FIX: Accept drop if over exists (container OR item)
+        if (isLibraryItem) {
             handleAddExercise(activeData as Exercise);
             return;
         }
 
         // 2. Reorder within Active Day
         if (!isLibraryItem && active.id !== over.id) {
-            // Reorder logic
             const oldIndex = plan.schedule[activeDay].findIndex(x => x.id === active.id);
             const newIndex = plan.schedule[activeDay].findIndex(x => x.id === over.id);
 
@@ -235,13 +232,6 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
 
     const categories = Array.from(new Set(exercises.map(e => e.category)));
 
-    // ... (previous state)
-    const [isWeekView, setIsWeekView] = useState(false); // [NEW] Toggle View
-
-    // ... (DnD Logic remains the same)
-
-    // ... (Actions remain the same)
-
     return (
         <DndContext
             sensors={sensors}
@@ -253,28 +243,41 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
                 {/* Top Bar: Navigation & Toggle */}
                 <div className="bg-white border-b border-slate-200 px-4 flex items-center justify-between shrink-0 h-14">
 
-                    {/* View Toggle */}
-                    <div className="flex bg-slate-100 p-1 rounded-lg">
-                        <button
-                            onClick={() => setIsWeekView(false)}
-                            className={cn(
-                                "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
-                                !isWeekView ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
-                            )}
-                        >
-                            <Target className="w-3.5 h-3.5" />
-                            Día (Focus)
-                        </button>
-                        <button
-                            onClick={() => setIsWeekView(true)}
-                            className={cn(
-                                "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
-                                isWeekView ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
-                            )}
-                        >
-                            <Calendar className="w-3.5 h-3.5" />
-                            Semana
-                        </button>
+                    <div className="flex items-center gap-4">
+                        {/* Sidebar Toggle */}
+                        {!isWeekView && (
+                            <button
+                                onClick={() => setSidebarOpen(!sidebarOpen)}
+                                className={cn("p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors", !sidebarOpen && "bg-slate-100 text-brand-600")}
+                                title={sidebarOpen ? "Ocultar Biblioteca" : "Mostrar Biblioteca"}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-panel-left"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /></svg>
+                            </button>
+                        )}
+
+                        {/* View Toggle */}
+                        <div className="flex bg-slate-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setIsWeekView(false)}
+                                className={cn(
+                                    "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
+                                    !isWeekView ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                                )}
+                            >
+                                <Target className="w-3.5 h-3.5" />
+                                Día (Focus)
+                            </button>
+                            <button
+                                onClick={() => setIsWeekView(true)}
+                                className={cn(
+                                    "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
+                                    isWeekView ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                                )}
+                            >
+                                <Calendar className="w-3.5 h-3.5" />
+                                Semana
+                            </button>
+                        </div>
                     </div>
 
                     {/* Day Tabs (Only visible in Focus Mode) */}
@@ -308,14 +311,17 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
                 </div>
 
                 {/* Content Area */}
-                <div className="flex flex-1 overflow-hidden">
+                <div className="flex flex-1 overflow-hidden relative">
 
                     {/* View 1: Focus Mode (Sidebar + Canvas) */}
                     {!isWeekView && (
                         <>
-                            {/* 1. Sidebar Library */}
-                            <div className="w-[300px] bg-white border-r border-slate-200 flex flex-col shrink-0">
-                                <div className="p-3 border-b border-slate-100 space-y-2">
+                            {/* 1. Sidebar Library - Collapsible */}
+                            <div className={cn(
+                                "bg-white border-r border-slate-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-hidden",
+                                sidebarOpen ? "w-[300px] opacity-100" : "w-0 opacity-0 border-r-0"
+                            )}>
+                                <div className="p-3 border-b border-slate-100 space-y-2 min-w-[300px]">
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                                         <input
@@ -344,7 +350,7 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
                                     </div>
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+                                <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar min-w-[300px]">
                                     {loading ? (
                                         <div className="flex flex-col items-center justify-center h-40 text-slate-400">
                                             <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2" />
@@ -414,24 +420,24 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
                         </>
                     )}
 
-                    {/* View 2: Week Overview Grid */}
+                    {/* View 2: Week Overview Grid - Horizontal Scroll */}
                     {isWeekView && (
-                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 custom-scrollbar">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
+                        <div className="flex-1 w-full overflow-x-auto p-6 bg-slate-50 custom-scrollbar">
+                            <div className="flex gap-4 min-w-max pb-4 h-full">
                                 {DAYS.map(day => (
-                                    <div key={day.key} className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full min-h-[300px]">
+                                    <div key={day.key} className="w-[280px] bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden shrink-0">
                                         <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                             <h3 className="font-bold text-slate-700">{day.label}</h3>
                                             <span className="text-xs text-slate-400 font-medium">{plan.schedule[day.key].length} ej.</span>
                                         </div>
-                                        <div className="p-3 flex-1 space-y-2">
+                                        <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-2 bg-white">
                                             {plan.schedule[day.key].length === 0 ? (
-                                                <div className="h-full flex items-center justify-center text-slate-300 text-xs italic">
+                                                <div className="h-32 flex items-center justify-center text-slate-300 text-xs italic">
                                                     Día de descanso
                                                 </div>
                                             ) : (
                                                 plan.schedule[day.key].map((ex) => (
-                                                    <div key={ex.id} className="p-2 bg-slate-50 rounded border border-slate-100 text-xs">
+                                                    <div key={ex.id} className="p-2 bg-slate-50 rounded border border-slate-100 text-xs hover:border-brand-200 transition-colors">
                                                         <div className="font-semibold text-slate-700 truncate mb-1">{ex.name}</div>
                                                         <div className="flex gap-2 text-slate-500 text-[10px]">
                                                             <span>{ex.details?.sets || '-'} x {ex.details?.reps || '-'}</span>
@@ -441,11 +447,11 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
                                                 ))
                                             )}
                                         </div>
-                                        <div className="p-2 border-t border-slate-100">
+                                        <div className="p-2 border-t border-slate-100 bg-slate-50">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full text-xs h-7 text-brand-600 hover:bg-brand-50"
+                                                className="w-full text-xs h-8 text-brand-600 hover:bg-white hover:shadow-sm"
                                                 onClick={() => {
                                                     setActiveDay(day.key);
                                                     setIsWeekView(false);
