@@ -67,9 +67,75 @@ export default function ProgramBuilderV2() {
         setActiveWeekIndex(program.weeks.length);
     };
 
-    // ... (handleSave and getTemplatePlan remain same)
+    // Save Handling
+    const handleSave = async () => {
+        try {
+            console.log("Saving Program:", program);
+            const { id, ...data } = program;
 
-    // ... (header remains same)
+            if (id === 'new') {
+                await ProgramService.create(data);
+                navigate('/programs');
+            } else {
+                await ProgramService.update(id, data);
+            }
+        } catch (error) {
+            console.error("Error saving program:", error);
+            alert("Error al guardar el programa. Revisa la consola.");
+        }
+    };
+
+    // Transforming ProProgramWeek to PrescribedPlan format for the PlanBuilder component
+    // We need to "fake" the dates for the PlanBuilder visual generic component
+    const currentWeek: ProProgramWeek = program.weeks[activeWeekIndex];
+
+    // Create generic "Week Dates" for the builder
+    const dummyDate = new Date();
+    // Monday of current week
+    const monday = new Date(dummyDate.setDate(dummyDate.getDate() - dummyDate.getDay() + 1));
+    const weekDates = {
+        monday: monday,
+        tuesday: new Date(new Date(monday).setDate(monday.getDate() + 1)),
+        wednesday: new Date(new Date(monday).setDate(monday.getDate() + 2)),
+        thursday: new Date(new Date(monday).setDate(monday.getDate() + 3)),
+        friday: new Date(new Date(monday).setDate(monday.getDate() + 4)),
+        saturday: new Date(new Date(monday).setDate(monday.getDate() + 5)),
+        sunday: new Date(new Date(monday).setDate(monday.getDate() + 6)),
+    };
+
+    // Helper to map generic template structure to PrescribedPlan structure expected by PlanBuilder
+    const getTemplatePlan = () => {
+        const schedule: any = {
+            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+        };
+        const activeBlocks: any = {
+            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+        };
+
+        // Flatten nested sections into flat schedule + block names
+        Object.entries(currentWeek.days).forEach(([dayKey, dayData]: [string, any]) => {
+            const sections = dayData.sections || [];
+            sections.forEach((section: any) => {
+                // Add block name
+                activeBlocks[dayKey].push(section.name);
+                // Add exercises with block tag
+                (section.exercises || []).forEach((ex: any) => {
+                    schedule[dayKey].push({
+                        ...ex,
+                        block: section.name
+                    });
+                });
+            });
+        });
+
+        return {
+            startDate: Timestamp.now(),
+            schedule,
+            activeBlocks
+        };
+    };
+
+    const templatePlan = getTemplatePlan();
 
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-50 flex-col">
