@@ -430,7 +430,7 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler,
                                                     Día de descanso
                                                 </div>
                                             ) : (
-                                                plan.schedule[day.key].map((ex, idx) => (
+                                                plan.schedule[day.key].map((ex) => (
                                                     <div key={ex.id} className="p-2 bg-slate-50 rounded border border-slate-100 text-xs">
                                                         <div className="font-semibold text-slate-700 truncate mb-1">{ex.name}</div>
                                                         <div className="flex gap-2 text-slate-500 text-[10px]">
