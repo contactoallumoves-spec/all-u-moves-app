@@ -69,7 +69,7 @@ function SortableExerciseItem({ id, children, className, data }: { id: string, c
 
 // --- Main Component ---
 
-export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler, weekDates }: PlanBuilderV3Props) {
+export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler }: PlanBuilderV3Props) {
     // -- State --
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [loading, setLoading] = useState(true);
