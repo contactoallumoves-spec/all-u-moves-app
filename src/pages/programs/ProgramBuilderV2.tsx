@@ -40,6 +40,7 @@ export default function ProgramBuilderV2() {
     const navigate = useNavigate();
     const [program, setProgram] = useState<ProProgram>(INITIAL_PROGRAM);
     const [activeWeekIndex, setActiveWeekIndex] = useState(0);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // [NEW]
 
     // [NEW] Load program if ID exists (Mock)
     useEffect(() => {
@@ -72,17 +73,14 @@ export default function ProgramBuilderV2() {
 
     // Save Handling
     const handleSave = async () => {
+        // ... (existing save logic)
         try {
             console.log("Saving Program:", program);
             const { id, ...data } = program;
 
-            // Clean up unwanted fields if any
-            // Ensure weeks are properly formatted
-
             if (id === 'new') {
                 await ProgramService.create(data);
-                // navigate(`/programs/${newId}`); // Stay on page or go back?
-                navigate('/programs'); // Go back to library
+                navigate('/programs');
             } else {
                 await ProgramService.update(id, data);
             }
@@ -92,14 +90,9 @@ export default function ProgramBuilderV2() {
         }
     };
 
-    // Transforming ProProgramWeek to PrescribedPlan format for the PlanBuilder component
-    // We need to "fake" the dates for the PlanBuilder visual generic component
+    // ... (rest of helper functions getTemplatePlan etc. - omitted for brevity as they are unchanged usually, but defining them here to be safe since replacing start of function)
     const currentWeek: ProProgramWeek = program.weeks[activeWeekIndex];
-
-    // Create generic "Week Dates" for the builder
-    // Since it's a template, we just use a dummy week (e.g. current week) purely for the column headers "Lunes", "Martes"...
     const dummyDate = new Date();
-    // Monday of current week
     const monday = new Date(dummyDate.setDate(dummyDate.getDate() - dummyDate.getDay() + 1));
     const weekDates = {
         monday: monday,
@@ -111,7 +104,6 @@ export default function ProgramBuilderV2() {
         sunday: new Date(new Date(monday).setDate(monday.getDate() + 6)),
     };
 
-    // Helper to map generic template structure to PrescribedPlan structure expected by PlanBuilder
     const getTemplatePlan = () => {
         const schedule: any = {
             monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
@@ -120,13 +112,10 @@ export default function ProgramBuilderV2() {
             monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
         };
 
-        // Flatten nested sections into flat schedule + block names
         Object.entries(currentWeek.days).forEach(([dayKey, dayData]: [string, any]) => {
             const sections = dayData.sections || [];
             sections.forEach((section: any) => {
-                // Add block name
                 activeBlocks[dayKey].push(section.name);
-                // Add exercises with block tag
                 (section.exercises || []).forEach((ex: any) => {
                     schedule[dayKey].push({
                         ...ex,
@@ -148,7 +137,7 @@ export default function ProgramBuilderV2() {
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-50 flex-col">
             {/* Top Bar */}
-            <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
+            <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10 shrink-0">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="sm" onClick={() => navigate('/programs')}>
                         <ArrowLeft className="w-5 h-5 text-slate-400" />
@@ -181,38 +170,77 @@ export default function ProgramBuilderV2() {
             </header>
 
             {/* Content Area */}
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 overflow-hidden relative">
                 {/* Week Selector Sidebar */}
-                <div className="w-64 bg-white border-r border-slate-200 flex flex-col">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Semanas</h3>
-                        <Button onClick={addWeek} variant="outline" size="sm" className="w-full justify-start text-xs border-dashed border-slate-300 text-slate-500 hover:text-brand-600 hover:border-brand-300 h-8">
-                            <Plus className="w-3 h-3 mr-2" /> Añadir Semana
+                <div className={cn(
+                    "bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out z-20",
+                    isSidebarCollapsed ? "w-16" : "w-64"
+                )}>
+                    <div className={cn(
+                        "p-4 border-b border-slate-100 bg-slate-50/50 flex items-center",
+                        isSidebarCollapsed ? "justify-center" : "justify-between"
+                    )}>
+                        {!isSidebarCollapsed && (
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Semanas</h3>
+                        )}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                            className="p-1 h-6 w-6 text-slate-400 hover:text-slate-600"
+                            title={isSidebarCollapsed ? "Expandir" : "Colapsar"}
+                        >
+                            {isSidebarCollapsed ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevrons-right"><path d="m9 18 6-6-6-6" /></svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevrons-left"><path d="m15 18-6-6 6-6" /></svg>
+                            )}
                         </Button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
+
+                    {!isSidebarCollapsed && (
+                        <div className="px-4 py-2">
+                            <Button onClick={addWeek} variant="outline" size="sm" className="w-full justify-start text-xs border-dashed border-slate-300 text-slate-500 hover:text-brand-600 hover:border-brand-300 h-8">
+                                <Plus className="w-3 h-3 mr-2" /> Añadir Semana
+                            </Button>
+                        </div>
+                    )}
+
+                    <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                         {program.weeks.map((week, idx) => (
                             <button
                                 key={week.id}
                                 onClick={() => setActiveWeekIndex(idx)}
                                 className={cn(
-                                    "w-full flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-all text-left group",
+                                    "w-full flex items-center transition-all text-left group rounded-lg",
+                                    isSidebarCollapsed ? "justify-center p-2" : "justify-between px-3 py-3",
                                     activeWeekIndex === idx
                                         ? "bg-brand-50 text-brand-900 ring-1 ring-brand-200 shadow-sm"
                                         : "text-slate-600 hover:bg-slate-50"
                                 )}
+                                title={week.name}
                             >
-                                <span className="flex items-center gap-2">
-                                    <span className={cn(
-                                        "w-5 h-5 flex items-center justify-center rounded text-[10px] font-bold",
-                                        activeWeekIndex === idx ? "bg-brand-200 text-brand-700" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
-                                    )}>
-                                        {idx + 1}
-                                    </span>
-                                    {week.name}
+                                <span className={cn(
+                                    "flex items-center justify-center rounded text-xs font-bold",
+                                    isSidebarCollapsed ? "w-8 h-8" : "w-5 h-5 text-[10px]",
+                                    activeWeekIndex === idx ? "bg-brand-200 text-brand-700" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                                )}>
+                                    {idx + 1}
                                 </span>
+                                {!isSidebarCollapsed && (
+                                    <span className="text-sm font-medium ml-2 truncate">{week.name}</span>
+                                )}
                             </button>
                         ))}
+                        {isSidebarCollapsed && (
+                            <button
+                                onClick={addWeek}
+                                className="w-full flex items-center justify-center p-2 text-slate-400 hover:text-brand-600 hover:bg-slate-50 rounded-lg transition-colors"
+                                title="Añadir Semana"
+                            >
+                                <Plus className="w-5 h-5" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
