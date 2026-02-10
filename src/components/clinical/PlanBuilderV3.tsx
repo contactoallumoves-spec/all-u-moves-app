@@ -1,16 +1,14 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Patient, PrescribedPlan, PlanExercise, SESSION_BLOCKS } from '../../types/patient';
 import { Exercise } from '../../types/exercise';
 import { ExerciseService } from '../../services/exerciseService';
 import { PatientService } from '../../services/patientService';
 import { Button } from '../ui/Button';
-import { ExerciseCreatorModal } from './ExerciseCreatorModal';
-import { WithTooltip } from '../ui/Tooltip';
-import { Search, Plus, Save, Calendar, Filter, Target, GripVertical, ChevronRight, X as XIcon, Trash2 } from 'lucide-react';
+import { Search, Plus, Calendar, Target, GripVertical, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Timestamp } from 'firebase/firestore';
-import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent, DragOverEvent, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -152,16 +150,16 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler,
     // -- Actions --
 
     const updatePlan = (day: DayKey, newExercises: PlanExercise[], newBlocks?: string[]) => {
-        const updatedPlan = {
+        const updatedPlan: PrescribedPlan = {
             ...plan,
             schedule: {
                 ...plan.schedule,
                 [day]: newExercises
             },
             activeBlocks: newBlocks ? {
-                ...plan.activeBlocks,
+                ...(plan.activeBlocks || { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] }),
                 [day]: newBlocks
-            } : plan.activeBlocks
+            } : (plan.activeBlocks || { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] })
         };
 
         setPlan(updatedPlan);
@@ -184,7 +182,7 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler,
             details: {
                 sets: exercise.defaultParams?.sets || '3',
                 reps: exercise.defaultParams?.reps || '10',
-                note: ''
+                notes: ''
             }
         };
 
@@ -199,14 +197,14 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler,
             // Implemented simplistic update above, let's refine if needed.
             // For now, let's just make sure activeBlocks is up to date in the same state update
             setPlan(prev => {
-                const next = {
+                const next: PrescribedPlan = {
                     ...prev,
                     schedule: {
                         ...prev.schedule,
                         [activeDay]: [...currentDayExercises, newItem]
                     },
                     activeBlocks: {
-                        ...prev.activeBlocks,
+                        ...(prev.activeBlocks || { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] }),
                         [activeDay]: newBlocks
                     }
                 };
@@ -237,6 +235,13 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler,
 
     const categories = Array.from(new Set(exercises.map(e => e.category)));
 
+    // ... (previous state)
+    const [isWeekView, setIsWeekView] = useState(false); // [NEW] Toggle View
+
+    // ... (DnD Logic remains the same)
+
+    // ... (Actions remain the same)
+
     return (
         <DndContext
             sensors={sensors}
@@ -244,144 +249,233 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler,
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex bg-slate-50 h-[calc(100vh-140px)] rounded-xl overflow-hidden border border-slate-200">
-                {/* 1. Sidebar Library */}
-                <div className="w-[320px] bg-white border-r border-slate-200 flex flex-col">
-                    <div className="p-4 border-b border-slate-100 bg-white z-10 space-y-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input
-                                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
-                                placeholder="Buscar ejercicios..."
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar mask-gradient-right">
-                            <button
-                                onClick={() => setSelectedCategory('All')}
-                                className={cn("px-2.5 py-1 text-[11px] font-medium rounded-full whitespace-nowrap transition-colors", selectedCategory === 'All' ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}
-                            >
-                                Todos
-                            </button>
-                            {categories.map(cat => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setSelectedCategory(cat)}
-                                    className={cn("px-2.5 py-1 text-[11px] font-medium rounded-full whitespace-nowrap transition-colors", selectedCategory === cat ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}
-                                >
-                                    {cat}
-                                </button>
-                            ))}
-                        </div>
+            <div className="flex flex-col h-[calc(100vh-130px)] bg-slate-50 rounded-xl overflow-hidden border border-slate-200">
+                {/* Top Bar: Navigation & Toggle */}
+                <div className="bg-white border-b border-slate-200 px-4 flex items-center justify-between shrink-0 h-14">
+
+                    {/* View Toggle */}
+                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => setIsWeekView(false)}
+                            className={cn(
+                                "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
+                                !isWeekView ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            <Target className="w-3.5 h-3.5" />
+                            Día (Focus)
+                        </button>
+                        <button
+                            onClick={() => setIsWeekView(true)}
+                            className={cn(
+                                "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2",
+                                isWeekView ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            <Calendar className="w-3.5 h-3.5" />
+                            Semana
+                        </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar content-start">
-                        {loading ? (
-                            <div className="flex flex-col items-center justify-center h-40 text-slate-400">
-                                <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2" />
-                                <span className="text-xs">Cargando biblioteca...</span>
-                            </div>
-                        ) : (
-                            filteredExercises.map(ex => (
-                                <DraggableLibraryItem key={ex.id} id={ex.id!} data={ex}>
-                                    <div className="group flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-100 hover:border-brand-300 hover:shadow-md hover:shadow-brand-500/5 transition-all cursor-grab active:cursor-grabbing">
-                                        <div className="w-8 h-8 rounded bg-brand-50 flex items-center justify-center shrink-0 text-brand-600">
-                                            {/* Icon based on category? */}
-                                            <Target className="w-4 h-4" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-slate-700 truncate group-hover:text-brand-700">{ex.name}</p>
-                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider">{ex.category}</p>
-                                        </div>
-                                        <GripVertical className="w-4 h-4 text-slate-300 group-hover:text-brand-400" />
-                                    </div>
-                                </DraggableLibraryItem>
-                            ))
-                        )}
-                    </div>
+                    {/* Day Tabs (Only visible in Focus Mode) */}
+                    {!isWeekView && (
+                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar mx-4">
+                            {DAYS.map(day => {
+                                const count = plan.schedule[day.key].length;
+                                const isActive = activeDay === day.key;
+                                return (
+                                    <button
+                                        key={day.key}
+                                        onClick={() => setActiveDay(day.key)}
+                                        className={cn(
+                                            "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap",
+                                            isActive
+                                                ? "bg-brand-50 text-brand-700"
+                                                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                                        )}
+                                    >
+                                        {day.label}
+                                        {count > 0 && (
+                                            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", isActive ? "bg-brand-100 text-brand-700" : "bg-slate-200 text-slate-600")}>
+                                                {count}
+                                            </span>
+                                        )}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
 
-                {/* 2. Main Canvas Area */}
-                <div className="flex-1 flex flex-col bg-slate-50/50">
+                {/* Content Area */}
+                <div className="flex flex-1 overflow-hidden">
 
-                    {/* Top Day Tabs */}
-                    <div className="flex items-center px-4 pt-4 pb-0 bg-white border-b border-slate-200 gap-1 overflow-x-auto no-scrollbar">
-                        {DAYS.map(day => {
-                            const count = plan.schedule[day.key].length;
-                            const isActive = activeDay === day.key;
-                            return (
-                                <button
-                                    key={day.key}
-                                    onClick={() => setActiveDay(day.key)}
-                                    className={cn(
-                                        "relative flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-t-xl transition-all border-b-2",
-                                        isActive
-                                            ? "bg-slate-50 border-brand-500 text-brand-700"
-                                            : "bg-transparent border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-                                    )}
-                                >
-                                    {day.label}
-                                    {count > 0 && (
-                                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", isActive ? "bg-brand-100 text-brand-700" : "bg-slate-200 text-slate-600")}>
-                                            {count}
-                                        </span>
-                                    )}
-                                </button>
-                            )
-                        })}
-                    </div>
+                    {/* View 1: Focus Mode (Sidebar + Canvas) */}
+                    {!isWeekView && (
+                        <>
+                            {/* 1. Sidebar Library */}
+                            <div className="w-[300px] bg-white border-r border-slate-200 flex flex-col shrink-0">
+                                <div className="p-3 border-b border-slate-100 space-y-2">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                        <input
+                                            className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+                                            placeholder="Buscar ejercicios..."
+                                            value={searchTerm}
+                                            onChange={e => setSearchTerm(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar mask-gradient-right">
+                                        <button
+                                            onClick={() => setSelectedCategory('All')}
+                                            className={cn("px-2 py-1 text-[10px] font-medium rounded-full whitespace-nowrap transition-colors", selectedCategory === 'All' ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}
+                                        >
+                                            Todos
+                                        </button>
+                                        {categories.map(cat => (
+                                            <button
+                                                key={cat}
+                                                onClick={() => setSelectedCategory(cat)}
+                                                className={cn("px-2 py-1 text-[10px] font-medium rounded-full whitespace-nowrap transition-colors", selectedCategory === cat ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}
+                                            >
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
 
-                    {/* Active Day Canvas */}
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                        <div className="max-w-3xl mx-auto space-y-6">
-
-                            {/* Droppable Zone */}
-                            <DroppableCanvas id="active-day-droppable" items={plan.schedule[activeDay]}>
-                                <SortableContext
-                                    items={plan.schedule[activeDay].map(x => x.id)}
-                                    strategy={verticalListSortingStrategy}
-                                >
-                                    {plan.schedule[activeDay].length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 text-slate-400">
-                                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
-                                                <Plus className="w-8 h-8 text-slate-300" />
-                                            </div>
-                                            <p className="font-medium text-lg">Tu día está vacío</p>
-                                            <p className="text-sm mt-1">Arrastra ejercicios desde la izquierda para comenzar</p>
+                                <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+                                    {loading ? (
+                                        <div className="flex flex-col items-center justify-center h-40 text-slate-400">
+                                            <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2" />
+                                            <span className="text-xs">Cargando...</span>
                                         </div>
                                     ) : (
-                                        <div className="space-y-4">
-                                            {plan.schedule[activeDay].map((item, index) => (
-                                                <SortableExerciseItem key={item.id} id={item.id} data={item}>
-                                                    <ExerciseCardPro
-                                                        item={item}
-                                                        index={index}
-                                                        onRemove={() => handleRemoveExercise(item.id)}
-                                                        onUpdate={(updates) => handleUpdateExerciseDetails(item.id, updates)}
-                                                    />
-                                                </SortableExerciseItem>
-                                            ))}
-                                        </div>
+                                        filteredExercises.map(ex => (
+                                            <DraggableLibraryItem key={ex.id} id={ex.id!} data={ex}>
+                                                <div className="group flex items-center gap-2 p-2.5 bg-white rounded-lg border border-slate-100 hover:border-brand-300 hover:shadow-sm transition-all cursor-grab active:cursor-grabbing">
+                                                    <div className="w-7 h-7 rounded bg-brand-50 flex items-center justify-center shrink-0 text-brand-600 text-xs font-bold">
+                                                        {ex.name.charAt(0)}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-medium text-slate-700 truncate group-hover:text-brand-700">{ex.name}</p>
+                                                        <p className="text-[9px] text-slate-400 uppercase tracking-wider">{ex.category}</p>
+                                                    </div>
+                                                    <Plus className="w-3.5 h-3.5 text-slate-300 group-hover:text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </div>
+                                            </DraggableLibraryItem>
+                                        ))
                                     )}
-                                </SortableContext>
-                            </DroppableCanvas>
+                                </div>
+                            </div>
 
+                            {/* 2. Active Day Canvas */}
+                            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 custom-scrollbar">
+                                <div className="max-w-4xl mx-auto">
+                                    <div className="mb-4 flex items-center justify-between">
+                                        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                            {DAYS.find(d => d.key === activeDay)?.label}
+                                            <span className="text-sm font-normal text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">
+                                                {plan.schedule[activeDay].length} Ejercicios
+                                            </span>
+                                        </h2>
+                                    </div>
+
+                                    <DroppableCanvas id="active-day-droppable" items={plan.schedule[activeDay]}>
+                                        <SortableContext
+                                            items={plan.schedule[activeDay].map(x => x.id)}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            {plan.schedule[activeDay].length === 0 ? (
+                                                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-slate-200 rounded-xl bg-white/50 text-slate-400">
+                                                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3">
+                                                        <GripVertical className="w-6 h-6 text-slate-300" />
+                                                    </div>
+                                                    <p className="font-medium">Arrastra ejercicios aquí</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {plan.schedule[activeDay].map((item, index) => (
+                                                        <SortableExerciseItem key={item.id} id={item.id} data={item}>
+                                                            <ExerciseCardPro
+                                                                item={item}
+                                                                index={index}
+                                                                onRemove={() => handleRemoveExercise(item.id)}
+                                                                onUpdate={(updates) => handleUpdateExerciseDetails(item.id, updates)}
+                                                            />
+                                                        </SortableExerciseItem>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </SortableContext>
+                                    </DroppableCanvas>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* View 2: Week Overview Grid */}
+                    {isWeekView && (
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
+                                {DAYS.map(day => (
+                                    <div key={day.key} className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full min-h-[300px]">
+                                        <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                            <h3 className="font-bold text-slate-700">{day.label}</h3>
+                                            <span className="text-xs text-slate-400 font-medium">{plan.schedule[day.key].length} ej.</span>
+                                        </div>
+                                        <div className="p-3 flex-1 space-y-2">
+                                            {plan.schedule[day.key].length === 0 ? (
+                                                <div className="h-full flex items-center justify-center text-slate-300 text-xs italic">
+                                                    Día de descanso
+                                                </div>
+                                            ) : (
+                                                plan.schedule[day.key].map((ex, idx) => (
+                                                    <div key={ex.id} className="p-2 bg-slate-50 rounded border border-slate-100 text-xs">
+                                                        <div className="font-semibold text-slate-700 truncate mb-1">{ex.name}</div>
+                                                        <div className="flex gap-2 text-slate-500 text-[10px]">
+                                                            <span>{ex.details?.sets || '-'} x {ex.details?.reps || '-'}</span>
+                                                            {ex.details?.load && <span>{ex.details.load}kg</span>}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                        <div className="p-2 border-t border-slate-100">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="w-full text-xs h-7 text-brand-600 hover:bg-brand-50"
+                                                onClick={() => {
+                                                    setActiveDay(day.key);
+                                                    setIsWeekView(false);
+                                                }}
+                                            >
+                                                Editar Día
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
+
                 </div>
             </div>
 
             <DragOverlay>
                 {activeDragItem ? (
-                    <div className="bg-white p-4 rounded-lg shadow-xl border border-brand-500/30 w-64 opacity-90 cursor-grabbing">
-                        <p className="font-bold text-brand-800">{activeDragItem.name}</p>
+                    <div className="bg-white p-3 rounded-lg shadow-xl border border-brand-500/30 w-56 opacity-90 cursor-grabbing">
+                        <p className="font-bold text-sm text-brand-800 truncate">{activeDragItem.name}</p>
                     </div>
                 ) : null}
             </DragOverlay>
         </DndContext>
     );
 }
+
+// ... Sub-components remain mostly the same, minor style tweaks inlining above logic
+
 
 // --- Sub-Components ---
 
