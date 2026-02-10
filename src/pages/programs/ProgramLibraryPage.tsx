@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -111,9 +111,32 @@ export default function ProgramLibraryPage() {
 }
 
 function ProgramCard({ program, onClick, onAssign }: { program: ProProgram, onClick: () => void, onAssign: () => void }) {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    // Close menu on click outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const handleDelete = async () => {
+        if (confirm('¿Estás seguro de eliminar este programa?')) {
+            await ProgramService.delete(program.id);
+            window.location.reload(); // Simple reload to refresh list
+        }
+    };
+
     return (
-        <Card className="group hover:shadow-md transition-all border-slate-200 hover:border-brand-300 overflow-hidden flex flex-col h-full">
-            <div className="h-2 bg-gradient-to-r from-brand-400 to-brand-600" />
+        <Card className="group hover:shadow-md transition-all border-slate-200 hover:border-brand-300 overflow-visible flex flex-col h-full relative">
+            <div className="h-2 bg-gradient-to-r from-brand-400 to-brand-600 rounded-t-xl" />
             <div className="p-5 space-y-4 flex-1 flex flex-col">
                 <div className="flex justify-between items-start cursor-pointer" onClick={onClick}>
                     <div>
@@ -134,7 +157,7 @@ function ProgramCard({ program, onClick, onAssign }: { program: ProProgram, onCl
                     ))}
                 </div>
 
-                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-medium">
+                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-medium relative">
                     <div className="flex items-center gap-4">
                         <span className="flex items-center gap-1.5">
                             <Calendar className="w-4 h-4" />
@@ -150,12 +173,50 @@ function ProgramCard({ program, onClick, onAssign }: { program: ProProgram, onCl
                         }}>
                             Asignar
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700" onClick={(e) => {
-                            e.stopPropagation();
-                            // Optional: Open dropdown menu
-                        }}>
-                            <MoreVertical className="w-4 h-4" />
-                        </Button>
+                        <div className="relative" ref={menuRef}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700" onClick={(e) => {
+                                e.stopPropagation();
+                                setMenuOpen(!menuOpen);
+                            }}>
+                                <MoreVertical className="w-4 h-4" />
+                            </Button>
+
+                            {/* Dropdown Menu */}
+                            {menuOpen && (
+                                <div className="absolute right-0 bottom-full mb-2 w-40 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-50 animate-in fade-in zoom-in-95 origin-bottom-right">
+                                    <button
+                                        className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600 flex items-center gap-2"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onClick(); // Edit
+                                        }}
+                                    >
+                                        <div className="w-2 h-2 rounded-full bg-blue-400" /> Editar
+                                    </button>
+                                    <button
+                                        className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-600 flex items-center gap-2"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            // Duplicate logic TODO
+                                            alert("Próximamente");
+                                            setMenuOpen(false);
+                                        }}
+                                    >
+                                        <div className="w-2 h-2 rounded-full bg-yellow-400" /> Duplicar
+                                    </button>
+                                    <div className="h-px bg-slate-100 my-1" />
+                                    <button
+                                        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete();
+                                        }}
+                                    >
+                                        <div className="w-2 h-2 rounded-full bg-red-400" /> Eliminar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

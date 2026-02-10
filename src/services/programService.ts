@@ -7,7 +7,8 @@ import {
     collection,
     query,
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    deleteDoc
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { ProProgram } from '../types/pro-plan';
@@ -79,6 +80,19 @@ export const ProgramService = {
             });
         } catch (error) {
             console.error("Error updating program:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Delete a Program
+     */
+    delete: async (id: string): Promise<void> => {
+        try {
+            const docRef = doc(db, COLLECTION, id);
+            await deleteDoc(docRef);
+        } catch (error) {
+            console.error("Error deleting program:", error);
             throw error;
         }
     }

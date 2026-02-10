@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { ArrowLeft, Plus, Save, MoreVertical } from 'lucide-react';
 import { ProgramService } from '../../services/programService'; // [NEW]
 import { cn } from '../../lib/utils';
-import { PlanBuilder } from '../../components/clinical/PlanBuilder';
+import { PlanBuilderV3 } from '../../components/clinical/PlanBuilderV3';
 import { Timestamp } from 'firebase/firestore';
 
 // Initial Template State
@@ -221,7 +221,7 @@ export default function ProgramBuilderV2() {
                     {/* Reuse PlanBuilder but adapt it */}
                     {/* Note: We pass 'patient={null}' or a dummy object to indicate template mode if generic builder supports it. */}
                     {/* For now, reusing PlanBuilder with dummy dates. */}
-                    <PlanBuilder
+                    <PlanBuilderV3
                         key={currentWeek.id} // Reset on week switch
                         patient={null as any} // Template mode
                         initialPlan={templatePlan as any}
@@ -243,10 +243,11 @@ export default function ProgramBuilderV2() {
                                 const dayExercises = updatedPlan.schedule[dayKey as keyof typeof updatedPlan.schedule] || [];
 
                                 // Create sections from blocks
+                                // In V3, simplified blocks to just MAIN for now, or ensure block tag is preserved
                                 const newSections = dayBlocks.map((blockName, index) => {
                                     // Find exercises for this block
                                     const sectionExercises = dayExercises
-                                        .filter((ex: any) => ex.block === blockName)
+                                        .filter((ex: any) => ex.block === blockName || (!ex.block && blockName === 'Trabajo Principal'))
                                         .map((ex: any) => {
                                             // Clean up the 'block' property we added for flattening
                                             const { block, ...rest } = ex;
