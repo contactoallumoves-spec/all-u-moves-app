@@ -5,14 +5,15 @@ import { PatientService } from '../../services/patientService';
 import { SessionLogService } from '../../services/sessionLogService';
 import { AnnualPlan } from '../../types/plan';
 import { Patient, PrescribedPlan } from '../../types/patient';
-import { PlanBuilder } from '../../components/clinical/PlanBuilder';
+// import { PlanBuilder } from '../../components/clinical/PlanBuilder'; // OLD
+import { PlanBuilderV3 } from '../../components/clinical/PlanBuilderV3'; // NEW
 import { Timestamp } from 'firebase/firestore';
 import { format, startOfWeek, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, ArrowLeft, Save } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/Button';
-import { SaveWeekAsTemplateModal } from '../../components/programs/SaveWeekAsTemplateModal'; // [NEW]
+import { SaveWeekAsTemplateModal } from '../../components/programs/SaveWeekAsTemplateModal';
 
 export default function ProgrammingPage() {
     const { patientId } = useParams<{ patientId: string }>();
@@ -21,7 +22,7 @@ export default function ProgrammingPage() {
     const [patient, setPatient] = useState<Patient | null>(null);
     const [loading, setLoading] = useState(true);
     const [completedDates, setCompletedDates] = useState<Set<string>>(new Set());
-    const [saveTemplateOpen, setSaveTemplateOpen] = useState(false); // [NEW]
+    const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
 
     // Date State
     const [selectedDate, setSelectedDate] = useState(new Date()); // The specific day selected or today
@@ -49,7 +50,7 @@ export default function ProgrammingPage() {
             setCompletedDates(dates);
 
             let activePlan = planData;
-            // Create default plan if needed, same as before
+            // Create default plan if needed
             if (!activePlan) {
                 const newId = await PlanService.create(patientId, `Temporada ${new Date().getFullYear()}`, new Date());
                 activePlan = {
@@ -77,17 +78,6 @@ export default function ProgrammingPage() {
     const currentWeekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday start
 
     const getWeekNumber = (date: Date, planStart: Date) => {
-        // Calculate week index considering plan start date
-        // Simple approximation: difference in weeks
-        // const diffTime = Math.abs(date.getTime() - planStart.getTime());
-        // const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
-        // Better: Use getWeek from date-fns relative to year, but we need relative to Plan Start.
-        // Let's assume Plan Start is "Week 1".
-        // Actually, let's just match the AnnualPlan structure. 
-        // If Annual Plan starts Jan 1st, and we select Feb 1st.
-        // For robustness, let's rely on standard ISO weeks if the plan aligns, 
-        // BUT the AnnualPlan 'weeks' object is indexed by 1..52 relative to start.
-        // Let's implement a simple relative week calculator
         const oneDay = 24 * 60 * 60 * 1000;
         const start = startOfWeek(planStart, { weekStartsOn: 1 });
         const current = startOfWeek(date, { weekStartsOn: 1 });
@@ -106,8 +96,6 @@ export default function ProgrammingPage() {
             await PlanService.updateWeek(annualPlan.id, currentWeekNumber, weekPlan);
 
             // 2. Sync to Patient Active Plan (For Portal Visibility)
-            // [FIX] Enforce End Date to prevent infinite recurrence.
-            // The Plan is valid ONLY for this week.
             const weekEndDate = endOfDay(addDays(currentWeekStart, 6)); // Sunday end of day
 
             if (patientId) {
@@ -126,7 +114,7 @@ export default function ProgrammingPage() {
             }
         } catch (error) {
             console.error("Error saving week:", error);
-            alert("Error al guardar cambios"); // Optional UI feedback
+            alert("Error al guardar cambios");
         }
     };
 
@@ -168,7 +156,7 @@ export default function ProgrammingPage() {
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
             {/* Sidebar Calendar */}
-            <div className="w-80 border-r border-gray-100 flex flex-col bg-gray-50/50 p-4">
+            <div className="w-80 border-r border-gray-100 flex flex-col bg-gray-50/50 p-4 shrink-0">
                 <Button
                     variant="ghost"
                     className="mb-6 pl-0 hover:bg-transparent hover:text-brand-600 justify-start"
@@ -195,9 +183,8 @@ export default function ProgrammingPage() {
                     {calendarDays.map((day) => {
                         const isSameMonthDay = isSameMonth(day, monthStart);
                         const isSelected = isSameDay(day, selectedDate);
-                        // Check if this week has data? (Optional optimization)
+
                         const weekNum = getWeekNumber(day, annualPlan.startDate instanceof Timestamp ? annualPlan.startDate.toDate() : new Date(annualPlan.startDate));
-                        // Map 0-6 (Sun-Sat) to schedule keys
                         const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
                         const dayKey = dayKeys[day.getDay()];
                         const hasData = annualPlan.weeks[weekNum]?.schedule?.[dayKey]?.length > 0;
@@ -241,7 +228,7 @@ export default function ProgrammingPage() {
             {/* Main Content: Week View */}
             <div className="flex-1 flex flex-col overflow-hidden relative">
                 {/* Header for Week */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shrink-0">
                     <div>
                         <h1 className="text-2xl font-serif font-bold text-brand-900 capitalize">
                             {format(currentWeekStart, 'MMMM yyyy', { locale: es })}
@@ -259,15 +246,14 @@ export default function ProgrammingPage() {
                     </div>
                 </div>
 
-                {/* Plan Builder (Week Editor) */}
-                <div className="flex-1 overflow-hidden">
-                    {/* Key prop ensures re-render when week changes */}
-                    <PlanBuilder
-                        key={currentWeekNumber}
+                {/* Plan Builder V3 (Week Editor) */}
+                <div className="flex-1 overflow-hidden relative">
+                    <PlanBuilderV3
+                        key={currentWeekNumber} // Re-mount on week change
                         patient={patient}
                         initialPlan={currentWeekPlan}
                         customSaveHandler={handleSaveWeek}
-                        weekDates={weekDates}
+                        weekDates={weekDates} // Pass real dates for the header
                     />
                 </div>
             </div>
