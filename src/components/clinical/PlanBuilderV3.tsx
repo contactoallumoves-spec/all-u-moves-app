@@ -36,11 +36,25 @@ interface PlanBuilderV3Props {
 
 // --- Draggable Components ---
 
-function DraggableLibraryItem({ id, data, children, className }: { id: string, data: any, children: React.ReactNode, className?: string }) {
+function DraggableLibraryItem({ id, data, children, className, onAdd }: { id: string, data: any, children: React.ReactNode, className?: string, onAdd?: () => void }) {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, data: { ...data, type: 'LibraryExercise' } });
     return (
-        <div ref={setNodeRef} {...listeners} {...attributes} className={cn(className, isDragging ? "opacity-50" : "")}>
-            {children}
+        <div ref={setNodeRef} className={cn(className, isDragging ? "opacity-50" : "relative")}>
+            {/* Drag Handle Wrapper */}
+            <div {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing w-full">
+                {children}
+            </div>
+            {/* Explicit Add Button - Overlay or distinct action */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (onAdd) onAdd();
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-white hover:bg-brand-100 text-brand-500 opacity-0 group-hover:opacity-100 transition-all shadow-sm z-10"
+                title="Agregar a este día"
+            >
+                <Plus className="w-4 h-4" />
+            </button>
         </div>
     );
 }
@@ -358,16 +372,21 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
                                         </div>
                                     ) : (
                                         filteredExercises.map(ex => (
-                                            <DraggableLibraryItem key={ex.id} id={ex.id!} data={ex}>
-                                                <div className="group flex items-center gap-2 p-2.5 bg-white rounded-lg border border-slate-100 hover:border-brand-300 hover:shadow-sm transition-all cursor-grab active:cursor-grabbing">
+                                            <DraggableLibraryItem
+                                                key={ex.id}
+                                                id={ex.id!}
+                                                data={ex}
+                                                onAdd={() => handleAddExercise(ex)}
+                                            >
+                                                <div className="group flex items-center gap-2 p-2.5 bg-white rounded-lg border border-slate-100 hover:border-brand-300 hover:shadow-sm transition-all">
                                                     <div className="w-7 h-7 rounded bg-brand-50 flex items-center justify-center shrink-0 text-brand-600 text-xs font-bold">
                                                         {ex.name.charAt(0)}
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
+                                                    <div className="flex-1 min-w-0 pr-8">
                                                         <p className="text-xs font-medium text-slate-700 truncate group-hover:text-brand-700">{ex.name}</p>
                                                         <p className="text-[9px] text-slate-400 uppercase tracking-wider">{ex.category}</p>
                                                     </div>
-                                                    <Plus className="w-3.5 h-3.5 text-slate-300 group-hover:text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    {/* Button is handled in DraggableLibraryItem now */}
                                                 </div>
                                             </DraggableLibraryItem>
                                         ))
@@ -377,7 +396,7 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
 
                             {/* 2. Active Day Canvas */}
                             <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 custom-scrollbar">
-                                <div className="max-w-4xl mx-auto">
+                                <div className="w-full max-w-[1600px] mx-auto">
                                     <div className="mb-4 flex items-center justify-between">
                                         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                             {DAYS.find(d => d.key === activeDay)?.label}
@@ -423,9 +442,9 @@ export function PlanBuilderV3({ patient, onSave, initialPlan, customSaveHandler 
                     {/* View 2: Week Overview Grid - Horizontal Scroll */}
                     {isWeekView && (
                         <div className="flex-1 w-full overflow-x-auto p-6 bg-slate-50 custom-scrollbar">
-                            <div className="flex gap-4 min-w-max pb-4 h-full">
+                            <div className="flex gap-4 min-w-full pb-4 h-full">
                                 {DAYS.map(day => (
-                                    <div key={day.key} className="w-[280px] bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden shrink-0">
+                                    <div key={day.key} className="min-w-[200px] flex-1 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden shrink-0">
                                         <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                             <h3 className="font-bold text-slate-700">{day.label}</h3>
                                             <span className="text-xs text-slate-400 font-medium">{plan.schedule[day.key].length} ej.</span>
