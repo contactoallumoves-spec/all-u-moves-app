@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Check, ChevronRight, Loader2, ArrowRight } from 'lucide-react';
+import { Check, Loader2, ArrowRight } from 'lucide-react';
 
 type Step = 'intro' | 'q1' | 'symptoms' | 'risks' | 'result' | 'contact' | 'success';
 

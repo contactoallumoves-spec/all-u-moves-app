@@ -137,8 +137,9 @@ function App() {
                     <Route path="pre-ingreso" element={<PreAdmissionPage />} />
                     {/* [NEW] Public Survey Routes */}
                     <Route path="surveys/:patientId/:type" element={<PublicSurveyPage />} />
-                    <Route path="charlas/evaluacion" element={<TalkEvaluationPage />} /> {/* [NEW] Public Questionnaire */}
                 </Route>
+                <Route path="/charlas/evaluacion" element={<TalkEvaluationPage />} /> {/* [NEW] Public Questionnaire */}
+
 
                 {/* [NEW] Patient Portal Routes (Magic Link) */}
                 <Route path="/portal" element={<PortalLayout />}>
