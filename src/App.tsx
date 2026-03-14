@@ -26,6 +26,8 @@ import { PortalGuard } from './pages/portal/PortalGuard'; // [NEW]
 import PortalDashboard from './pages/portal/PortalDashboard'; // [NEW]
 import SessionPlayer from './pages/portal/SessionPlayer'; // [NEW]
 import ProgrammingPage from './pages/planning/ProgrammingPage'; // [NEW] Unified View
+import TalkEvaluationPage from './pages/public/TalkEvaluationPage'; // [NEW] Public Questionnaire
+import TalkLeadsPage from './pages/admin/TalkLeadsPage'; // [NEW] Admin View for Leads
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -128,12 +130,14 @@ function App() {
                 <Route path="/programs" element={user ? <MainLayout><ProgramLibraryPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/programs/new" element={user ? <MainLayout><ProgramBuilderV2 /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/programs/:programId" element={user ? <MainLayout><ProgramBuilderV2 /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/evaluaciones-charlas" element={user ? <MainLayout><TalkLeadsPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] Admin View */}
 
                 {/* Public Routes */}
                 <Route path="/" element={<PublicLayout />}>
                     <Route path="pre-ingreso" element={<PreAdmissionPage />} />
                     {/* [NEW] Public Survey Routes */}
                     <Route path="surveys/:patientId/:type" element={<PublicSurveyPage />} />
+                    <Route path="charlas/evaluacion" element={<TalkEvaluationPage />} /> {/* [NEW] Public Questionnaire */}
                 </Route>
 
                 {/* [NEW] Patient Portal Routes (Magic Link) */}

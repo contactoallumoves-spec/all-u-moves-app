@@ -26,6 +26,7 @@ export function Sidebar() {
         { href: '/users', label: 'Usuarias', icon: Users },
         { href: '/exercises', label: 'Ejercicios', icon: Dumbbell },
         { href: '/reports', label: 'Reportes', icon: FileText },
+        { href: '/evaluaciones-charlas', label: 'Leads Charlas', icon: Users }, // [NEW] Link to Talk Leads
         { href: '/settings', label: 'Configuración', icon: Settings },
     ];
 
