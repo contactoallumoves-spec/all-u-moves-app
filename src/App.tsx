@@ -28,6 +28,7 @@ import SessionPlayer from './pages/portal/SessionPlayer'; // [NEW]
 import ProgrammingPage from './pages/planning/ProgrammingPage'; // [NEW] Unified View
 import TalkEvaluationPage from './pages/public/TalkEvaluationPage'; // [NEW] Public Questionnaire
 import TalkLeadsPage from './pages/admin/TalkLeadsPage'; // [NEW] Admin View for Leads
+import CuestionarioPrenatalPage from './pages/public/CuestionarioPrenatalPage'; // [NEW] Cuestionario Prenatal
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -139,6 +140,7 @@ function App() {
                     <Route path="surveys/:patientId/:type" element={<PublicSurveyPage />} />
                 </Route>
                 <Route path="/charlas/evaluacion" element={<TalkEvaluationPage />} /> {/* [NEW] Public Questionnaire */}
+                <Route path="/cuestionario-prenatal" element={<CuestionarioPrenatalPage />} /> {/* [NEW] Cuestionario Prenatal */}
 
 
                 {/* [NEW] Patient Portal Routes (Magic Link) */}
