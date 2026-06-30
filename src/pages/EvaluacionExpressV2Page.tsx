@@ -787,7 +787,7 @@ function ClinicalPlanningSection({ area, clasificacionDolor, setClasificacionDol
         <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200/60">
             <div className="flex justify-between items-center mb-6">
                 <h3 className="font-black text-slate-800 text-lg">Diagnóstico y Plan Clínico</h3>
-                <button onClick={handleGenerateAi} disabled={isGenerating} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50">
+                <button onClick={handleGenerateAi} disabled={isGenerating} className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50">
                     {isGenerating ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generando...</> : <><span>✨</span> Generar con IA</>}
                 </button>
             </div>
@@ -821,7 +821,7 @@ function ClinicalPlanningSection({ area, clasificacionDolor, setClasificacionDol
                             <button onClick={() => removeSmart(o.id)} className="p-2 text-slate-400 hover:text-red-500 shrink-0">✕</button>
                         </div>
                     ))}
-                    <button onClick={addSmart} className="text-sm text-indigo-600 font-bold hover:text-indigo-800 flex items-center gap-1">+ Agregar objetivo</button>
+                    <button onClick={addSmart} className="text-sm text-brand-600 font-bold hover:text-brand-800 flex items-center gap-1">+ Agregar objetivo</button>
                 </SectionBox>
 
                 {/* Pronóstico */}
@@ -850,7 +850,7 @@ function ClinicalPlanningSection({ area, clasificacionDolor, setClasificacionDol
                             <div><label className="text-xs font-bold text-slate-500 block mb-1">Criterios de progresión</label><AutoTextarea value={(f.criterios_progresion || []).join('\n')} onChange={(v: string) => setFases(fases.map((x: any, j: number) => j === i ? { ...x, criterios_progresion: v.split('\n').filter(Boolean) } : x))} placeholder="Un criterio por línea..." minRows={2} /></div>
                         </div>
                     ))}
-                    <button onClick={addFase} className="text-sm text-indigo-600 font-bold hover:text-indigo-800 flex items-center gap-1">+ Agregar fase</button>
+                    <button onClick={addFase} className="text-sm text-brand-600 font-bold hover:text-brand-800 flex items-center gap-1">+ Agregar fase</button>
                 </SectionBox>
 
                 {/* Reglas de Reevaluación */}
@@ -991,7 +991,7 @@ export default function EvaluacionExpressV2Page() {
                         {activeFullscreen !== 'razonamientoIA' && (
                             <button onClick={() => handleInsertTemplate(activeFullscreen as any)} className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs">📋 Plantilla</button>
                         )}
-                        <button onClick={() => setActiveFullscreen(null)} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm">Listo</button>
+                        <button onClick={() => setActiveFullscreen(null)} className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-sm">Listo</button>
                     </div>
                 </div>
                 {activeFullscreen === 'razonamientoIA' ? (
@@ -1009,26 +1009,26 @@ export default function EvaluacionExpressV2Page() {
 
     // ─── MAIN RENDER ──────────────────────────────────────────────────────────
     return (
-        <div className="min-h-screen bg-[#F8FAFC]">
+        <div className="min-h-screen bg-brand-50">
             {/* Header */}
-            <div className="bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div className="bg-white border-b border-brand-100 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
                 <div className="flex items-center gap-4">
                     {patientId && (
-                        <button onClick={() => navigate(`/users/${patientId}`)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 font-medium transition-colors">
+                        <button onClick={() => navigate(`/users/${patientId}`)} className="flex items-center gap-1.5 text-sm text-brand-400 hover:text-brand-700 font-medium transition-colors">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                             Volver
                         </button>
                     )}
                     <div>
-                        <h2 className="text-xl font-black text-indigo-900 flex items-center gap-2">
+                        <h2 className="text-xl font-black text-brand-900 flex items-center gap-2">
                             <span>⚡</span> Evaluación Inicial
-                            {patientName && <span className="text-base font-semibold text-indigo-400">— {patientName}</span>}
+                            {patientName && <span className="text-base font-semibold text-brand-400">— {patientName}</span>}
                         </h2>
-                        <p className="text-xs text-indigo-600 font-medium mt-0.5">Toma notas libres y deja que la IA razone las hipótesis.</p>
+                        <p className="text-xs text-brand-500 font-medium mt-0.5">Toma notas libres y deja que la IA razone las hipótesis.</p>
                     </div>
                 </div>
-                <button onClick={handleSave} disabled={savingState === 'saving'} className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all flex items-center gap-1.5 ${savingState === 'saved' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-white border-indigo-200 hover:bg-indigo-50 text-indigo-700'}`}>
-                    {savingState === 'saving' ? <><div className="w-3 h-3 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" /> Guardando...</> : savingState === 'saved' ? <><span>✅</span> Guardado</> : <><span>💾</span> Guardar</>}
+                <button onClick={handleSave} disabled={savingState === 'saving'} className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all flex items-center gap-1.5 ${savingState === 'saved' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-white border-brand-200 hover:bg-brand-50 text-brand-700'}`}>
+                    {savingState === 'saving' ? <><div className="w-3 h-3 border-2 border-brand-300 border-t-brand-600 rounded-full animate-spin" /> Guardando...</> : savingState === 'saved' ? <><span>✅</span> Guardado</> : <><span>💾</span> Guardar</>}
                 </button>
             </div>
 
@@ -1047,7 +1047,7 @@ export default function EvaluacionExpressV2Page() {
                     </div>
                     <div className="mt-4">
                         <label className="text-xs font-bold text-slate-500 block mb-1">Contexto rápido del paciente (opcional)</label>
-                        <input className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder={`Ej: ${area === 'pisoPelvico' ? 'Mujer 42 años, 2 partos vaginales, IUE' : area === 'msk' ? 'Hombre 35 años, dolor lumbar crónico 3 meses' : 'Futbolista 22 años, esguince tobillo grado II'}`} value={patientContext} onChange={e => setPatientContext(e.target.value)} />
+                        <input className="w-full bg-brand-50 border border-brand-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-400" placeholder={`Ej: ${area === 'pisoPelvico' ? 'Mujer 42 años, 2 partos vaginales, IUE' : area === 'msk' ? 'Hombre 35 años, dolor lumbar crónico 3 meses' : 'Futbolista 22 años, esguince tobillo grado II'}`} value={patientContext} onChange={e => setPatientContext(e.target.value)} />
                     </div>
                 </div>
 
@@ -1076,7 +1076,7 @@ export default function EvaluacionExpressV2Page() {
                                     <button onClick={() => setActiveFullscreen('anamnesisProxima')} className="text-xs text-indigo-500 font-bold hover:text-indigo-700 md:hidden">⛶</button>
                                 </div>
                             </div>
-                            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-sm resize-none focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-300 transition-all" placeholder={`Anota libremente la historia del paciente (${areaConfig.label})...`} rows={5} value={anamnesisProxima} onChange={e => setAnamnesisProxima(e.target.value)} onFocus={() => { if (window.innerWidth < 768) setActiveFullscreen('anamnesisProxima'); }} />
+                            <textarea className="w-full bg-brand-50 border border-brand-200 rounded-2xl p-5 text-sm resize-none focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-400 transition-all" placeholder={`Anota libremente la historia del paciente (${areaConfig.label})...`} rows={10} value={anamnesisProxima} onChange={e => setAnamnesisProxima(e.target.value)} onFocus={() => { if (window.innerWidth < 768) setActiveFullscreen('anamnesisProxima'); }} />
                         </div>
 
                         {/* Anamnesis Remota */}
@@ -1099,7 +1099,7 @@ export default function EvaluacionExpressV2Page() {
                                     <button onClick={() => setActiveFullscreen('anamnesisRemota')} className="text-xs text-purple-500 font-bold hover:text-purple-700 md:hidden">⛶</button>
                                 </div>
                             </div>
-                            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-sm resize-none focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-300 transition-all" placeholder="Antecedentes médicos, contexto de vida..." rows={4} value={anamnesisRemota} onChange={e => setAnamnesisRemota(e.target.value)} onFocus={() => { if (window.innerWidth < 768) setActiveFullscreen('anamnesisRemota'); }} />
+                            <textarea className="w-full bg-brand-50 border border-brand-200 rounded-2xl p-5 text-sm resize-none focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-400 transition-all" placeholder="Antecedentes médicos, contexto de vida..." rows={8} value={anamnesisRemota} onChange={e => setAnamnesisRemota(e.target.value)} onFocus={() => { if (window.innerWidth < 768) setActiveFullscreen('anamnesisRemota'); }} />
                         </div>
 
                         {/* Evaluación Física */}
@@ -1122,13 +1122,13 @@ export default function EvaluacionExpressV2Page() {
                                     <button onClick={() => setActiveFullscreen('evaluacionFisica')} className="text-xs text-emerald-500 font-bold hover:text-emerald-700 md:hidden">⛶</button>
                                 </div>
                             </div>
-                            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-sm resize-none focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-300 transition-all" placeholder="Anota libremente tus hallazgos de evaluación..." rows={5} value={evaluacionFisica} onChange={e => setEvaluacionFisica(e.target.value)} onFocus={() => { if (window.innerWidth < 768) setActiveFullscreen('evaluacionFisica'); }} />
+                            <textarea className="w-full bg-brand-50 border border-brand-200 rounded-2xl p-5 text-sm resize-none focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-400 transition-all" placeholder="Anota libremente tus hallazgos de evaluación..." rows={10} value={evaluacionFisica} onChange={e => setEvaluacionFisica(e.target.value)} onFocus={() => { if (window.innerWidth < 768) setActiveFullscreen('evaluacionFisica'); }} />
                         </div>
                     </div>
 
                     {/* BOTÓN IA */}
                     <div className="mt-8">
-                        <button onClick={handleRazonarIA} disabled={isAiProcessing || (!anamnesisProxima && !anamnesisRemota && !evaluacionFisica)} className="w-full bg-slate-900 hover:bg-black text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-slate-900/10 hover:shadow-slate-900/20 transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:transform-none disabled:shadow-none">
+                        <button onClick={handleRazonarIA} disabled={isAiProcessing || (!anamnesisProxima && !anamnesisRemota && !evaluacionFisica)} className="w-full bg-brand-800 hover:bg-brand-900 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-brand-900/20 hover:shadow-brand-900/30 transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:transform-none disabled:shadow-none">
                             {isAiProcessing ? (
                                 <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Razonando con IA Clínica ({areaConfig.label})...</>
                             ) : (
@@ -1141,10 +1141,10 @@ export default function EvaluacionExpressV2Page() {
                     {razonamientoIA && (
                         <div className="mt-8 pt-8 border-t border-slate-200">
                             <div className="flex justify-between items-center mb-4">
-                                <h4 className="font-black text-indigo-900 text-lg flex items-center gap-2"><span className="text-indigo-500">🤖</span> Razonamiento sugerido por IA</h4>
+                                <h4 className="font-black text-brand-900 text-lg flex items-center gap-2"><span>🤖</span> Razonamiento sugerido por IA</h4>
                                 <div className="flex gap-2">
-                                    <button onClick={() => setIsEditingIA(!isEditingIA)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs">{isEditingIA ? '👁️ Ver' : '✏️ Editar'}</button>
-                                    <button onClick={() => setActiveFullscreen('razonamientoIA')} className="text-xs text-indigo-500 font-bold hover:text-indigo-700 md:hidden">Ampliar</button>
+                                    <button onClick={() => setIsEditingIA(!isEditingIA)} className="px-3 py-1.5 bg-brand-100 hover:bg-brand-200 text-brand-700 font-bold rounded-lg text-xs">{isEditingIA ? '👁️ Ver' : '✏️ Editar'}</button>
+                                    <button onClick={() => setActiveFullscreen('razonamientoIA')} className="text-xs text-brand-500 font-bold hover:text-brand-700 md:hidden">Ampliar</button>
                                 </div>
                             </div>
                             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex gap-3 text-amber-800 text-sm">
@@ -1152,7 +1152,7 @@ export default function EvaluacionExpressV2Page() {
                                 <p><strong>Aviso:</strong> El razonamiento de IA es solo una orientación clínica. Debe ser confirmado, ajustado o descartado por el profesional tratante. <strong>Podés editar este texto antes de guardar.</strong></p>
                             </div>
                             {isEditingIA ? (
-                                <textarea className="w-full bg-white border border-indigo-200 rounded-2xl p-6 text-sm resize-none focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 leading-relaxed text-slate-700" rows={20} value={razonamientoIA} onChange={e => setRazonamientoIA(e.target.value)} />
+                                <textarea className="w-full bg-white border border-brand-200 rounded-2xl p-6 text-sm resize-none focus:outline-none focus:ring-4 focus:ring-brand-100 focus:border-brand-400 leading-relaxed text-slate-700" rows={20} value={razonamientoIA} onChange={e => setRazonamientoIA(e.target.value)} />
                             ) : (
                                 <div className="w-full bg-slate-50/60 rounded-2xl p-4 md:p-5 text-sm max-h-[600px] overflow-y-auto border border-slate-100">
                                     <BeautifulClinicalMarkdown text={razonamientoIA} />
