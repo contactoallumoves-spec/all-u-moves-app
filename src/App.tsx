@@ -99,9 +99,15 @@ function App() {
             if (currentUser) {
                 // Obtener perfil de Kinesiólogo
                 let profile = await KineService.getProfile(currentUser.uid);
+                const isFirstOrAdmin = currentUser.email === 'admin@allufem.cl' || 
+                                       currentUser.email === 'contacto@allufem.cl' || 
+                                       currentUser.email === 'contactoallumoves@gmail.com' ||
+                                       currentUser.email?.includes('allufem') || 
+                                       currentUser.email?.includes('allumoves') || 
+                                       currentUser.email?.startsWith('admin');
+                
                 if (!profile) {
-                    // Si no existe, lo creamos (útil para el admin actual)
-                    const isFirstOrAdmin = currentUser.email === 'admin@allufem.cl' || currentUser.email === 'contacto@allufem.cl' || currentUser.email?.startsWith('admin');
+                    // Si no existe, lo creamos
                     const defaultProfile: Kinesiologist = {
                         id: currentUser.uid,
                         firstName: 'Usuario',
@@ -119,6 +125,11 @@ function App() {
                         status: defaultProfile.status
                     });
                     profile = defaultProfile;
+                } else if (isFirstOrAdmin && (profile.status !== 'active' || profile.role !== 'admin')) {
+                    // Si ya existe pero debería ser administrador activo por patrón de correo, lo corregimos en la BD
+                    await KineService.approveKine(currentUser.uid, 'admin');
+                    profile.status = 'active';
+                    profile.role = 'admin';
                 }
                 setKineProfile(profile);
             } else {
