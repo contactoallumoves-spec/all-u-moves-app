@@ -6,8 +6,10 @@ import { Badge } from '../components/ui/Badge';
 import {
     Calendar, Plus, MessageSquare, Trash2,
     CheckCircle, Clock, XCircle, Link2, Link2Off, Loader2,
-    List, LayoutGrid, ChevronLeft, ChevronRight
+    List, LayoutGrid, ChevronLeft, ChevronRight, X
 } from 'lucide-react';
+
+const GCAL_DISMISS_KEY = 'gcal_banner_dismissed_until';
 import { AppointmentService } from '../services/appointmentService';
 import { calendarService } from '../services/calendarService';
 import { PatientService } from '../services/patientService';
@@ -278,6 +280,16 @@ export default function AppointmentsPage() {
     const [calendarConnected, setCalendarConnected] = useState(() => calendarService.isConnected());
     const [calendarLoading, setCalendarLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showCalBanner, setShowCalBanner] = useState(() => {
+        if (calendarService.isConnected()) return false;
+        const until = Number(localStorage.getItem(GCAL_DISMISS_KEY) || 0);
+        return Date.now() > until;
+    });
+
+    const dismissCalBanner = (days = 3) => {
+        localStorage.setItem(GCAL_DISMISS_KEY, String(Date.now() + days * 86400000));
+        setShowCalBanner(false);
+    };
     const [viewMode, setViewMode] = useState<'list' | 'week'>('week');
     const [weekRef, setWeekRef] = useState(new Date());
 
@@ -308,6 +320,7 @@ export default function AppointmentsPage() {
         try {
             await calendarService.connect();
             setCalendarConnected(true);
+            setShowCalBanner(false);
             await syncStatusesToCalendar(appointments);
         } catch (e: any) {
             setError(`Error al conectar Google Calendar: ${e.message}`);
@@ -452,6 +465,35 @@ export default function AppointmentsPage() {
                     </Button>
                 </div>
             </div>
+
+            {/* Banner conectar Google Calendar */}
+            {showCalBanner && !calendarConnected && (
+                <div className="flex items-center gap-4 bg-blue-50 border border-blue-200 rounded-2xl px-5 py-4">
+                    <div className="text-2xl">📅</div>
+                    <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-blue-900 text-sm">Conecta tu Google Calendar</p>
+                        <p className="text-blue-600 text-xs mt-0.5">Los turnos que crees aquí se guardarán automáticamente en tu calendario de Google. Solo lo necesitás configurar una vez.</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                            size="sm"
+                            onClick={connectGoogleCalendar}
+                            disabled={calendarLoading}
+                            className="bg-blue-600 hover:bg-blue-700 text-white border-0 text-xs"
+                        >
+                            {calendarLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Link2 className="w-3 h-3 mr-1" />}
+                            Conectar ahora
+                        </Button>
+                        <button
+                            onClick={() => dismissCalBanner()}
+                            className="text-blue-400 hover:text-blue-700 p-1 rounded-lg hover:bg-blue-100 transition-colors"
+                            title="Recordarme en 3 días"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Estado Google Calendar */}
             <div className={cn(
