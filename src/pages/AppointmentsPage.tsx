@@ -308,6 +308,7 @@ export default function AppointmentsPage() {
         try {
             await calendarService.connect();
             setCalendarConnected(true);
+            await syncStatusesToCalendar(appointments);
         } catch (e: any) {
             setError(`Error al conectar Google Calendar: ${e.message}`);
         } finally {
@@ -369,7 +370,20 @@ export default function AppointmentsPage() {
     const handleStatusChange = async (id: string, status: Appointment['status']) => {
         await AppointmentService.update(id, { status });
         setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+        if (calendarConnected) {
+            const appt = appointments.find(a => a.id === id);
+            if (appt?.googleCalendarEventId) {
+                calendarService.updateEventStatus(appt.googleCalendarEventId, status, appt.patientName, appt.place).catch(console.warn);
+            }
+        }
     };
+
+    const syncStatusesToCalendar = useCallback(async (appts: Appointment[]) => {
+        const toSync = appts.filter(a => a.googleCalendarEventId && (a.status === 'confirmado' || a.status === 'cancelado' || a.status === 'completado'));
+        for (const appt of toSync) {
+            await calendarService.updateEventStatus(appt.googleCalendarEventId!, appt.status, appt.patientName, appt.place).catch(console.warn);
+        }
+    }, []);
 
     const formatDate = (dateStr: string) => {
         const [year, month, day] = dateStr.split('-').map(Number);

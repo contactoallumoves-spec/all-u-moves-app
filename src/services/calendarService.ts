@@ -98,6 +98,20 @@ export const calendarService = {
         return data.id;
     },
 
+    async updateEventStatus(eventId: string, status: 'confirmado' | 'cancelado' | 'completado' | 'pendiente', patientName: string, place?: string): Promise<void> {
+        if (!accessToken) return;
+        const emoji = status === 'confirmado' ? '✅' : status === 'cancelado' ? '❌' : status === 'completado' ? '☑️' : '';
+        const baseName = patientName + (place === 'domicilio' ? ' (Domicilio)' : '');
+        const colorId = status === 'confirmado' ? '2' : status === 'cancelado' ? '11' : undefined;
+        const body: any = { summary: `${emoji} Kine: ${baseName}`.trim() };
+        if (colorId) body.colorId = colorId;
+        await fetch(`${CALENDAR_API}/calendars/primary/events/${eventId}`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+    },
+
     async deleteEvent(eventId: string): Promise<void> {
         if (!accessToken) return;
         await fetch(`${CALENDAR_API}/calendars/primary/events/${eventId}`, {
