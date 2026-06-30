@@ -44,6 +44,11 @@ export const AppointmentService = {
         return snap.docs.map(d => ({ id: d.id, ...d.data() } as Appointment));
     },
 
+    async getAll(): Promise<Appointment[]> {
+        const snap = await getDocs(collection(db, COLLECTION));
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as Appointment));
+    },
+
     async getByPatient(patientId: string): Promise<Appointment[]> {
         const q = query(
             collection(db, COLLECTION),

@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Bell, X, Clock, Check, CheckCircle2, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, X, Clock, Check, CheckCircle2, XCircle, Layers } from 'lucide-react';
 import { AppointmentService } from '../../services/appointmentService';
+import { PatientService } from '../../services/patientService';
 import { calendarService } from '../../services/calendarService';
 import { Appointment } from '../../types/appointment';
+import { Patient } from '../../types/patient';
 
 const WINDOW_OPTIONS = [12, 24, 48];
 const STORAGE_KEY = 'reminderWindowHours';
@@ -45,8 +48,17 @@ function formatWhen(a: Appointment): string {
     return d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' }) + ` ${a.time}`;
 }
 
+interface ExpiringPatient {
+    patient: Patient;
+    completed: number;
+    total: number;
+    remaining: number;
+}
+
 export function NotificationCenter() {
+    const navigate = useNavigate();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [expiringPatients, setExpiringPatients] = useState<ExpiringPatient[]>([]);
     const [windowHours, setWindowHours] = useState<number>(getWindowHours());
     const [acked, setAcked] = useState<Record<string, number>>(getAcked);
     const [open, setOpen] = useState(false);
@@ -73,13 +85,41 @@ export function NotificationCenter() {
         }
     }, []);
 
+    const loadExpiring = useCallback(async () => {
+        try {
+            const [patients, allAppts] = await Promise.all([
+                PatientService.getAll(),
+                AppointmentService.getAll()
+            ]);
+            const completedByPatient = new Map<string, number>();
+            allAppts.forEach(a => {
+                if (a.status === 'completado' && a.patientId) {
+                    completedByPatient.set(a.patientId, (completedByPatient.get(a.patientId) || 0) + 1);
+                }
+            });
+            const list: ExpiringPatient[] = patients
+                .filter(p => p.id && p.sessionPackage?.total && p.status !== 'archived' && p.status !== 'inactive')
+                .map(p => {
+                    const completed = completedByPatient.get(p.id!) || 0;
+                    const total = p.sessionPackage!.total;
+                    return { patient: p, completed, total, remaining: total - completed };
+                })
+                .filter(e => e.remaining <= 2)
+                .sort((a, b) => a.remaining - b.remaining);
+            setExpiringPatients(list);
+        } catch (e) {
+            console.warn('NotificationCenter: no se pudieron cargar paquetes de sesiones', e);
+        }
+    }, []);
+
     useEffect(() => {
         load();
-        const interval = setInterval(load, 5 * 60 * 1000);
-        const onFocus = () => load();
+        loadExpiring();
+        const interval = setInterval(() => { load(); loadExpiring(); }, 5 * 60 * 1000);
+        const onFocus = () => { load(); loadExpiring(); };
         window.addEventListener('focus', onFocus);
         return () => { clearInterval(interval); window.removeEventListener('focus', onFocus); };
-    }, [load]);
+    }, [load, loadExpiring]);
 
     useEffect(() => {
         if (!open) return;
@@ -106,7 +146,7 @@ export function NotificationCenter() {
     // Respuestas NUEVAS (aún no vistas por la kine)
     const newResponses = recentResponses.filter(a => acked[a.id!] !== confirmedAtMillis(a));
 
-    const badgeCount = pending.length + newResponses.length;
+    const badgeCount = pending.length + newResponses.length + expiringPatients.length;
 
     // Avisos del navegador (sistema operativo) — funciona con la app/pestaña abierta
     useEffect(() => {
@@ -242,6 +282,31 @@ export function NotificationCenter() {
                                 </div>
                             )}
 
+                            {/* Sesiones por agotar */}
+                            {expiringPatients.length > 0 && (
+                                <div>
+                                    <p className="px-4 pt-3 pb-1 text-[10px] font-black text-brand-400 uppercase tracking-wider">Sesiones por agotar</p>
+                                    {expiringPatients.map(e => (
+                                        <button
+                                            key={e.patient.id}
+                                            onClick={() => { setOpen(false); navigate(`/users/${e.patient.id}`); }}
+                                            className="w-full px-4 py-2.5 border-b border-brand-50 last:border-0 flex items-start gap-3 text-left hover:bg-brand-50/40 transition-colors"
+                                        >
+                                            <Layers className={`w-5 h-5 shrink-0 mt-0.5 ${e.remaining <= 0 ? 'text-red-500' : 'text-amber-500'}`} />
+                                            <div className="flex-1">
+                                                <p className="text-sm text-brand-900">
+                                                    <span className="font-bold">{e.patient.firstName} {e.patient.lastName}</span>
+                                                </p>
+                                                <p className="text-xs text-brand-400 mt-0.5">
+                                                    {e.completed} de {e.total} sesiones
+                                                    {e.remaining <= 0 ? ' · paquete completo' : ` · quedan ${e.remaining}`}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
                             {/* Recordatorios por enviar */}
                             <div>
                                 <div className="px-4 pt-3 pb-1 flex items-center justify-between">
@@ -287,7 +352,7 @@ export function NotificationCenter() {
                                 )}
                             </div>
 
-                            {recentResponses.length === 0 && pending.length === 0 && (
+                            {recentResponses.length === 0 && pending.length === 0 && expiringPatients.length === 0 && (
                                 <div className="px-4 py-8 text-center">
                                     <div className="text-3xl mb-2">🔔</div>
                                     <p className="text-sm text-brand-400">Todo al día. No hay notificaciones nuevas.</p>

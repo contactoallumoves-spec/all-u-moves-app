@@ -54,6 +54,9 @@ export interface Patient {
     magicLinkToken?: string; // [NEW] For Public Portal Access
     kineId?: string; // [NEW] Kinesiologist responsible
     kineName?: string; // [NEW] Optional cached name
+    sessionPackage?: {
+        total: number; // Cantidad de sesiones contratadas/pagadas. Opcional — no todas las pacientes tienen paquete fijo.
+    };
 }
 
 

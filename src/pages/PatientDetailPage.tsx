@@ -22,7 +22,11 @@ import {
     Trash2,
     Maximize2,
     ArrowLeft,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Layers,
+    Pencil,
+    Check,
+    X as XIcon
 } from 'lucide-react';
 import { QuestionnaireResultViewer } from '../components/clinical/questionnaires/QuestionnaireResultViewer';
 import { cn } from '../lib/utils';
@@ -134,6 +138,9 @@ export default function PatientDetailPage() {
     const [activeTab, setActiveTab] = useState<'clinical' | 'anamnesis' | 'planning'>('clinical'); // [NEW]
 
     const [nextAppointment, setNextAppointment] = useState<Appointment | null>(null);
+    const [completedSessionsCount, setCompletedSessionsCount] = useState(0);
+    const [editingPackage, setEditingPackage] = useState(false);
+    const [packageInput, setPackageInput] = useState('');
 
     // Modal States
     const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -187,6 +194,7 @@ export default function PatientDetailPage() {
                 return da.getTime() - db_.getTime();
             });
             setNextAppointment(upcoming[0] || null);
+            setCompletedSessionsCount(appointments.filter(a => a.status === 'completado').length);
 
             // Normalize and Merge
             const normalizedEvals = evals.map(e => ({
@@ -669,6 +677,81 @@ export default function PatientDetailPage() {
                                 </CardContent>
                             </Card>
                         )}
+
+                        {/* Paquete de Sesiones */}
+                        <Card className={patient.sessionPackage && (patient.sessionPackage.total - completedSessionsCount) <= 2 && (patient.sessionPackage.total - completedSessionsCount) >= 0 ? 'border-amber-300 bg-amber-50/60' : ''}>
+                            <CardContent className="pt-4 pb-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-xs font-bold text-brand-600 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Layers className="w-3.5 h-3.5" /> Paquete de Sesiones
+                                    </h4>
+                                    {!editingPackage && (
+                                        <button
+                                            onClick={() => { setPackageInput(String(patient.sessionPackage?.total ?? '')); setEditingPackage(true); }}
+                                            className="text-brand-400 hover:text-brand-600"
+                                        >
+                                            <Pencil className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {editingPackage ? (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            value={packageInput}
+                                            onChange={(e) => setPackageInput(e.target.value)}
+                                            placeholder="N° de sesiones"
+                                            className="w-full text-sm px-2 py-1.5 rounded-lg border border-brand-200 focus:outline-none focus:ring-1 focus:ring-brand-400"
+                                            autoFocus
+                                        />
+                                        <button
+                                            onClick={async () => {
+                                                if (!patient.id) return;
+                                                const total = parseInt(packageInput, 10);
+                                                if (!total || total <= 0) return;
+                                                await PatientService.update(patient.id, { sessionPackage: { total } });
+                                                setPatient({ ...patient, sessionPackage: { total } });
+                                                setEditingPackage(false);
+                                            }}
+                                            className="p-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg"
+                                        >
+                                            <Check className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button onClick={() => setEditingPackage(false)} className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-lg">
+                                            <XIcon className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ) : patient.sessionPackage ? (
+                                    <div>
+                                        <div className="flex items-baseline justify-between mb-1">
+                                            <p className="text-sm font-bold text-brand-900">
+                                                {completedSessionsCount} de {patient.sessionPackage.total} sesiones
+                                            </p>
+                                            {completedSessionsCount >= patient.sessionPackage.total ? (
+                                                <span className="text-xs font-bold text-red-600">Completo</span>
+                                            ) : (patient.sessionPackage.total - completedSessionsCount) <= 2 ? (
+                                                <span className="text-xs font-bold text-amber-600">Por vencer</span>
+                                            ) : null}
+                                        </div>
+                                        <div className="w-full h-2 bg-brand-100 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full ${completedSessionsCount >= patient.sessionPackage.total ? 'bg-red-500' : (patient.sessionPackage.total - completedSessionsCount) <= 2 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                                style={{ width: `${Math.min(100, (completedSessionsCount / patient.sessionPackage.total) * 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => { setPackageInput(''); setEditingPackage(true); }}
+                                        className="text-xs text-brand-500 hover:text-brand-700 font-bold underline"
+                                    >
+                                        + Definir paquete de sesiones
+                                    </button>
+                                )}
+                            </CardContent>
+                        </Card>
 
                         <Card>
                             <CardHeader>
