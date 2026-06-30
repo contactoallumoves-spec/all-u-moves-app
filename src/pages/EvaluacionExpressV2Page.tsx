@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 const genId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
@@ -869,6 +870,20 @@ function ClinicalPlanningSection({ area, clasificacionDolor, setClasificacionDol
 // ─── MAIN PAGE COMPONENT ──────────────────────────────────────────────────────
 export default function EvaluacionExpressV2Page() {
     const user = auth.currentUser;
+    const { patientId } = useParams<{ patientId?: string }>();
+    const navigate = useNavigate();
+    const [patientName, setPatientName] = useState('');
+
+    // Load patient name if patientId is provided
+    useEffect(() => {
+        if (!patientId) return;
+        getDoc(doc(db, 'patients', patientId)).then(snap => {
+            if (snap.exists()) {
+                const d = snap.data() as any;
+                setPatientName(`${d.firstName || ''} ${d.lastName || ''}`.trim());
+            }
+        }).catch(() => {});
+    }, [patientId]);
 
     // ─── ÁREA CLÍNICA ─────────────────────────────────────────────────────────
     const [area, setArea] = useState<AreaClinica>('pisoPelvico');
@@ -938,8 +953,9 @@ export default function EvaluacionExpressV2Page() {
             const docId = genId();
             await setDoc(doc(db, 'evaluaciones_express_v2', docId), {
                 userId: user.uid,
+                ...(patientId ? { patientId } : {}),
                 area,
-                patientContext,
+                patientContext: patientName || patientContext,
                 anamnesisProxima,
                 anamnesisRemota,
                 evaluacionFisica,
@@ -996,11 +1012,20 @@ export default function EvaluacionExpressV2Page() {
         <div className="min-h-screen bg-[#F8FAFC]">
             {/* Header */}
             <div className="bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
-                <div>
-                    <h2 className="text-xl font-black text-indigo-900 flex items-center gap-2">
-                        <span>⚡</span> Evaluación Inicial v2
-                    </h2>
-                    <p className="text-xs text-indigo-600 font-medium mt-0.5">Toma notas libres y deja que la IA razone las hipótesis.</p>
+                <div className="flex items-center gap-4">
+                    {patientId && (
+                        <button onClick={() => navigate(`/users/${patientId}`)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 font-medium transition-colors">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                            Volver
+                        </button>
+                    )}
+                    <div>
+                        <h2 className="text-xl font-black text-indigo-900 flex items-center gap-2">
+                            <span>⚡</span> Evaluación Inicial
+                            {patientName && <span className="text-base font-semibold text-indigo-400">— {patientName}</span>}
+                        </h2>
+                        <p className="text-xs text-indigo-600 font-medium mt-0.5">Toma notas libres y deja que la IA razone las hipótesis.</p>
+                    </div>
                 </div>
                 <button onClick={handleSave} disabled={savingState === 'saving'} className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all flex items-center gap-1.5 ${savingState === 'saved' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' : 'bg-white border-indigo-200 hover:bg-indigo-50 text-indigo-700'}`}>
                     {savingState === 'saving' ? <><div className="w-3 h-3 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" /> Guardando...</> : savingState === 'saved' ? <><span>✅</span> Guardado</> : <><span>💾</span> Guardar</>}

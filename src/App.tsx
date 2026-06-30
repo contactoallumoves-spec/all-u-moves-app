@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { MainLayout } from './components/layout/MainLayout';
 import DashboardPage from './pages/DashboardPage';
 import PatientsPage from './pages/PatientsPage';
-import NewEvaluationPage from './pages/NewEvaluationPage';
 import FastEvaluationWizard from './pages/FastEvaluationWizard';
 import CompleteEvaluation from './pages/CompleteEvaluation';
 import PatientDetailPage from './pages/PatientDetailPage'; // [NEW]
@@ -189,7 +188,7 @@ function App() {
                 {/* Protected Routes */}
                 <Route path="/" element={user ? <MainLayout><DashboardPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/users" element={user ? <MainLayout><PatientsPage /></MainLayout> : <Navigate to="/login" />} />
-                <Route path="/eval/new/:patientId" element={user ? <MainLayout><NewEvaluationPage /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/eval/new/:patientId" element={user ? <MainLayout><EvaluacionExpressV2Page /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/fast/:patientId" element={user ? <MainLayout><FastEvaluationWizard /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/complete/:patientId" element={user ? <MainLayout><CompleteEvaluation /></MainLayout> : <Navigate to="/login" />} />
 

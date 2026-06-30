@@ -22,7 +22,7 @@ export function Sidebar() {
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/users', label: 'Usuarias', icon: Users },
         { href: '/turnos', label: 'Agenda / Turnos', icon: CalendarDays },
-        { href: '/evaluacion-express-v2', label: 'Evaluación Express v2', icon: Zap },
+        { href: '/evaluacion-express-v2', label: 'Evaluación', icon: Zap },
         { href: '/reports', label: 'Reportes', icon: FileText },
         { href: '/evaluaciones-charlas', label: 'Leads Charlas', icon: Users },
         { href: '/settings', label: 'Configuración', icon: Settings },
