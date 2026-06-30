@@ -282,6 +282,6 @@ export default function ProgramBuilderV2() {
                     />
                 </div>
             </div>
-            );</div>
+        </div>
     );
 }

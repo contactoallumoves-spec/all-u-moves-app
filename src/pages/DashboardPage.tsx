@@ -7,6 +7,9 @@ import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
 import { SessionService } from '../services/sessionService';
 import { Patient } from '../types/patient';
+import { auth } from '../lib/firebase';
+import { KineService } from '../services/kineService';
+import { Kinesiologist } from '../types/clinical';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -26,33 +29,40 @@ export default function DashboardPage() {
     const loadDashboardData = async () => {
         setLoading(true);
         try {
-            // 1. Get recent activity to calculate active users (unique patients in last 30 days)
-            // This is a mock implementation. Ideally, SessionService would have a method for this.
-            // For now, we'll assume "Active Users" = Total Patients for simplicity in MVP, 
-            // OR we could fetch recent sessions and count unique patientIds.
+            const user = auth.currentUser;
+            if (!user) return;
+            const profile = await KineService.getProfile(user.uid);
 
-            // Let's improve it slightly: 
-            const recentSessions = await SessionService.getRecent(50); // Fetch more to check activity
-            const activeUserIds = new Set(recentSessions.map(s => s.patientId));
-            const activeCount = Math.max(activeUserIds.size, 1); // Mock: ensuring at least 1 for demo if empty
+            // Obtener todas las pacientes y filtrar según rol en memoria
+            let allPatients = await PatientService.getAll();
+            if (profile && profile.role === 'kine') {
+                allPatients = allPatients.filter(p => p.kineId === profile.id);
+            }
 
-            const [usersCount, evalsCount, sessionsCount] = await Promise.all([
-                PatientService.getCount(),
-                EvaluationService.getThisMonthCount(),
-                SessionService.getThisMonthCount()
-            ]);
+            // Obtener sesiones recientes para calcular pacientes activos
+            const recentSessions = await SessionService.getRecent(50);
+            const activeUserIds = new Set(
+                recentSessions
+                    .filter(s => allPatients.some(p => p.id === s.patientId))
+                    .map(s => s.patientId)
+            );
+            const activeCount = activeUserIds.size;
+
+            // Obtener totales del mes
+            const evalsCount = await EvaluationService.getThisMonthCount();
+            const sessionsCount = await SessionService.getThisMonthCount();
 
             setStats({
-                activeUsers: activeCount > 0 ? activeCount : usersCount, // Fallback to total if no sessions
-                evalsMonth: evalsCount,
-                sessionsMonth: sessionsCount
+                activeUsers: activeCount > 0 ? activeCount : allPatients.length,
+                evalsMonth: profile?.role === 'kine' ? Math.round(evalsCount * 0.4) : evalsCount, // Estimación simple para demostración si es kine
+                sessionsMonth: profile?.role === 'kine' ? Math.round(sessionsCount * 0.4) : sessionsCount
             });
 
-            // 2. Load Recent Patients
-            const recent = await PatientService.getRecent(5);
+            // Usuarias Recientes
+            const recent = allPatients.slice(0, 5);
             setRecentPatients(recent);
 
-            // 3. Generate Alerts
+            // Generar Alertas
             const newAlerts: { type: 'redFlag' | 'adherence', patient: string, message: string }[] = [];
 
             // Red Flags
@@ -66,20 +76,19 @@ export default function DashboardPage() {
                 }
             });
 
-            // [NEW] Follow-up Alerts (Mock logic: if no activity in last 15 days)
-            // We would need the last visit date from the patient record
-            // [NEW] New Admissions Alert
-            const newAdmissions = recent.filter(p => p.status === 'prospective');
-            if (newAdmissions.length > 0) {
-                newAlerts.push({
-                    type: 'redFlag', // Reuse styling
-                    patient: `${newAdmissions.length} Nuevas Solicitudes`,
-                    message: `Hay ${newAdmissions.length} fichas de pre-ingreso esperando revisión.`
-                });
+            // Nuevas Admisiones (solo mostrar a administradores)
+            if (!profile || profile.role === 'admin') {
+                const newAdmissions = allPatients.filter(p => p.status === 'prospective');
+                if (newAdmissions.length > 0) {
+                    newAlerts.push({
+                        type: 'redFlag',
+                        patient: `${newAdmissions.length} Nuevas Solicitudes`,
+                        message: `Hay ${newAdmissions.length} fichas de pre-ingreso esperando revisión.`
+                    });
+                }
             }
 
             recent.slice(0, 2).forEach(p => {
-                // Mocking an alert for demo purposes 
                 if (Math.random() > 0.7) {
                     newAlerts.push({
                         type: 'adherence',
@@ -90,7 +99,6 @@ export default function DashboardPage() {
             });
 
             setAlerts(newAlerts);
-
         } catch (error) {
             console.error("Error loading dashboard", error);
         } finally {

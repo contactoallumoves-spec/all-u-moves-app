@@ -7,10 +7,7 @@ import {
     FileText,
     Settings,
     LogOut,
-    PlusCircle,
-    Dumbbell,
-    Calendar, // [NEW]
-    Library   // [NEW] Using Library icon for Programs
+    PlusCircle
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
@@ -21,10 +18,7 @@ export function Sidebar() {
 
     const links = [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/planner', label: 'Planificador', icon: Calendar },
-        { href: '/programs', label: 'Biblioteca', icon: Library },
         { href: '/users', label: 'Usuarias', icon: Users },
-        { href: '/exercises', label: 'Ejercicios', icon: Dumbbell },
         { href: '/reports', label: 'Reportes', icon: FileText },
         { href: '/evaluaciones-charlas', label: 'Leads Charlas', icon: Users }, // [NEW] Link to Talk Leads
         { href: '/settings', label: 'Configuración', icon: Settings },

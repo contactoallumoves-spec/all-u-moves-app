@@ -5,6 +5,9 @@ import { PlusCircle, Search, Loader2, User as UserIcon, Phone, Mail, FileText, T
 import { PatientService } from '../services/patientService';
 import { Patient } from '../types/patient';
 import { useNavigate } from 'react-router-dom';
+import { auth } from '../lib/firebase';
+import { KineService } from '../services/kineService';
+import { Kinesiologist } from '../types/clinical';
 
 import { EvaluationService, Evaluation } from '../services/evaluationService';
 import { CLUSTERS } from '../data/clusters';
@@ -14,6 +17,11 @@ export default function PatientsPage() {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Kinesiologist states
+    const [currentKine, setCurrentKine] = useState<Kinesiologist | null>(null);
+    const [kinesList, setKinesList] = useState<Kinesiologist[]>([]);
 
     // History Modal State
     const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -29,12 +37,35 @@ export default function PatientsPage() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        loadPatients();
+        const init = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                const profile = await KineService.getProfile(user.uid);
+                setCurrentKine(profile);
+
+                if (profile?.role === 'admin') {
+                    const list = await KineService.getAllKines();
+                    setKinesList(list.filter(k => k.status === 'active'));
+                }
+
+                await loadPatients(profile);
+            } else {
+                setLoading(false);
+            }
+        };
+        init();
     }, []);
 
-    const loadPatients = async () => {
+    const loadPatients = async (profile?: Kinesiologist | null) => {
+        const activeProfile = profile || currentKine;
         const data = await PatientService.getAll();
-        setPatients(data);
+        
+        // Filtrar en memoria por privacidad del kinesiólogo
+        if (activeProfile && activeProfile.role === 'kine') {
+            setPatients(data.filter(p => p.kineId === activeProfile.id));
+        } else {
+            setPatients(data);
+        }
         setLoading(false);
     };
 
@@ -60,10 +91,16 @@ export default function PatientsPage() {
         setError('');
         setSaving(true);
         try {
+            let finalFormData = { ...formData };
+            if (!finalFormData.kineId && currentKine) {
+                finalFormData.kineId = currentKine.id;
+                finalFormData.kineName = `${currentKine.firstName} ${currentKine.lastName}`;
+            }
+
             if (formData.id) {
-                await PatientService.update(formData.id, formData);
+                await PatientService.update(formData.id, finalFormData);
             } else {
-                await PatientService.create(formData as Patient);
+                await PatientService.create(finalFormData as Patient);
             }
             await loadPatients();
             setShowModal(false);
@@ -113,6 +150,8 @@ export default function PatientsPage() {
                         <input
                             type="text"
                             placeholder="Buscar por nombre o RUT..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                         />
                     </div>
@@ -120,15 +159,15 @@ export default function PatientsPage() {
                 <CardContent>
                     {loading ? (
                         <div className="text-center py-10"><Loader2 className="animate-spin h-8 w-8 mx-auto text-brand-400" /></div>
-                    ) : patients.length === 0 ? (
+                    ) : filteredPatients.length === 0 ? (
                         <div className="text-center py-16 bg-brand-50/30 rounded-xl border-dashed border-2 border-brand-100 m-4">
                             <UserIcon className="h-12 w-12 text-brand-300 mx-auto mb-3" />
-                            <p className="text-brand-500 font-medium">No hay usuarias registradas</p>
-                            <p className="text-sm text-brand-400 mt-1">Comienza agregando la primera ficha.</p>
+                            <p className="text-brand-500 font-medium">No se encontraron usuarias</p>
+                            <p className="text-sm text-brand-400 mt-1">Intenta con otra búsqueda o agrega una nueva usuaria.</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-brand-50">
-                            {patients.map(patient => (
+                            {filteredPatients.map(patient => (
                                 <div key={patient.id} className="p-4 flex items-center justify-between hover:bg-brand-50/50 transition-colors group">
                                     <div className="flex items-center gap-4">
                                         <div className="cursor-pointer w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg" onClick={() => navigate(`/users/${patient.id}`)}>
@@ -136,9 +175,14 @@ export default function PatientsPage() {
                                         </div>
                                         <div className="cursor-pointer" onClick={() => navigate(`/users/${patient.id}`)}>
                                             <p className="font-semibold text-brand-900 text-lg">{patient.firstName} {patient.lastName}</p>
-                                            <div className="flex items-center gap-3 text-xs text-brand-500">
+                                            <div className="flex items-center gap-3 text-xs text-brand-500 mt-1">
                                                 <span className="bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium">{patient.stage}</span>
                                                 <span className="flex items-center gap-1"><FileText size={12} /> {patient.rut}</span>
+                                                {patient.kineName && (
+                                                    <span className="text-purple-600 font-medium bg-purple-50 px-2.5 py-0.5 rounded-full text-[10px]">
+                                                        Kine: {patient.kineName}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -293,6 +337,29 @@ export default function PatientsPage() {
                                         />
                                     </div>
                                 </div>
+
+                                {currentKine?.role === 'admin' && (
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-brand-500">Kinesiólogo Responsable</label>
+                                        <select
+                                            className="w-full p-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-brand-500/20 outline-none"
+                                            value={formData.kineId || ''}
+                                            onChange={e => {
+                                                const selectedKine = kinesList.find(k => k.id === e.target.value);
+                                                setFormData({
+                                                    ...formData,
+                                                    kineId: e.target.value,
+                                                    kineName: selectedKine ? `${selectedKine.firstName} ${selectedKine.lastName}` : ''
+                                                });
+                                            }}
+                                        >
+                                            <option value="">-- Seleccionar Responsable --</option>
+                                            {kinesList.map(kine => (
+                                                <option key={kine.id} value={kine.id}>{kine.firstName} {kine.lastName}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

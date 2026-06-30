@@ -52,6 +52,8 @@ export interface Patient {
     activeTasks?: Task[];
     activePlan?: PrescribedPlan; // [NEW] Structured Weekly Plan
     magicLinkToken?: string; // [NEW] For Public Portal Access
+    kineId?: string; // [NEW] Kinesiologist responsible
+    kineName?: string; // [NEW] Optional cached name
 }
 
 

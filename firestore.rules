@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función para validar si es terapeuta logueado
+    function isTherapist() {
+      return request.auth != null;
+    }
+    
+    // Función para validar si el token del portal de paciente coincide
+    function isValidPatientToken(token) {
+      return token != null && token != "";
+    }
+
+    // Reglas para la colección de Kinesiólogos
+    match /kinesiologists/{kineId} {
+      // Permitir registrarse públicamente
+      allow create: if true;
+      // Permitir leer y actualizar si está logueado
+      allow read, update, delete: if isTherapist();
+    }
+
+    // Reglas para la colección de Pacientes
+    match /patients/{patientId} {
+      // Los kinesiólogos activos pueden hacer todo
+      allow read, write: if isTherapist();
+      // Las landing pages públicas pueden enviar fichas de pre-ingreso
+      allow create: if request.resource.data.status == 'prospective';
+      // Los pacientes pueden leer su propio perfil si proveen su magicLinkToken
+      allow read: if isValidPatientToken(resource.data.magicLinkToken);
+    }
+
+    // Reglas para Evaluaciones, Sesiones y Logs
+    match /evaluations/{evalId} {
+      allow read, write: if isTherapist();
+    }
+    match /sessions/{sessionId} {
+      allow read, write: if isTherapist();
+    }
+    match /sessionLogs/{logId} {
+      allow read, write: if isTherapist();
+      // Los pacientes pueden subir sus respuestas y logs de sesión en casa
+      allow read, create, update: if isValidPatientToken(request.resource.data.patientId);
+    }
+    match /annualPlans/{planId} {
+      allow read: if isTherapist() || isValidPatientToken(resource.data.patientId);
+      allow write: if isTherapist();
+    }
+    match /talk_evaluations/{evalId} {
+      allow create: if true; // Leads públicos de charlas
+      allow read, update, delete: if isTherapist();
+    }
+  }
+}

@@ -8,10 +8,11 @@ import FastEvaluationWizard from './pages/FastEvaluationWizard';
 import CompleteEvaluation from './pages/CompleteEvaluation';
 import PatientDetailPage from './pages/PatientDetailPage'; // [NEW]
 import EvolutionPage from './pages/EvolutionPage';
-import ExercisesPage from './pages/ExercisesPage';
-import ProgramLibraryPage from './pages/programs/ProgramLibraryPage'; // [NEW]
-import PlannerSelectorPage from './pages/planning/PlannerSelectorPage'; // [NEW]
-import ProgramBuilderV2 from './pages/programs/ProgramBuilderV2'; // [NEW]
+import RegisterPage from './pages/RegisterPage';
+import SettingsPage from './pages/SettingsPage';
+import { KineService } from './services/kineService';
+import { Kinesiologist } from './types/clinical';
+import { signOut } from 'firebase/auth';
 
 
 import { Button } from './components/ui/Button';
@@ -25,7 +26,6 @@ import { PortalLayout } from './components/portal/PortalLayout'; // [NEW]
 import { PortalGuard } from './pages/portal/PortalGuard'; // [NEW]
 import PortalDashboard from './pages/portal/PortalDashboard'; // [NEW]
 import SessionPlayer from './pages/portal/SessionPlayer'; // [NEW]
-import ProgrammingPage from './pages/planning/ProgrammingPage'; // [NEW] Unified View
 import TalkEvaluationPage from './pages/public/TalkEvaluationPage'; // [NEW] Public Questionnaire
 import TalkLeadsPage from './pages/admin/TalkLeadsPage'; // [NEW] Admin View for Leads
 import CuestionarioPrenatalPage from './pages/public/CuestionarioPrenatalPage'; // [NEW] Cuestionario Prenatal
@@ -90,11 +90,40 @@ const Login = () => {
 
 function App() {
     const [user, setUser] = useState<User | null>(null);
+    const [kineProfile, setKineProfile] = useState<Kinesiologist | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
+            if (currentUser) {
+                // Obtener perfil de Kinesiólogo
+                let profile = await KineService.getProfile(currentUser.uid);
+                if (!profile) {
+                    // Si no existe, lo creamos (útil para el admin actual)
+                    const isFirstOrAdmin = currentUser.email === 'admin@allufem.cl' || currentUser.email === 'contacto@allufem.cl' || currentUser.email?.startsWith('admin');
+                    const defaultProfile: Kinesiologist = {
+                        id: currentUser.uid,
+                        firstName: 'Usuario',
+                        lastName: 'Allufem',
+                        email: currentUser.email || '',
+                        role: isFirstOrAdmin ? 'admin' : 'kine',
+                        status: isFirstOrAdmin ? 'active' : 'pending',
+                        createdAt: new Date()
+                    };
+                    await KineService.createProfile(currentUser.uid, {
+                        firstName: defaultProfile.firstName,
+                        lastName: defaultProfile.lastName,
+                        email: defaultProfile.email,
+                        role: defaultProfile.role,
+                        status: defaultProfile.status
+                    });
+                    profile = defaultProfile;
+                }
+                setKineProfile(profile);
+            } else {
+                setKineProfile(null);
+            }
             setLoading(false);
         });
         return () => unsubscribe();
@@ -108,14 +137,44 @@ function App() {
         );
     }
 
+    // Pantalla de espera para cuentas pendientes de aprobación
+    if (user && kineProfile?.status === 'pending') {
+        const handleLogout = () => signOut(auth);
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-brand-50 p-4">
+                <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-brand-100 text-center space-y-6 animate-in fade-in">
+                    <div className="flex justify-center">
+                        <div className="p-3 bg-amber-50 text-amber-600 rounded-full animate-pulse">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-serif font-bold text-brand-900">Aprobación Pendiente</h2>
+                        <p className="text-brand-500 text-sm">
+                            Hola, <strong>{kineProfile?.firstName}</strong>. Tu cuenta ha sido registrada y está en espera de aprobación por parte del administrador.
+                        </p>
+                        <p className="text-brand-400 text-xs">
+                            Una vez aprobado, tendrás acceso completo a las fichas clínicas de tus pacientes.
+                        </p>
+                    </div>
+                    <div className="pt-4">
+                        <Button onClick={handleLogout} variant="outline" className="w-full">
+                            Cerrar Sesión
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+                <Route path="/register" element={<RegisterPage />} />
 
                 {/* Protected Routes */}
                 <Route path="/" element={user ? <MainLayout><DashboardPage /></MainLayout> : <Navigate to="/login" />} />
-                <Route path="/planner" element={user ? <MainLayout><PlannerSelectorPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] Option 2 Direct Planner */}
                 <Route path="/users" element={user ? <MainLayout><PatientsPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/new/:patientId" element={user ? <MainLayout><NewEvaluationPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/eval/fast/:patientId" element={user ? <MainLayout><FastEvaluationWizard /></MainLayout> : <Navigate to="/login" />} />
@@ -124,14 +183,8 @@ function App() {
                 {/* Hub & Sessions */}
                 <Route path="/users/:id" element={user ? <MainLayout><PatientDetailPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/users/:patientId/sessions/new" element={user ? <MainLayout><EvolutionPage /></MainLayout> : <Navigate to="/login" />} />
-                <Route path="/exercises" element={user ? <MainLayout><ExercisesPage /></MainLayout> : <Navigate to="/login" />} />
-                <Route path="/users/:patientId/planning" element={user ? <MainLayout><ProgrammingPage /></MainLayout> : <Navigate to="/login" />} />
-
-                {/* [NEW] Program Library */}
-                <Route path="/programs" element={user ? <MainLayout><ProgramLibraryPage /></MainLayout> : <Navigate to="/login" />} />
-                <Route path="/programs/new" element={user ? <MainLayout><ProgramBuilderV2 /></MainLayout> : <Navigate to="/login" />} />
-                <Route path="/programs/:programId" element={user ? <MainLayout><ProgramBuilderV2 /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/evaluaciones-charlas" element={user ? <MainLayout><TalkLeadsPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] Admin View */}
+                <Route path="/settings" element={user ? <MainLayout><SettingsPage /></MainLayout> : <Navigate to="/login" />} />
 
                 {/* Public Routes */}
                 <Route path="/" element={<PublicLayout />}>

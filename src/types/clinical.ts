@@ -37,3 +37,13 @@ export interface EvaluationData {
         sane?: number; // 0-100
     };
 }
+
+export interface Kinesiologist {
+    id: string; // Firebase Auth UID
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: 'admin' | 'kine';
+    status: 'pending' | 'active';
+    createdAt: any;
+}
