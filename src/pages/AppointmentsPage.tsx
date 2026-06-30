@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import {
     Calendar, Plus, MessageSquare, RefreshCw, Trash2,
-    CheckCircle, Clock, XCircle, Link2, Link2Off, Loader2
+    CheckCircle, Clock, XCircle, Link2, Link2Off, Loader2,
+    List, LayoutGrid, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { AppointmentService } from '../services/appointmentService';
 import { calendarService } from '../services/calendarService';
@@ -32,6 +33,272 @@ const EMPTY_FORM: Omit<Appointment, 'id' | 'patientName' | 'patientPhone'> = {
     status: 'pendiente'
 };
 
+// --- Constantes para la grilla semanal ---
+const HOUR_START = 7;
+const HOUR_END = 21;
+const HOUR_HEIGHT = 64; // px por hora
+const TOTAL_HOURS = HOUR_END - HOUR_START;
+
+function getWeekDays(referenceDate: Date): Date[] {
+    const d = new Date(referenceDate);
+    const day = d.getDay(); // 0=Dom, 1=Lun...
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diffToMonday);
+    return Array.from({ length: 7 }, (_, i) => {
+        const dd = new Date(d);
+        dd.setDate(d.getDate() + i);
+        return dd;
+    });
+}
+
+function dateToStr(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function apptTop(time: string): number {
+    const [h, m] = time.split(':').map(Number);
+    return ((h - HOUR_START) + m / 60) * HOUR_HEIGHT;
+}
+
+function apptHeight(durationMinutes: number): number {
+    return Math.max((durationMinutes / 60) * HOUR_HEIGHT, 28);
+}
+
+function statusBgColor(status: Appointment['status']): string {
+    switch (status) {
+        case 'confirmado': return 'bg-green-100 border-green-400 text-green-900';
+        case 'cancelado':  return 'bg-red-100 border-red-400 text-red-900';
+        case 'completado': return 'bg-brand-100 border-brand-400 text-brand-900';
+        default:           return 'bg-amber-50 border-amber-400 text-amber-900';
+    }
+}
+
+// --- Componente grilla semanal ---
+interface WeekGridProps {
+    weekDays: Date[];
+    appointments: Appointment[];
+    googleEvents: any[];
+    onNewAppt: (date: string) => void;
+    onDelete: (appt: Appointment) => void;
+    onStatusChange: (id: string, status: Appointment['status']) => void;
+}
+
+function WeekGrid({ weekDays, appointments, googleEvents, onNewAppt, onDelete, onStatusChange }: WeekGridProps) {
+    const [selected, setSelected] = useState<Appointment | null>(null);
+    const todayStr = dateToStr(new Date());
+
+    const apptsByDay = useMemo(() => {
+        const map: Record<string, Appointment[]> = {};
+        for (const a of appointments) {
+            if (!map[a.date]) map[a.date] = [];
+            map[a.date].push(a);
+        }
+        return map;
+    }, [appointments]);
+
+    const googleByDay = useMemo(() => {
+        const map: Record<string, any[]> = {};
+        for (const ev of googleEvents) {
+            const day = (ev.start?.dateTime || ev.start?.date || '').split('T')[0];
+            if (!map[day]) map[day] = [];
+            map[day].push(ev);
+        }
+        return map;
+    }, [googleEvents]);
+
+    const hours = Array.from({ length: TOTAL_HOURS }, (_, i) => HOUR_START + i);
+    const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+    return (
+        <div className="bg-white rounded-2xl border border-brand-100 overflow-hidden shadow-sm">
+            {/* Cabecera días */}
+            <div className="grid border-b border-brand-100" style={{ gridTemplateColumns: '52px repeat(7, 1fr)' }}>
+                <div className="border-r border-brand-50" />
+                {weekDays.map(day => {
+                    const str = dateToStr(day);
+                    const isToday = str === todayStr;
+                    return (
+                        <div
+                            key={str}
+                            className={cn(
+                                'py-3 text-center border-r border-brand-50 last:border-r-0 cursor-pointer hover:bg-brand-50 transition-colors',
+                                isToday ? 'bg-brand-50' : ''
+                            )}
+                            onClick={() => onNewAppt(str)}
+                            title={`Nuevo turno el ${str}`}
+                        >
+                            <div className="text-[10px] font-semibold text-brand-400 uppercase tracking-widest">
+                                {DAY_NAMES[day.getDay()]}
+                            </div>
+                            <div className={cn(
+                                'text-lg font-bold mt-0.5',
+                                isToday ? 'text-brand-700' : 'text-brand-900'
+                            )}>
+                                {isToday ? (
+                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-brand-600 text-white text-base">
+                                        {day.getDate()}
+                                    </span>
+                                ) : day.getDate()}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Grilla de horas */}
+            <div className="overflow-y-auto" style={{ maxHeight: '70vh' }}>
+                <div className="grid relative" style={{ gridTemplateColumns: '52px repeat(7, 1fr)' }}>
+                    {/* Columna de horas */}
+                    <div className="relative">
+                        {hours.map(h => (
+                            <div
+                                key={h}
+                                className="border-b border-brand-50 text-right pr-2 text-[10px] text-brand-300 font-medium flex items-start justify-end pt-1"
+                                style={{ height: HOUR_HEIGHT }}
+                            >
+                                {String(h).padStart(2, '0')}:00
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Columnas de días */}
+                    {weekDays.map(day => {
+                        const str = dateToStr(day);
+                        const dayAppts = apptsByDay[str] || [];
+                        const dayGoogle = (googleByDay[str] || []).filter(ev => !appointments.some(a => a.googleCalendarEventId === ev.id));
+                        const isToday = str === todayStr;
+
+                        return (
+                            <div
+                                key={str}
+                                className={cn(
+                                    'relative border-r border-brand-50 last:border-r-0',
+                                    isToday ? 'bg-brand-50/30' : ''
+                                )}
+                                style={{ height: TOTAL_HOURS * HOUR_HEIGHT }}
+                            >
+                                {/* Líneas de hora */}
+                                {hours.map(h => (
+                                    <div
+                                        key={h}
+                                        className="absolute w-full border-b border-brand-50"
+                                        style={{ top: (h - HOUR_START) * HOUR_HEIGHT }}
+                                    />
+                                ))}
+
+                                {/* Línea de mitad de hora */}
+                                {hours.map(h => (
+                                    <div
+                                        key={`${h}-half`}
+                                        className="absolute w-full border-b border-brand-50/50"
+                                        style={{ top: (h - HOUR_START) * HOUR_HEIGHT + HOUR_HEIGHT / 2 }}
+                                    />
+                                ))}
+
+                                {/* Turnos de la app */}
+                                {dayAppts.map(appt => {
+                                    const top = apptTop(appt.time);
+                                    const height = apptHeight(appt.durationMinutes);
+                                    const isOutOfRange = top < 0 || top > TOTAL_HOURS * HOUR_HEIGHT;
+                                    if (isOutOfRange) return null;
+
+                                    return (
+                                        <div
+                                            key={appt.id}
+                                            className={cn(
+                                                'absolute left-0.5 right-0.5 rounded-lg border-l-4 px-1.5 py-1 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity shadow-sm',
+                                                statusBgColor(appt.status)
+                                            )}
+                                            style={{ top, height: Math.max(height, 30), zIndex: 10 }}
+                                            onClick={() => setSelected(selected?.id === appt.id ? null : appt)}
+                                        >
+                                            <p className="text-[11px] font-bold leading-tight truncate">{appt.time} {appt.patientName}</p>
+                                            {height > 38 && (
+                                                <p className="text-[10px] opacity-70 leading-tight truncate">{APPOINTMENT_TYPES[appt.type]}</p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+
+                                {/* Eventos de Google Calendar */}
+                                {dayGoogle.map(ev => {
+                                    if (!ev.start?.dateTime) return null;
+                                    const evDate = new Date(ev.start.dateTime);
+                                    const timeStr = `${String(evDate.getHours()).padStart(2, '0')}:${String(evDate.getMinutes()).padStart(2, '0')}`;
+                                    const top = apptTop(timeStr);
+                                    const endDate = ev.end?.dateTime ? new Date(ev.end.dateTime) : new Date(evDate.getTime() + 3600000);
+                                    const durMin = (endDate.getTime() - evDate.getTime()) / 60000;
+                                    const height = apptHeight(durMin);
+                                    if (top < 0) return null;
+
+                                    return (
+                                        <div
+                                            key={ev.id}
+                                            className="absolute left-0.5 right-0.5 rounded-lg border-l-4 border-blue-400 bg-blue-50 px-1.5 py-1 overflow-hidden cursor-default shadow-sm"
+                                            style={{ top, height: Math.max(height, 30), zIndex: 5 }}
+                                        >
+                                            <p className="text-[11px] font-bold text-blue-800 leading-tight truncate">{timeStr} {ev.summary}</p>
+                                            {height > 38 && <p className="text-[10px] text-blue-500">Google Calendar</p>}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Panel de detalle del turno seleccionado */}
+            {selected && (
+                <div className="border-t border-brand-100 p-4 bg-brand-50/50">
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-brand-900 text-lg">{selected.patientName}</span>
+                                <Badge className={cn('text-xs', STATUS_CONFIG[selected.status].color)}>
+                                    {STATUS_CONFIG[selected.status].label}
+                                </Badge>
+                                {selected.place && (
+                                    <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', selected.place === 'domicilio' ? 'bg-orange-100 text-orange-700' : 'bg-brand-100 text-brand-700')}>
+                                        {selected.place === 'domicilio' ? '🏠 Domicilio' : '🏥 Local'}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-sm text-brand-500 mt-1">
+                                {APPOINTMENT_TYPES[selected.type]} · {selected.time} hrs · {selected.durationMinutes} min
+                            </p>
+                            {selected.notes && <p className="text-sm text-brand-600 mt-1">{selected.notes}</p>}
+                        </div>
+                        <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+                            {selected.status === 'pendiente' && (
+                                <Button size="sm" variant="outline" className="text-green-700 border-green-300 hover:bg-green-50 text-xs"
+                                    onClick={() => { onStatusChange(selected.id!, 'confirmado'); setSelected({ ...selected, status: 'confirmado' }); }}>
+                                    <CheckCircle className="w-3 h-3 mr-1" /> Confirmar
+                                </Button>
+                            )}
+                            {selected.patientPhone && (
+                                <a href={calendarService.buildWhatsAppLink(selected, selected.patientPhone)} target="_blank" rel="noopener noreferrer">
+                                    <Button size="sm" variant="outline" className="text-green-600 border-green-300 text-xs">
+                                        <MessageSquare className="w-3 h-3 mr-1" /> WhatsApp
+                                    </Button>
+                                </a>
+                            )}
+                            <Button size="sm" variant="outline" className="text-red-500 border-red-200 hover:bg-red-50 text-xs"
+                                onClick={() => { onDelete(selected); setSelected(null); }}>
+                                <Trash2 className="w-3 h-3 mr-1" /> Eliminar
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-brand-400 text-xs" onClick={() => setSelected(null)}>
+                                Cerrar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// --- Página principal ---
 export default function AppointmentsPage() {
     const [searchParams] = useSearchParams();
     const prefilledPatientId = searchParams.get('patientId') || '';
@@ -47,10 +314,13 @@ export default function AppointmentsPage() {
     const [calendarLoading, setCalendarLoading] = useState(false);
     const [syncingCalendar, setSyncingCalendar] = useState(false);
     const [error, setError] = useState('');
+    const [viewMode, setViewMode] = useState<'list' | 'week'>('week');
+    const [weekRef, setWeekRef] = useState(new Date());
+
+    const weekDays = useMemo(() => getWeekDays(weekRef), [weekRef]);
 
     const load = useCallback(async () => {
         setLoading(true);
-        // Fetch independently so a failing appointments query doesn't block the patient list
         const [appts, pts] = await Promise.allSettled([
             AppointmentService.getUpcoming(),
             PatientService.getAll()
@@ -66,7 +336,7 @@ export default function AppointmentsPage() {
 
     const connectGoogleCalendar = async () => {
         if (!calendarService.isConfigured()) {
-            setError('Google Calendar no está configurado aún. Agrega VITE_GOOGLE_CLIENT_ID en .env.local y recarga la app.');
+            setError('Google Calendar no está configurado aún. Agrega VITE_GOOGLE_CLIENT_ID en Vercel y recarga la app.');
             return;
         }
         setCalendarLoading(true);
@@ -92,6 +362,12 @@ export default function AppointmentsPage() {
         } finally {
             setSyncingCalendar(false);
         }
+    };
+
+    const openNewApptForDate = (date: string) => {
+        setForm({ ...EMPTY_FORM, patientId: prefilledPatientId, date });
+        setShowForm(true);
+        setError('');
     };
 
     const handleSave = async () => {
@@ -166,15 +442,41 @@ export default function AppointmentsPage() {
 
     const allDays = Array.from(new Set([...Object.keys(apptsByDay), ...Object.keys(googleEventsByDay)])).sort();
 
+    const weekLabel = (() => {
+        const start = weekDays[0];
+        const end = weekDays[6];
+        const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        if (start.getMonth() === end.getMonth()) {
+            return `${start.getDate()} – ${end.getDate()} de ${months[start.getMonth()]} ${start.getFullYear()}`;
+        }
+        return `${start.getDate()} ${months[start.getMonth()]} – ${end.getDate()} ${months[end.getMonth()]} ${end.getFullYear()}`;
+    })();
+
     return (
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-5">
             {/* Header */}
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between flex-wrap gap-3">
                 <div>
                     <h1 className="text-3xl font-serif font-bold text-brand-900">Agenda / Turnos</h1>
                     <p className="text-brand-500 text-sm mt-1">Gestiona los turnos y sincroniza con Google Calendar</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2 flex-wrap">
+                    {/* Toggle vista */}
+                    <div className="flex border border-brand-200 rounded-xl overflow-hidden">
+                        <button
+                            className={cn('px-3 py-2 text-sm flex items-center gap-1.5 transition-colors', viewMode === 'week' ? 'bg-brand-600 text-white' : 'bg-white text-brand-600 hover:bg-brand-50')}
+                            onClick={() => setViewMode('week')}
+                        >
+                            <LayoutGrid className="w-4 h-4" /> Semana
+                        </button>
+                        <button
+                            className={cn('px-3 py-2 text-sm flex items-center gap-1.5 transition-colors border-l border-brand-200', viewMode === 'list' ? 'bg-brand-600 text-white' : 'bg-white text-brand-600 hover:bg-brand-50')}
+                            onClick={() => setViewMode('list')}
+                        >
+                            <List className="w-4 h-4" /> Lista
+                        </button>
+                    </div>
+
                     {calendarConnected ? (
                         <Button variant="outline" size="sm" onClick={syncGoogleEvents} disabled={syncingCalendar}>
                             {syncingCalendar ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
@@ -188,14 +490,11 @@ export default function AppointmentsPage() {
                             disabled={calendarLoading}
                             className="border-blue-300 text-blue-700 hover:bg-blue-50"
                         >
-                            {calendarLoading
-                                ? <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                : <Link2 className="w-4 h-4 mr-2" />
-                            }
+                            {calendarLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Link2 className="w-4 h-4 mr-2" />}
                             Conectar Google Calendar
                         </Button>
                     )}
-                    <Button onClick={() => { setShowForm(true); setError(''); }}>
+                    <Button onClick={() => { openNewApptForDate(new Date().toISOString().split('T')[0]); }}>
                         <Plus className="w-4 h-4 mr-2" /> Nuevo Turno
                     </Button>
                 </div>
@@ -203,7 +502,7 @@ export default function AppointmentsPage() {
 
             {/* Estado Google Calendar */}
             <div className={cn(
-                "flex items-center gap-2 text-sm px-4 py-2 rounded-lg",
+                'flex items-center gap-2 text-sm px-4 py-2 rounded-lg',
                 calendarConnected ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'
             )}>
                 {calendarConnected ? <Link2 className="w-4 h-4" /> : <Link2Off className="w-4 h-4" />}
@@ -339,140 +638,169 @@ export default function AppointmentsPage() {
                 </Card>
             )}
 
-            {/* Lista de turnos */}
-            {loading ? (
-                <div className="flex justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
-                </div>
-            ) : allDays.length === 0 ? (
-                <div className="text-center py-16 text-brand-400">
-                    <Calendar className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                    <p className="font-medium">No hay turnos próximos</p>
-                    <p className="text-sm mt-1">Crea el primero con el botón "Nuevo Turno"</p>
-                </div>
-            ) : (
-                <div className="space-y-6">
-                    {allDays.map(day => (
-                        <div key={day}>
-                            <h3 className="text-sm font-semibold text-brand-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                {formatDate(day)}
-                            </h3>
+            {/* Vista semanal */}
+            {viewMode === 'week' && !loading && (
+                <div>
+                    {/* Navegación semana */}
+                    <div className="flex items-center justify-between mb-3">
+                        <button
+                            className="flex items-center gap-1 text-sm text-brand-600 hover:text-brand-900 font-medium px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors"
+                            onClick={() => { const d = new Date(weekRef); d.setDate(d.getDate() - 7); setWeekRef(d); }}
+                        >
+                            <ChevronLeft className="w-4 h-4" /> Anterior
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-brand-700 capitalize">{weekLabel}</span>
+                            <button
+                                className="text-xs text-brand-400 hover:text-brand-700 underline"
+                                onClick={() => setWeekRef(new Date())}
+                            >
+                                Hoy
+                            </button>
+                        </div>
+                        <button
+                            className="flex items-center gap-1 text-sm text-brand-600 hover:text-brand-900 font-medium px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors"
+                            onClick={() => { const d = new Date(weekRef); d.setDate(d.getDate() + 7); setWeekRef(d); }}
+                        >
+                            Siguiente <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
 
-                            <div className="space-y-3">
-                                {/* Turnos de la app */}
-                                {(apptsByDay[day] || []).map(appt => {
-                                    const statusCfg = STATUS_CONFIG[appt.status];
-                                    const StatusIcon = statusCfg.icon;
-                                    const waLink = calendarService.buildWhatsAppLink(appt, appt.patientPhone);
-                                    const gcLink = calendarService.buildCalendarLink(appt);
+                    <WeekGrid
+                        weekDays={weekDays}
+                        appointments={appointments}
+                        googleEvents={googleEvents}
+                        onNewAppt={openNewApptForDate}
+                        onDelete={handleDelete}
+                        onStatusChange={handleStatusChange}
+                    />
+                    <p className="text-xs text-brand-300 text-center mt-2">Hacé clic en un día para crear un turno · Hacé clic en un turno para ver opciones</p>
+                </div>
+            )}
 
-                                    return (
-                                        <Card key={appt.id} className="border-brand-100">
-                                            <CardContent className="p-4">
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="font-bold text-brand-900">{appt.time}</span>
-                                                            <span className="text-brand-700 font-medium">{appt.patientName}</span>
-                                                            <Badge className={cn('text-xs', statusCfg.color)}>
-                                                                <StatusIcon className="w-3 h-3 mr-1" />
-                                                                {statusCfg.label}
-                                                            </Badge>
-                                                            <span className="text-xs text-brand-400">
-                                                                {APPOINTMENT_TYPES[appt.type]} · {appt.durationMinutes}min
-                                                            </span>
-                                                            {appt.place && (
-                                                                <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', appt.place === 'domicilio' ? 'bg-orange-100 text-orange-700' : 'bg-brand-100 text-brand-700')}>
-                                                                    {appt.place === 'domicilio' ? '🏠 Domicilio' : '🏥 Local'}
+            {/* Vista lista */}
+            {viewMode === 'list' && (
+                loading ? (
+                    <div className="flex justify-center py-12">
+                        <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
+                    </div>
+                ) : allDays.length === 0 ? (
+                    <div className="text-center py-16 text-brand-400">
+                        <Calendar className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                        <p className="font-medium">No hay turnos próximos</p>
+                        <p className="text-sm mt-1">Crea el primero con el botón "Nuevo Turno"</p>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {allDays.map(day => (
+                            <div key={day}>
+                                <h3 className="text-sm font-semibold text-brand-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <Calendar className="w-4 h-4" />
+                                    {formatDate(day)}
+                                </h3>
+
+                                <div className="space-y-3">
+                                    {(apptsByDay[day] || []).map(appt => {
+                                        const statusCfg = STATUS_CONFIG[appt.status];
+                                        const StatusIcon = statusCfg.icon;
+                                        const waLink = calendarService.buildWhatsAppLink(appt, appt.patientPhone);
+                                        const gcLink = calendarService.buildCalendarLink(appt);
+
+                                        return (
+                                            <Card key={appt.id} className="border-brand-100">
+                                                <CardContent className="p-4">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-bold text-brand-900">{appt.time}</span>
+                                                                <span className="text-brand-700 font-medium">{appt.patientName}</span>
+                                                                <Badge className={cn('text-xs', statusCfg.color)}>
+                                                                    <StatusIcon className="w-3 h-3 mr-1" />
+                                                                    {statusCfg.label}
+                                                                </Badge>
+                                                                <span className="text-xs text-brand-400">
+                                                                    {APPOINTMENT_TYPES[appt.type]} · {appt.durationMinutes}min
                                                                 </span>
-                                                            )}
-                                                            {appt.googleCalendarEventId && (
-                                                                <span className="text-xs text-green-600 flex items-center gap-1">
-                                                                    <Calendar className="w-3 h-3" /> En Google Calendar
-                                                                </span>
+                                                                {appt.place && (
+                                                                    <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', appt.place === 'domicilio' ? 'bg-orange-100 text-orange-700' : 'bg-brand-100 text-brand-700')}>
+                                                                        {appt.place === 'domicilio' ? '🏠 Domicilio' : '🏥 Local'}
+                                                                    </span>
+                                                                )}
+                                                                {appt.googleCalendarEventId && (
+                                                                    <span className="text-xs text-green-600 flex items-center gap-1">
+                                                                        <Calendar className="w-3 h-3" /> En Google Calendar
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {appt.notes && (
+                                                                <p className="text-sm text-brand-500 mt-1 truncate">{appt.notes}</p>
                                                             )}
                                                         </div>
-                                                        {appt.notes && (
-                                                            <p className="text-sm text-brand-500 mt-1 truncate">{appt.notes}</p>
-                                                        )}
-                                                    </div>
 
-                                                    <div className="flex items-center gap-2 shrink-0">
-                                                        {/* Estado rápido */}
-                                                        {appt.status === 'pendiente' && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                className="text-green-700 border-green-300 hover:bg-green-50 text-xs"
-                                                                onClick={() => handleStatusChange(appt.id!, 'confirmado')}
-                                                            >
-                                                                <CheckCircle className="w-3 h-3 mr-1" /> Confirmar
-                                                            </Button>
-                                                        )}
-
-                                                        {/* WhatsApp */}
-                                                        {waLink ? (
-                                                            <a href={waLink} target="_blank" rel="noopener noreferrer">
-                                                                <Button size="sm" variant="outline" className="text-green-600 border-green-300 hover:bg-green-50" title="Enviar recordatorio por WhatsApp">
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            {appt.status === 'pendiente' && (
+                                                                <Button size="sm" variant="outline" className="text-green-700 border-green-300 hover:bg-green-50 text-xs"
+                                                                    onClick={() => handleStatusChange(appt.id!, 'confirmado')}>
+                                                                    <CheckCircle className="w-3 h-3 mr-1" /> Confirmar
+                                                                </Button>
+                                                            )}
+                                                            {waLink ? (
+                                                                <a href={waLink} target="_blank" rel="noopener noreferrer">
+                                                                    <Button size="sm" variant="outline" className="text-green-600 border-green-300 hover:bg-green-50" title="Enviar recordatorio por WhatsApp">
+                                                                        <MessageSquare className="w-4 h-4" />
+                                                                    </Button>
+                                                                </a>
+                                                            ) : (
+                                                                <Button size="sm" variant="outline" className="opacity-40 cursor-not-allowed" disabled>
                                                                     <MessageSquare className="w-4 h-4" />
                                                                 </Button>
-                                                            </a>
-                                                        ) : (
-                                                            <Button size="sm" variant="outline" className="opacity-40 cursor-not-allowed" title="Sin teléfono registrado" disabled>
-                                                                <MessageSquare className="w-4 h-4" />
+                                                            )}
+                                                            {!appt.googleCalendarEventId && (
+                                                                <a href={gcLink} target="_blank" rel="noopener noreferrer">
+                                                                    <Button size="sm" variant="outline" className="text-blue-600 border-blue-300 hover:bg-blue-50" title="Agregar a Google Calendar">
+                                                                        <Calendar className="w-4 h-4" />
+                                                                    </Button>
+                                                                </a>
+                                                            )}
+                                                            <Button size="sm" variant="outline" className="text-red-500 border-red-200 hover:bg-red-50"
+                                                                onClick={() => handleDelete(appt)}>
+                                                                <Trash2 className="w-4 h-4" />
                                                             </Button>
-                                                        )}
-
-                                                        {/* Google Calendar link (si no tiene evento ya) */}
-                                                        {!appt.googleCalendarEventId && (
-                                                            <a href={gcLink} target="_blank" rel="noopener noreferrer">
-                                                                <Button size="sm" variant="outline" className="text-blue-600 border-blue-300 hover:bg-blue-50" title="Agregar a Google Calendar">
-                                                                    <Calendar className="w-4 h-4" />
-                                                                </Button>
-                                                            </a>
-                                                        )}
-
-                                                        {/* Eliminar */}
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-red-500 border-red-200 hover:bg-red-50"
-                                                            onClick={() => handleDelete(appt)}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    );
-                                })}
+                                                </CardContent>
+                                            </Card>
+                                        );
+                                    })}
 
-                                {/* Eventos importados de Google Calendar (que no son turnos de la app) */}
-                                {(googleEventsByDay[day] || [])
-                                    .filter(ev => !appointments.some(a => a.googleCalendarEventId === ev.id))
-                                    .map(ev => (
-                                        <Card key={ev.id} className="border-blue-100 bg-blue-50/30">
-                                            <CardContent className="p-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Calendar className="w-4 h-4 text-blue-500 shrink-0" />
-                                                    <span className="text-sm font-medium text-blue-800">
-                                                        {ev.start?.dateTime
-                                                            ? new Date(ev.start.dateTime).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
-                                                            : 'Todo el día'
-                                                        }
-                                                    </span>
-                                                    <span className="text-sm text-blue-700">{ev.summary}</span>
-                                                    <Badge className="text-xs bg-blue-100 text-blue-700">Google Calendar</Badge>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))
-                                }
+                                    {(googleEventsByDay[day] || [])
+                                        .filter(ev => !appointments.some(a => a.googleCalendarEventId === ev.id))
+                                        .map(ev => (
+                                            <Card key={ev.id} className="border-blue-100 bg-blue-50/30">
+                                                <CardContent className="p-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="w-4 h-4 text-blue-500 shrink-0" />
+                                                        <span className="text-sm font-medium text-blue-800">
+                                                            {ev.start?.dateTime
+                                                                ? new Date(ev.start.dateTime).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+                                                                : 'Todo el día'}
+                                                        </span>
+                                                        <span className="text-sm text-blue-700">{ev.summary}</span>
+                                                        <Badge className="text-xs bg-blue-100 text-blue-700">Google Calendar</Badge>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
+                )
+            )}
+
+            {viewMode === 'week' && loading && (
+                <div className="flex justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
                 </div>
             )}
         </div>
