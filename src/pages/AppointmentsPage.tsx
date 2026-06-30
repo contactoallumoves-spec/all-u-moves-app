@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -31,12 +32,15 @@ const EMPTY_FORM: Omit<Appointment, 'id' | 'patientName' | 'patientPhone'> = {
 };
 
 export default function AppointmentsPage() {
+    const [searchParams] = useSearchParams();
+    const prefilledPatientId = searchParams.get('patientId') || '';
+
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [googleEvents, setGoogleEvents] = useState<any[]>([]);
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(true);
-    const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState(EMPTY_FORM);
+    const [showForm, setShowForm] = useState(!!prefilledPatientId);
+    const [form, setForm] = useState({ ...EMPTY_FORM, patientId: prefilledPatientId });
     const [saving, setSaving] = useState(false);
     const [calendarConnected, setCalendarConnected] = useState(false);
     const [calendarLoading, setCalendarLoading] = useState(false);
@@ -45,18 +49,16 @@ export default function AppointmentsPage() {
 
     const load = useCallback(async () => {
         setLoading(true);
-        try {
-            const [appts, pts] = await Promise.all([
-                AppointmentService.getUpcoming(),
-                PatientService.getAll()
-            ]);
-            setAppointments(appts);
-            setPatients(pts);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
+        // Fetch independently so a failing appointments query doesn't block the patient list
+        const [appts, pts] = await Promise.allSettled([
+            AppointmentService.getUpcoming(),
+            PatientService.getAll()
+        ]);
+        if (appts.status === 'fulfilled') setAppointments(appts.value);
+        else console.warn('Error cargando turnos:', appts.reason);
+        if (pts.status === 'fulfilled') setPatients(pts.value);
+        else console.warn('Error cargando pacientes:', pts.reason);
+        setLoading(false);
     }, []);
 
     useEffect(() => { load(); }, [load]);

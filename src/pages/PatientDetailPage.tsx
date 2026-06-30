@@ -665,7 +665,7 @@ export default function PatientDetailPage() {
                                         <Calendar className="w-3.5 h-3.5" /> Próxima Cita
                                     </h4>
                                     <p className="text-xs text-brand-300 italic mb-2">Sin cita agendada</p>
-                                    <button onClick={() => navigate('/turnos')} className="text-xs text-brand-500 hover:text-brand-700 font-bold underline">
+                                    <button onClick={() => navigate(`/turnos?patientId=${id}`)} className="text-xs text-brand-500 hover:text-brand-700 font-bold underline">
                                         Agendar en Turnos →
                                     </button>
                                 </CardContent>
