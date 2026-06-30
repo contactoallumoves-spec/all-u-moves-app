@@ -204,13 +204,7 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
 
         dispatch({ type: 'SET_SYNC_STATUS', payload: 'syncing' });
         try {
-            // Strip ID for creation if needed
-            // Use destructuring to remove 'id' safely (works even if id is required/optional in source type)
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { id, ...logWithoutId } = logToSave;
-
-            // Cast to any to assume compatibility with Service.create requirement
-            await SessionLogService.create(logWithoutId as any);
+            await SessionLogService.create(logToSave);
             dispatch({ type: 'SET_SYNC_STATUS', payload: 'synced' });
         } catch (error) {
             console.error("Sync failed", error);

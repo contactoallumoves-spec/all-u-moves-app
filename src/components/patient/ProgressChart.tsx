@@ -64,14 +64,19 @@ export function ProgressChart({ history, className }: ProgressChartProps) {
                 }
             }
 
+            const oxfordVal = item.raw?.pelvic?.oxford ?? item.raw?.reassessment?.oxford ?? item.raw?.perfectScheme?.power ?? null;
+            const enduranceVal = item.raw?.perfectScheme?.endurance ?? null;
+            const repetitionsVal = item.raw?.perfectScheme?.repetitions ?? null;
+            const fastVal = item.raw?.perfectScheme?.fast ?? null;
+
             return {
                 date: dateObj,
                 dateLabel: format(dateObj, 'd MMM', { locale: es }),
                 eva: item.raw?.symptomsScore !== undefined ? Number(item.raw.symptomsScore) : null,
-                oxford: item.raw?.pelvic?.oxford || item.raw?.reassessment?.oxford || item.raw?.perfectScheme?.power || 0,
-                endurance: item.raw?.perfectScheme?.endurance || 0,
-                repetitions: item.raw?.perfectScheme?.repetitions || 0,
-                fast: item.raw?.perfectScheme?.fast || 0,
+                oxford: oxfordVal,
+                endurance: enduranceVal,
+                repetitions: repetitionsVal,
+                fast: fastVal,
                 sane, // Normalized
                 saneRaw, // Original for tooltip
                 psfs: psfsAvg,

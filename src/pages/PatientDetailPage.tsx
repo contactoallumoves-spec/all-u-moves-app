@@ -5,7 +5,6 @@ import { EvaluationService } from '../services/evaluationService';
 import { SessionService } from '../services/sessionService';
 import { SessionLogService } from '../services/sessionLogService';
 import { Patient } from '../types/patient';
-import { pdfService } from '../services/pdfService';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import {
@@ -267,13 +266,13 @@ export default function PatientDetailPage() {
                     <Button variant={activeTab === 'anamnesis' ? 'primary' : 'outline'} onClick={() => setActiveTab('anamnesis')}>
                         Anamnesis Remota
                     </Button>
-                    <Button variant={activeTab === 'anamnesis' ? 'primary' : 'outline'} onClick={() => setActiveTab('anamnesis')}>
-                        Anamnesis Remota
-                    </Button>
                 </div>
                 <div className="flex gap-2">
 
-                    <Button variant="outline" onClick={() => pdfService.generateFullHistoryReport(patient!, history)}>
+                    <Button variant="outline" onClick={async () => {
+                        const { pdfService } = await import('../services/pdfService');
+                        pdfService.generateFullHistoryReport(patient!, history);
+                    }}>
                         <FileText className="w-4 h-4 mr-2" />
                         Exportar Evoluciones
                     </Button>
@@ -612,7 +611,10 @@ export default function PatientDetailPage() {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Button variant="outline" className="text-xs" size="sm" onClick={() => pdfService.generateHomePlanPDF(patient, patient.activeTasks || [])}>
+                                     <Button variant="outline" className="text-xs" size="sm" onClick={async () => {
+                                         const { pdfService } = await import('../services/pdfService');
+                                         pdfService.generateHomePlanPDF(patient, patient.activeTasks || []);
+                                     }}>
                                         <FileText className="w-3 h-3 mr-1" /> PDF Plan
                                     </Button>
                                     <Button variant="outline" className="text-xs" size="sm" onClick={() => navigate(`/users/${id}/sessions/new`)}>

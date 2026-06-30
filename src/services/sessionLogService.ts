@@ -1,18 +1,21 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, Timestamp, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, setDoc, Timestamp, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 import { SessionLog } from '../types/patient';
 
 const COLLECTION_NAME = 'sessionLogs';
 
 export const SessionLogService = {
-    async create(log: Omit<SessionLog, 'id' | 'createdAt'>) {
+    async create(log: SessionLog) {
         try {
-            const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+            const docId = `${log.patientId}_${log.id}`;
+            const docRef = doc(db, COLLECTION_NAME, docId);
+            await setDoc(docRef, {
                 ...log,
+                id: docId,
                 createdAt: Timestamp.now()
-            });
-            return docRef.id;
+            }, { merge: true });
+            return docId;
         } catch (error) {
             console.error("Error creating session log", error);
             throw error;

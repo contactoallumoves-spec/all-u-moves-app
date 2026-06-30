@@ -174,7 +174,7 @@ export default function CompleteEvaluation() {
                 : "Evaluación Completa (Sin hallazgos críticos)";
 
             const dataToSave = {
-                patientData: { stage: patient?.stage || 'General', redFlags: [] },
+                patientData: { stage: patient?.stage || 'General', redFlags: evalData.redFlags || [] },
                 clusters: {
                     active: logicResult.activeClusters.map(c => c.id), // Save generated clusters
                     scores: {}
@@ -205,6 +205,16 @@ export default function CompleteEvaluation() {
                     date: new Date(),
                     ...dataToSave
                 } as any);
+            }
+
+            // Actualizar la ficha del paciente con la etapa y banderas rojas para alertas globales
+            if (patientId) {
+                await PatientService.update(patientId, {
+                    clinicalData: {
+                        ...patient?.clinicalData,
+                        redFlags: evalData.redFlags || []
+                    }
+                });
             }
 
             navigate('/users');

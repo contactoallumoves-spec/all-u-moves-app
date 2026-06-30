@@ -6,6 +6,8 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Save } from 'lucide-react
 import { cn } from '../lib/utils';
 import { CLUSTERS, RED_FLAGS } from '../data/clusters';
 import { EvaluationService } from '../services/evaluationService';
+import { PatientService } from '../services/patientService';
+import { Patient, LifeStage } from '../types/patient';
 
 export default function FastEvaluationWizard() {
     const navigate = useNavigate();
@@ -16,17 +18,30 @@ export default function FastEvaluationWizard() {
     const [step, setStep] = useState(1);
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [selectedStage, setSelectedStage] = useState<string>('');
-
+    const [selectedStage, setSelectedStage] = useState<LifeStage>('Nuligesta');
     const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+    const [selectedRedFlags, setSelectedRedFlags] = useState<string[]>([]);
+    const [patient, setPatient] = useState<Patient | null>(null);
+
+    useEffect(() => {
+        if (patientId) {
+            PatientService.getById(patientId).then(p => {
+                setPatient(p);
+                if (p) {
+                    setSelectedStage(p.stage || 'Nuligesta');
+                }
+            });
+        }
+    }, [patientId]);
 
     useEffect(() => {
         if (editId) {
             setLoading(true);
             EvaluationService.getById(editId).then(ev => {
                 if (ev) {
-                    setSelectedStage(ev.patientData?.stage || '');
+                    setSelectedStage((ev.patientData?.stage || 'Nuligesta') as any);
                     setSelectedClusters(ev.clusters?.active || []);
+                    setSelectedRedFlags(ev.patientData?.redFlags || []);
                 }
                 setLoading(false);
             });
@@ -59,7 +74,7 @@ export default function FastEvaluationWizard() {
         try {
             const dataToSave = {
                 type: 'fast',
-                patientData: { stage: selectedStage || 'Nuligesta', redFlags: [] },
+                patientData: { stage: selectedStage || 'Nuligesta', redFlags: selectedRedFlags },
                 clusters: { active: selectedClusters },
                 summary: `Evaluación Rápida (${selectedStage || 'General'}) con ${selectedClusters.length} clusters activos.`,
                 plan: activeSuggestions,
@@ -75,6 +90,15 @@ export default function FastEvaluationWizard() {
                     ...dataToSave
                 } as any);
             }
+
+            // Actualizar la ficha del paciente con la etapa y banderas rojas para alertas globales
+            await PatientService.update(patientId, {
+                stage: selectedStage || 'Nuligesta',
+                clinicalData: {
+                    ...patient?.clinicalData,
+                    redFlags: selectedRedFlags
+                }
+            });
             navigate('/users');
         } catch (error) {
             console.error(error);
@@ -115,7 +139,7 @@ export default function FastEvaluationWizard() {
                                         onClick={(e) => {
                                             e.preventDefault();
                                             console.log("Setting stage to:", tag);
-                                            setSelectedStage(tag);
+                                            setSelectedStage(tag as any);
                                         }}
                                         className={cn(
                                             "p-4 rounded-xl text-left transition-all border-2",
@@ -161,13 +185,24 @@ export default function FastEvaluationWizard() {
                             <h2 className="text-2xl font-bold text-brand-900">Screening de Banderas</h2>
                             <div className="space-y-3">
                                 {RED_FLAGS.map(flag => (
-                                    <label key={flag.id} className={cn("flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors", flag.severity === 'red_flag' ? "bg-red-50/50 border-red-100 hover:bg-red-100" : "bg-orange-50/50 border-orange-100 hover:bg-orange-100")}>
-                                        <input type="checkbox" className="w-5 h-5 rounded text-red-600 focus:ring-red-500 border-gray-300" />
-                                        <div className="flex-1">
-                                            <span className="text-ink-900 font-medium">{flag.label}</span>
-                                            {flag.severity === 'red_flag' && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">URGENTE</span>}
-                                        </div>
-                                    </label>
+                                     <label key={flag.id} className={cn("flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors", flag.severity === 'red_flag' ? "bg-red-50/50 border-red-100 hover:bg-red-100" : "bg-orange-50/50 border-orange-100 hover:bg-orange-100")}>
+                                         <input 
+                                             type="checkbox" 
+                                             className="w-5 h-5 rounded text-red-600 focus:ring-red-500 border-gray-300"
+                                             checked={selectedRedFlags.includes(flag.id)}
+                                             onChange={(e) => {
+                                                 if (e.target.checked) {
+                                                     setSelectedRedFlags([...selectedRedFlags, flag.id]);
+                                                 } else {
+                                                     setSelectedRedFlags(selectedRedFlags.filter(id => id !== flag.id));
+                                                 }
+                                             }}
+                                         />
+                                         <div className="flex-1">
+                                             <span className="text-ink-900 font-medium">{flag.label}</span>
+                                             {flag.severity === 'red_flag' && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">URGENTE</span>}
+                                         </div>
+                                     </label>
                                 ))}
                             </div>
                         </div>
