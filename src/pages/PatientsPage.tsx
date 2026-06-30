@@ -127,6 +127,13 @@ export default function PatientsPage() {
         setFormData({ ...formData, rut: formatRut(e.target.value) });
     }
 
+    const filteredPatients = patients.filter((patient: Patient) => {
+        const name = `${patient.firstName || ''} ${patient.lastName || ''}`.toLowerCase();
+        const rut = (patient.rut || '').toLowerCase();
+        const term = searchTerm.toLowerCase();
+        return name.includes(term) || rut.includes(term);
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

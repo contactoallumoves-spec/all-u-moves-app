@@ -9,7 +9,6 @@ import { SessionService } from '../services/sessionService';
 import { Patient } from '../types/patient';
 import { auth } from '../lib/firebase';
 import { KineService } from '../services/kineService';
-import { Kinesiologist } from '../types/clinical';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
