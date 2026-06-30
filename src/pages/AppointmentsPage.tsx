@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/Badge';
 import {
     Calendar, Plus, MessageSquare, Trash2,
     CheckCircle, Clock, XCircle, Link2, Loader2,
-    List, LayoutGrid, ChevronLeft, ChevronRight, X, Search, Send
+    List, LayoutGrid, ChevronLeft, ChevronRight, X, Search, Send, Repeat, Lightbulb
 } from 'lucide-react';
 import { AppointmentService } from '../services/appointmentService';
 import { calendarService } from '../services/calendarService';
@@ -70,6 +70,26 @@ const HOUR_END = 21;
 const HOUR_HEIGHT = 64;
 const TOTAL_HOURS = HOUR_END - HOUR_START;
 
+const WEEKDAY_LABELS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+
+// ── Recomendación de horarios: cuenta ocupación por día/hora y sugiere huecos ──
+function buildOccupancy(appts: Appointment[]): number[][] {
+    // grid[weekday 0=Lun..4=Vie][hour-HOUR_START] = cantidad de turnos históricos (no cancelados)
+    const grid: number[][] = Array.from({ length: 5 }, () => Array(TOTAL_HOURS).fill(0));
+    appts.forEach(a => {
+        if (a.status === 'cancelado') return;
+        const [y, m, d] = a.date.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const dow = dt.getDay(); // 0=Dom..6=Sab
+        if (dow === 0 || dow === 6) return;
+        const weekdayIdx = dow - 1; // 0=Lun..4=Vie
+        const [h] = a.time.split(':').map(Number);
+        if (h < HOUR_START || h >= HOUR_END) return;
+        grid[weekdayIdx][h - HOUR_START]++;
+    });
+    return grid;
+}
+
 function getWeekDays(ref: Date): Date[] {
     const d = new Date(ref);
     const day = d.getDay();
@@ -84,6 +104,12 @@ function getWeekDays(ref: Date): Date[] {
 
 function dateToStr(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function addWeeks(dateStr: string, weeks: number): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d + weeks * 7);
+    return dateToStr(dt);
 }
 
 function apptTop(time: string): number {
@@ -358,6 +384,8 @@ export default function AppointmentsPage() {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(!!prefilledPatientId);
     const [form, setForm] = useState({ ...EMPTY_FORM, patientId: prefilledPatientId });
+    const [repeatWeekly, setRepeatWeekly] = useState(false);
+    const [repeatCount, setRepeatCount] = useState(4);
     const [saving, setSaving] = useState(false);
     const [calendarConnected, setCalendarConnected] = useState(() => calendarService.isConnected());
     const [calendarLoading, setCalendarLoading] = useState(false);
@@ -370,6 +398,8 @@ export default function AppointmentsPage() {
         if (calendarService.isConnected()) return false;
         return Date.now() > Number(localStorage.getItem(GCAL_DISMISS_KEY) || 0);
     });
+    const [historyAppts, setHistoryAppts] = useState<Appointment[]>([]);
+    const [showRecommend, setShowRecommend] = useState(false);
 
     const weekDays = useMemo(() => getWeekDays(weekRef), [weekRef]);
 
@@ -411,6 +441,29 @@ export default function AppointmentsPage() {
 
     useEffect(() => { load(); }, [load]);
 
+    useEffect(() => {
+        AppointmentService.getAll().then(setHistoryAppts).catch(e => console.warn('Error cargando historial para recomendaciones:', e));
+    }, []);
+
+    const occupancy = useMemo(() => buildOccupancy(historyAppts), [historyAppts]);
+
+    const recommendedSlots = useMemo(() => {
+        const slots: { weekday: number; hour: number; count: number }[] = [];
+        for (let w = 0; w < 5; w++) {
+            for (let h = 0; h < TOTAL_HOURS; h++) {
+                slots.push({ weekday: w, hour: h + HOUR_START, count: occupancy[w][h] });
+            }
+        }
+        const totalBooked = slots.reduce((s, x) => s + x.count, 0);
+        if (totalBooked < 5) return [];
+        const maxCount = Math.max(...slots.map(s => s.count));
+        if (maxCount === 0) return [];
+        return slots
+            .filter(s => s.count < maxCount)
+            .sort((a, b) => a.count - b.count)
+            .slice(0, 5);
+    }, [occupancy]);
+
     const connectGoogleCalendar = async () => {
         if (!calendarService.isConfigured()) {
             setError('Google Calendar no está configurado aún. Agrega VITE_GOOGLE_CLIENT_ID en Vercel y recarga la app.');
@@ -437,6 +490,8 @@ export default function AppointmentsPage() {
 
     const openNewApptForDate = (date: string) => {
         setForm({ ...EMPTY_FORM, patientId: prefilledPatientId, date });
+        setRepeatWeekly(false);
+        setRepeatCount(4);
         setShowForm(true);
         setError('');
     };
@@ -450,19 +505,28 @@ export default function AppointmentsPage() {
         setError('');
         try {
             const patient = patients.find(p => p.id === form.patientId);
-            const appt: Omit<Appointment, 'id'> = {
-                ...form,
-                patientName: patient ? `${patient.firstName} ${patient.lastName}` : '',
-                patientPhone: patient?.phone || ''
-            };
-            const newId = await AppointmentService.create(appt);
-            if (calendarConnected) {
-                calendarService.createEvent({ ...appt, id: newId })
-                    .then(eventId => AppointmentService.update(newId, { googleCalendarEventId: eventId }))
-                    .catch(console.warn);
+            const occurrences = repeatWeekly ? Math.max(1, repeatCount) : 1;
+            const recurrenceId = repeatWeekly && occurrences > 1 ? `rec_${Date.now()}` : undefined;
+
+            for (let i = 0; i < occurrences; i++) {
+                const appt: Omit<Appointment, 'id'> = {
+                    ...form,
+                    date: addWeeks(form.date, i),
+                    patientName: patient ? `${patient.firstName} ${patient.lastName}` : '',
+                    patientPhone: patient?.phone || '',
+                    ...(recurrenceId ? { recurrenceId } : {})
+                };
+                const newId = await AppointmentService.create(appt);
+                if (calendarConnected) {
+                    calendarService.createEvent({ ...appt, id: newId })
+                        .then(eventId => AppointmentService.update(newId, { googleCalendarEventId: eventId }))
+                        .catch(console.warn);
+                }
             }
             setShowForm(false);
             setForm(EMPTY_FORM);
+            setRepeatWeekly(false);
+            setRepeatCount(4);
             await load();
         } catch (e: any) {
             setError(e.message || 'Error al guardar el turno');
@@ -580,6 +644,11 @@ export default function AppointmentsPage() {
                             Conectar Calendar
                         </Button>
                     )}
+
+                    <Button variant="outline" size="sm" onClick={() => setShowRecommend(v => !v)}
+                        className="border-amber-300 text-amber-700 hover:bg-amber-50">
+                        <Lightbulb className="w-4 h-4 mr-1.5" /> Horarios recomendados
+                    </Button>
                     <Button onClick={() => openNewApptForDate(new Date().toISOString().split('T')[0])}>
                         <Plus className="w-4 h-4 mr-2" /> Nuevo Turno
                     </Button>
@@ -621,6 +690,42 @@ export default function AppointmentsPage() {
 
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-xl">{error}</div>
+            )}
+
+            {/* Recomendación de horarios */}
+            {showRecommend && (
+                <Card className="border-amber-200 bg-amber-50/40">
+                    <CardContent className="p-5 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-amber-900 text-sm flex items-center gap-1.5">
+                                <Lightbulb className="w-4 h-4" /> Horarios recomendados para ofrecer
+                            </h3>
+                            <button onClick={() => setShowRecommend(false)} className="text-amber-400 hover:text-amber-700">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                        {recommendedSlots.length === 0 ? (
+                            <p className="text-xs text-amber-700">
+                                {historyAppts.length < 5
+                                    ? 'Aún no hay suficientes turnos registrados para generar una recomendación.'
+                                    : 'Tu agenda está bastante pareja — no hay horarios claramente más libres que otros.'}
+                            </p>
+                        ) : (
+                            <>
+                                <p className="text-xs text-amber-700">
+                                    Según tu historial de turnos (lunes a viernes), estos horarios son los menos ocupados — son buenos para ofrecer a nuevas pacientes:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {recommendedSlots.map((s, i) => (
+                                        <span key={i} className="text-xs font-semibold bg-white border border-amber-300 text-amber-800 px-3 py-1.5 rounded-full">
+                                            {WEEKDAY_LABELS[s.weekday]} {String(s.hour).padStart(2, '0')}:00
+                                        </span>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
             )}
 
             {/* Modal envío masivo de recordatorios */}
@@ -717,6 +822,21 @@ export default function AppointmentsPage() {
                                 placeholder="Observaciones para este turno..."
                                 value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
                         </div>
+                        <div className="flex items-center gap-3 bg-brand-50 rounded-xl px-3 py-2.5">
+                            <label className="flex items-center gap-2 text-sm text-brand-700 font-medium cursor-pointer">
+                                <input type="checkbox" checked={repeatWeekly} onChange={e => setRepeatWeekly(e.target.checked)} className="rounded" />
+                                <Repeat className="w-3.5 h-3.5" /> Repetir cada semana
+                            </label>
+                            {repeatWeekly && (
+                                <div className="flex items-center gap-1.5 ml-auto">
+                                    <span className="text-xs text-brand-500">por</span>
+                                    <input type="number" min={2} max={26} value={repeatCount}
+                                        onChange={e => setRepeatCount(Number(e.target.value))}
+                                        className="w-16 px-2 py-1 border border-brand-200 rounded-lg text-sm text-center" />
+                                    <span className="text-xs text-brand-500">semanas</span>
+                                </div>
+                            )}
+                        </div>
                         {calendarConnected && (
                             <p className="text-xs text-green-600 flex items-center gap-1">
                                 <Calendar className="w-3 h-3" /> Este turno se agregará automáticamente a tu Google Calendar.
@@ -727,7 +847,7 @@ export default function AppointmentsPage() {
                                 {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Guardar Turno
                             </Button>
-                            <Button variant="outline" onClick={() => { setShowForm(false); setError(''); }}>Cancelar</Button>
+                            <Button variant="outline" onClick={() => { setShowForm(false); setError(''); setRepeatWeekly(false); setRepeatCount(4); }}>Cancelar</Button>
                         </div>
                     </CardContent>
                 </Card>

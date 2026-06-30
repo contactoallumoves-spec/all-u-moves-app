@@ -15,6 +15,7 @@ export interface Appointment {
     confirmedAt?: any;
     kineId?: string;
     createdAt?: any;
+    recurrenceId?: string; // [NEW] Agrupa turnos creados como serie recurrente
 }
 
 export const APPOINTMENT_TYPES: Record<Appointment['type'], string> = {
