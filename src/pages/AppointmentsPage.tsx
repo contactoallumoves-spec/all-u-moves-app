@@ -4,7 +4,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import {
-    Calendar, Plus, MessageSquare, RefreshCw, Trash2,
+    Calendar, Plus, MessageSquare, Trash2,
     CheckCircle, Clock, XCircle, Link2, Link2Off, Loader2,
     List, LayoutGrid, ChevronLeft, ChevronRight
 } from 'lucide-react';
@@ -77,13 +77,12 @@ function statusBgColor(status: Appointment['status']): string {
 interface WeekGridProps {
     weekDays: Date[];
     appointments: Appointment[];
-    googleEvents: any[];
     onNewAppt: (date: string) => void;
     onDelete: (appt: Appointment) => void;
     onStatusChange: (id: string, status: Appointment['status']) => void;
 }
 
-function WeekGrid({ weekDays, appointments, googleEvents, onNewAppt, onDelete, onStatusChange }: WeekGridProps) {
+function WeekGrid({ weekDays, appointments, onNewAppt, onDelete, onStatusChange }: WeekGridProps) {
     const [selected, setSelected] = useState<Appointment | null>(null);
     const todayStr = dateToStr(new Date());
 
@@ -95,16 +94,6 @@ function WeekGrid({ weekDays, appointments, googleEvents, onNewAppt, onDelete, o
         }
         return map;
     }, [appointments]);
-
-    const googleByDay = useMemo(() => {
-        const map: Record<string, any[]> = {};
-        for (const ev of googleEvents) {
-            const day = (ev.start?.dateTime || ev.start?.date || '').split('T')[0];
-            if (!map[day]) map[day] = [];
-            map[day].push(ev);
-        }
-        return map;
-    }, [googleEvents]);
 
     const hours = Array.from({ length: TOTAL_HOURS }, (_, i) => HOUR_START + i);
     const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -165,7 +154,6 @@ function WeekGrid({ weekDays, appointments, googleEvents, onNewAppt, onDelete, o
                     {weekDays.map(day => {
                         const str = dateToStr(day);
                         const dayAppts = apptsByDay[str] || [];
-                        const dayGoogle = (googleByDay[str] || []).filter(ev => !appointments.some(a => a.googleCalendarEventId === ev.id));
                         const isToday = str === todayStr;
 
                         return (
@@ -220,28 +208,6 @@ function WeekGrid({ weekDays, appointments, googleEvents, onNewAppt, onDelete, o
                                     );
                                 })}
 
-                                {/* Eventos de Google Calendar */}
-                                {dayGoogle.map(ev => {
-                                    if (!ev.start?.dateTime) return null;
-                                    const evDate = new Date(ev.start.dateTime);
-                                    const timeStr = `${String(evDate.getHours()).padStart(2, '0')}:${String(evDate.getMinutes()).padStart(2, '0')}`;
-                                    const top = apptTop(timeStr);
-                                    const endDate = ev.end?.dateTime ? new Date(ev.end.dateTime) : new Date(evDate.getTime() + 3600000);
-                                    const durMin = (endDate.getTime() - evDate.getTime()) / 60000;
-                                    const height = apptHeight(durMin);
-                                    if (top < 0) return null;
-
-                                    return (
-                                        <div
-                                            key={ev.id}
-                                            className="absolute left-0.5 right-0.5 rounded-lg border-l-4 border-blue-400 bg-blue-50 px-1.5 py-1 overflow-hidden cursor-default shadow-sm"
-                                            style={{ top, height: Math.max(height, 30), zIndex: 5 }}
-                                        >
-                                            <p className="text-[11px] font-bold text-blue-800 leading-tight truncate">{timeStr} {ev.summary}</p>
-                                            {height > 38 && <p className="text-[10px] text-blue-500">Google Calendar</p>}
-                                        </div>
-                                    );
-                                })}
                             </div>
                         );
                     })}
@@ -304,7 +270,6 @@ export default function AppointmentsPage() {
     const prefilledPatientId = searchParams.get('patientId') || '';
 
     const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [googleEvents, setGoogleEvents] = useState<any[]>([]);
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(!!prefilledPatientId);
@@ -312,7 +277,6 @@ export default function AppointmentsPage() {
     const [saving, setSaving] = useState(false);
     const [calendarConnected, setCalendarConnected] = useState(false);
     const [calendarLoading, setCalendarLoading] = useState(false);
-    const [syncingCalendar, setSyncingCalendar] = useState(false);
     const [error, setError] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'week'>('week');
     const [weekRef, setWeekRef] = useState(new Date());
@@ -344,23 +308,10 @@ export default function AppointmentsPage() {
         try {
             await calendarService.connect();
             setCalendarConnected(true);
-            await syncGoogleEvents();
         } catch (e: any) {
             setError(`Error al conectar Google Calendar: ${e.message}`);
         } finally {
             setCalendarLoading(false);
-        }
-    };
-
-    const syncGoogleEvents = async () => {
-        setSyncingCalendar(true);
-        try {
-            const events = await calendarService.fetchEvents(60);
-            setGoogleEvents(events);
-        } catch (e: any) {
-            setError(`Error al leer Google Calendar: ${e.message}`);
-        } finally {
-            setSyncingCalendar(false);
         }
     };
 
@@ -427,20 +378,13 @@ export default function AppointmentsPage() {
         });
     };
 
-    const googleEventsByDay = googleEvents.reduce((acc: Record<string, any[]>, ev) => {
-        const day = (ev.start?.dateTime || ev.start?.date || '').split('T')[0];
-        if (!acc[day]) acc[day] = [];
-        acc[day].push(ev);
-        return acc;
-    }, {});
-
     const apptsByDay = appointments.reduce((acc: Record<string, Appointment[]>, a) => {
         if (!acc[a.date]) acc[a.date] = [];
         acc[a.date].push(a);
         return acc;
     }, {});
 
-    const allDays = Array.from(new Set([...Object.keys(apptsByDay), ...Object.keys(googleEventsByDay)])).sort();
+    const allDays = Object.keys(apptsByDay).sort();
 
     const weekLabel = (() => {
         const start = weekDays[0];
@@ -477,12 +421,7 @@ export default function AppointmentsPage() {
                         </button>
                     </div>
 
-                    {calendarConnected ? (
-                        <Button variant="outline" size="sm" onClick={syncGoogleEvents} disabled={syncingCalendar}>
-                            {syncingCalendar ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                            Sincronizar
-                        </Button>
-                    ) : (
+                    {!calendarConnected && (
                         <Button
                             variant="outline"
                             size="sm"
@@ -507,8 +446,8 @@ export default function AppointmentsPage() {
             )}>
                 {calendarConnected ? <Link2 className="w-4 h-4" /> : <Link2Off className="w-4 h-4" />}
                 {calendarConnected
-                    ? `Google Calendar conectado — ${googleEvents.length} eventos importados`
-                    : 'Google Calendar no conectado. Conecta para ver y sincronizar eventos bidireccional.'}
+                    ? 'Google Calendar conectado — los turnos que crees aquí se guardarán en tu calendario automáticamente.'
+                    : 'Google Calendar no conectado. Conecta para que los turnos se guarden en tu calendario.'}
             </div>
 
             {error && (
@@ -669,7 +608,6 @@ export default function AppointmentsPage() {
                     <WeekGrid
                         weekDays={weekDays}
                         appointments={appointments}
-                        googleEvents={googleEvents}
                         onNewAppt={openNewApptForDate}
                         onDelete={handleDelete}
                         onStatusChange={handleStatusChange}
@@ -773,24 +711,6 @@ export default function AppointmentsPage() {
                                         );
                                     })}
 
-                                    {(googleEventsByDay[day] || [])
-                                        .filter(ev => !appointments.some(a => a.googleCalendarEventId === ev.id))
-                                        .map(ev => (
-                                            <Card key={ev.id} className="border-blue-100 bg-blue-50/30">
-                                                <CardContent className="p-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <Calendar className="w-4 h-4 text-blue-500 shrink-0" />
-                                                        <span className="text-sm font-medium text-blue-800">
-                                                            {ev.start?.dateTime
-                                                                ? new Date(ev.start.dateTime).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
-                                                                : 'Todo el día'}
-                                                        </span>
-                                                        <span className="text-sm text-blue-700">{ev.summary}</span>
-                                                        <Badge className="text-xs bg-blue-100 text-blue-700">Google Calendar</Badge>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        ))}
                                 </div>
                             </div>
                         ))}
