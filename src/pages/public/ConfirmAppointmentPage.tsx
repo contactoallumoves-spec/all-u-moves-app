@@ -80,35 +80,35 @@ export default function ConfirmAppointmentPage() {
 
                             {!result ? (
                                 <>
-                                    <p className="text-center text-brand-700 font-medium mb-5">¿Podrás asistir a tu sesión?</p>
+                                    <p className="text-center text-brand-700 font-medium mb-5">¿Confirmas tu sesión?</p>
                                     <div className="space-y-3">
                                         <button
                                             onClick={() => respond('confirmado')}
                                             disabled={saving}
                                             className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-2xl text-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                         >
-                                            ✅ Sí, confirmo mi asistencia
+                                            ✅ Sí, confirmo mi sesión
                                         </button>
                                         <button
                                             onClick={() => respond('cancelado')}
                                             disabled={saving}
                                             className="w-full bg-white hover:bg-red-50 text-red-600 border-2 border-red-200 font-bold py-4 rounded-2xl text-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                         >
-                                            ❌ No podré asistir
+                                            ❌ No podré / necesito reagendar
                                         </button>
                                     </div>
                                 </>
                             ) : result === 'confirmado' ? (
                                 <div className="text-center py-6 animate-in fade-in zoom-in-95">
                                     <div className="text-5xl mb-4">🎉</div>
-                                    <h2 className="text-xl font-bold text-green-600 mb-2">¡Asistencia confirmada!</h2>
-                                    <p className="text-brand-500 text-sm">Te esperamos el <span className="capitalize font-medium">{dateLabel}</span> a las {appt.time} hrs. ¡Nos vemos pronto!</p>
+                                    <h2 className="text-xl font-bold text-green-600 mb-2">¡Sesión confirmada!</h2>
+                                    <p className="text-brand-500 text-sm">Tu sesión quedó confirmada para el <span className="capitalize font-medium">{dateLabel}</span> a las {appt.time} hrs. ¡Nos vemos!</p>
                                 </div>
                             ) : (
                                 <div className="text-center py-6 animate-in fade-in zoom-in-95">
                                     <div className="text-5xl mb-4">📅</div>
-                                    <h2 className="text-xl font-bold text-brand-700 mb-2">Registramos que no podrás asistir</h2>
-                                    <p className="text-brand-500 text-sm">Gracias por avisarnos con tiempo. Tu kinesióloga te contactará para reagendar.</p>
+                                    <h2 className="text-xl font-bold text-brand-700 mb-2">Registramos que no podrás realizarla</h2>
+                                    <p className="text-brand-500 text-sm">Gracias por avisar con tiempo. Tu kinesióloga te contactará para reagendar.</p>
                                 </div>
                             )}
 
