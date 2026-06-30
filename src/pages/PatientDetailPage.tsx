@@ -5,6 +5,7 @@ import { EvaluationService } from '../services/evaluationService';
 import { SessionService } from '../services/sessionService';
 import { SessionLogService } from '../services/sessionLogService';
 import { AppointmentService } from '../services/appointmentService';
+import { calendarService } from '../services/calendarService';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { Patient } from '../types/patient';
@@ -644,11 +645,8 @@ export default function PatientDetailPage() {
                                     {patient.phone && (
                                         <button
                                             onClick={() => {
-                                                const [y, m, d] = nextAppointment.date.split('-').map(Number);
-                                                const fecha = new Date(y, m - 1, d).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
-                                                const msg = `Hola ${patient.firstName}! Te recuerdo tu cita el ${fecha} a las ${nextAppointment.time}. Por favor confírmame si puedes asistir 🙏`;
-                                                const phone = patient.phone!.replace(/[^0-9]/g, '');
-                                                window.open(`https://wa.me/56${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                                const link = calendarService.buildWhatsAppLink(nextAppointment, patient.phone);
+                                                if (link) window.open(link, '_blank');
                                             }}
                                             className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors"
                                         >

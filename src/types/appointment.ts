@@ -11,6 +11,7 @@ export interface Appointment {
     status: 'pendiente' | 'confirmado' | 'cancelado' | 'completado';
     googleCalendarEventId?: string;
     reminderSent?: boolean;
+    confirmedAt?: any;
     kineId?: string;
     createdAt?: any;
 }

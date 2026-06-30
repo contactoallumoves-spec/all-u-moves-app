@@ -134,7 +134,10 @@ export const calendarService = {
             weekday: 'long', day: 'numeric', month: 'long'
         });
 
-        const message = `Hola ${appt.patientName} 👋, te recuerdo tu sesión de kinesiología el *${dateLabel}* a las *${appt.time}*. Por favor confirma tu asistencia respondiendo este mensaje. ¡Muchas gracias!`;
+        const confirmUrl = appt.id ? `${window.location.origin}/confirmar/${appt.id}` : '';
+        const message = confirmUrl
+            ? `Hola ${appt.patientName} 👋, te recuerdo tu sesión de kinesiología el *${dateLabel}* a las *${appt.time}*.\n\nConfirma tu asistencia con un toque aquí 👉 ${confirmUrl}\n\n¡Muchas gracias!`
+            : `Hola ${appt.patientName} 👋, te recuerdo tu sesión de kinesiología el *${dateLabel}* a las *${appt.time}*. Por favor confirma tu asistencia respondiendo este mensaje. ¡Muchas gracias!`;
 
         return `https://wa.me/${withCountry}?text=${encodeURIComponent(message)}`;
     }

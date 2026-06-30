@@ -50,5 +50,18 @@ service cloud.firestore {
       allow create: if true; // Leads públicos de charlas
       allow read, update, delete: if isTherapist();
     }
+
+    // Reglas para Turnos / Agenda
+    match /appointments/{appointmentId} {
+      allow read, write: if isTherapist();
+      // Confirmación pública del paciente: puede leer su cita y cambiar SOLO el estado
+      allow get: if true;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'confirmedAt']);
+    }
+
+    // Reglas para Evaluaciones Express v2 (IA por área clínica)
+    match /evaluaciones_express_v2/{evalId} {
+      allow read, write: if isTherapist();
+    }
   }
 }

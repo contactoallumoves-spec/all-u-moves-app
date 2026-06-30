@@ -30,6 +30,7 @@ import TalkLeadsPage from './pages/admin/TalkLeadsPage'; // [NEW] Admin View for
 import CuestionarioPrenatalPage from './pages/public/CuestionarioPrenatalPage'; // [NEW] Cuestionario Prenatal
 import AppointmentsPage from './pages/AppointmentsPage';
 import EvaluacionExpressV2Page from './pages/EvaluacionExpressV2Page';
+import ConfirmAppointmentPage from './pages/public/ConfirmAppointmentPage';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -206,6 +207,7 @@ function App() {
                     {/* [NEW] Public Survey Routes */}
                     <Route path="surveys/:patientId/:type" element={<PublicSurveyPage />} />
                 </Route>
+                <Route path="/confirmar/:appointmentId" element={<ConfirmAppointmentPage />} /> {/* Confirmación pública de cita */}
                 <Route path="/charlas/evaluacion" element={<TalkEvaluationPage />} /> {/* [NEW] Public Questionnaire */}
                 <Route path="/cuestionario-prenatal" element={<CuestionarioPrenatalPage />} /> {/* [NEW] Cuestionario Prenatal */}
 

@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
+import { NotificationCenter } from '../notifications/NotificationCenter';
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -18,6 +19,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                     {children}
                 </div>
             </main>
+            <NotificationCenter />
         </div>
     );
 }
