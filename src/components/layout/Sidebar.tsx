@@ -7,7 +7,8 @@ import {
     FileText,
     Settings,
     LogOut,
-    PlusCircle
+    PlusCircle,
+    CalendarDays
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
@@ -19,8 +20,9 @@ export function Sidebar() {
     const links = [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/users', label: 'Usuarias', icon: Users },
+        { href: '/turnos', label: 'Agenda / Turnos', icon: CalendarDays },
         { href: '/reports', label: 'Reportes', icon: FileText },
-        { href: '/evaluaciones-charlas', label: 'Leads Charlas', icon: Users }, // [NEW] Link to Talk Leads
+        { href: '/evaluaciones-charlas', label: 'Leads Charlas', icon: Users },
         { href: '/settings', label: 'Configuración', icon: Settings },
     ];
 

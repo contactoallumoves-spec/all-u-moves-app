@@ -29,6 +29,7 @@ import SessionPlayer from './pages/portal/SessionPlayer'; // [NEW]
 import TalkEvaluationPage from './pages/public/TalkEvaluationPage'; // [NEW] Public Questionnaire
 import TalkLeadsPage from './pages/admin/TalkLeadsPage'; // [NEW] Admin View for Leads
 import CuestionarioPrenatalPage from './pages/public/CuestionarioPrenatalPage'; // [NEW] Cuestionario Prenatal
+import AppointmentsPage from './pages/AppointmentsPage';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -194,7 +195,8 @@ function App() {
                 {/* Hub & Sessions */}
                 <Route path="/users/:id" element={user ? <MainLayout><PatientDetailPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/users/:patientId/sessions/new" element={user ? <MainLayout><EvolutionPage /></MainLayout> : <Navigate to="/login" />} />
-                <Route path="/evaluaciones-charlas" element={user ? <MainLayout><TalkLeadsPage /></MainLayout> : <Navigate to="/login" />} /> {/* [NEW] Admin View */}
+                <Route path="/turnos" element={user ? <MainLayout><AppointmentsPage /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/evaluaciones-charlas" element={user ? <MainLayout><TalkLeadsPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/settings" element={user ? <MainLayout><SettingsPage /></MainLayout> : <Navigate to="/login" />} />
 
                 {/* Public Routes */}

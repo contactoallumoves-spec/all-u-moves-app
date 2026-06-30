@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
-import { logicService } from '../services/logicService'; // [NEW]
+import { logicService } from '../services/logicService';
+import { geminiService } from '../services/geminiService';
 import { Patient } from '../types/patient';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, Save, Loader2, CheckCircle2, Sparkles, Brain } from 'lucide-react';
@@ -103,10 +104,82 @@ export default function CompleteEvaluation() {
         load();
     }, [patientId, editId]);
 
-    // Store the brain result to display suggestions (CIF etc)
     const [activeLogicResult, setActiveLogicResult] = useState<any>(null);
+    const [aiAnalysis, setAiAnalysis] = useState<string>('');
+    const [aiPlan, setAiPlan] = useState<any>(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState('');
 
-    // [NEW] Logic Brain & Shortcuts
+    const runAiAnalysis = async () => {
+        if (!patient) return;
+        setAiLoading(true);
+        setAiError('');
+        try {
+            const payload = {
+                patient: { firstName: patient.firstName, lastName: patient.lastName, stage: patient.stage },
+                anamnesis: {
+                    motive: evalData.anamnesis.motive,
+                    history: evalData.anamnesis.history,
+                    comorbidities: evalData.anamnesis.comorbidities
+                },
+                pelvic: evalData.pelvic,
+                msk: evalData.msk,
+                redFlags: evalData.redFlags,
+                symptoms: evalData.symptoms,
+                diagnosisCodes: evalData.diagnosisCodes,
+                functionalScales: evalData.functionalScales
+            };
+            const analysis = await geminiService.analyzeP2(payload);
+            setAiAnalysis(analysis);
+        } catch (e: any) {
+            setAiError(e.message || 'Error al llamar a la IA');
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const runAiPlan = async () => {
+        if (!patient) return;
+        setAiLoading(true);
+        setAiError('');
+        try {
+            const payload = {
+                patient: { firstName: patient.firstName, lastName: patient.lastName, stage: patient.stage },
+                anamnesis: {
+                    motive: evalData.anamnesis.motive,
+                    history: evalData.anamnesis.history,
+                    comorbidities: evalData.anamnesis.comorbidities
+                },
+                pelvic: evalData.pelvic,
+                msk: evalData.msk,
+                redFlags: evalData.redFlags,
+                symptoms: evalData.symptoms,
+                diagnosisCodes: evalData.diagnosisCodes,
+                functionalScales: evalData.functionalScales
+            };
+            const plan = await geminiService.generatePlanP3P4(payload, aiAnalysis);
+            setAiPlan(plan);
+            if (plan.diagnostico_narrativo) {
+                setEvalData(prev => ({
+                    ...prev,
+                    plan: { ...prev.plan, diagnosis: plan.diagnostico_narrativo }
+                }));
+            }
+            if (plan.objetivos_smart?.length) {
+                const goals = plan.objetivos_smart.map((o: any) => o.texto);
+                setEvalData(prev => ({
+                    ...prev,
+                    smartGoals: goals,
+                    plan: { ...prev.plan, goals: goals.join('\n\n') }
+                }));
+            }
+        } catch (e: any) {
+            setAiError(e.message || 'Error al generar el plan con IA');
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
     const generateSmartGoals = () => {
         // Infer status first
         const inferredSymptoms = logicService.evaluateMetrics({ pelvic: evalData.pelvic, msk: evalData.msk, questionnaire: evalData.questionnaire });
@@ -443,12 +516,44 @@ export default function CompleteEvaluation() {
                                 </div>
                             </div>
 
-                            {/* SMART Goals Generator */}
+                            {/* Análisis Clínico IA v2 */}
+                            <div className="space-y-3 pt-4 border-t border-dashed">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <h3 className="font-bold text-sm text-brand-600 flex items-center gap-1">
+                                        <Brain className="w-4 h-4" /> Análisis Clínico IA v2
+                                    </h3>
+                                    <Button
+                                        onClick={runAiAnalysis}
+                                        size="sm"
+                                        disabled={aiLoading}
+                                        className="bg-gradient-to-r from-purple-600 to-brand-600 text-white"
+                                    >
+                                        {aiLoading
+                                            ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analizando...</>
+                                            : <><Brain className="w-4 h-4 mr-2" /> Analizar con Gemini</>
+                                        }
+                                    </Button>
+                                </div>
+                                {aiError && (
+                                    <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{aiError}</p>
+                                )}
+                                {aiAnalysis ? (
+                                    <div className="bg-brand-50/50 border border-brand-100 rounded-xl p-4 max-h-[600px] overflow-y-auto">
+                                        <pre className="text-sm text-brand-800 whitespace-pre-wrap font-sans leading-relaxed">{aiAnalysis}</pre>
+                                    </div>
+                                ) : !aiLoading && (
+                                    <p className="text-sm text-gray-400 italic">
+                                        Completa la anamnesis y los hallazgos, luego haz clic en "Analizar con Gemini" para obtener un razonamiento clínico de 12 puntos.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* SMART Goals */}
                             <div className="space-y-3 pt-4 border-t border-dashed">
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-bold text-sm text-brand-600">Objetivos SMART</h3>
-                                    <Button onClick={generateSmartGoals} size="sm" className="bg-gradient-to-r from-purple-600 to-brand-600 text-white">
-                                        <Brain className="w-4 h-4 mr-2" /> Generar con IA
+                                    <Button onClick={generateSmartGoals} size="sm" variant="outline" className="text-xs">
+                                        <Brain className="w-3 h-3 mr-1" /> Generar (lógica local)
                                     </Button>
                                 </div>
                                 {evalData.smartGoals.length > 0 ? (
@@ -470,18 +575,77 @@ export default function CompleteEvaluation() {
 
                 {activeTab === 'plan' && (
                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                        {/* Logic Engine Trigger */}
-                        <div className="bg-purple-50 border border-purple-100 rounded-xl p-6 text-center">
-                            <div className="flex flex-col items-center gap-2">
-                                <Sparkles className="w-8 h-8 text-purple-600" />
-                                <h3 className="font-bold text-purple-900">Asistente Inteligente</h3>
-                                <p className="text-sm text-purple-700 max-w-md">
-                                    Analiza los síntomas marcados y tus hallazgos para sugerir un plan basado en los protocolos.
-                                </p>
-                                <Button onClick={generateSuggestions} className="mt-2 bg-purple-600 hover:bg-purple-700 text-white">
-                                    Generar Sugerencias Automáticas
-                                </Button>
+                        {/* IA v2 — Plan Maestro */}
+                        <div className="bg-gradient-to-br from-purple-50 to-brand-50 border border-purple-100 rounded-xl p-6">
+                            <div className="flex items-start justify-between flex-wrap gap-4">
+                                <div className="flex items-center gap-3">
+                                    <Sparkles className="w-8 h-8 text-purple-600 shrink-0" />
+                                    <div>
+                                        <h3 className="font-bold text-purple-900">Plan Maestro IA v2</h3>
+                                        <p className="text-sm text-purple-700">
+                                            Genera diagnóstico narrativo CIF, objetivos SMART y fases de rehabilitación con Gemini.
+                                            {!aiAnalysis && ' (Recomendado: primero analiza en el tab Diagnóstico)'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button onClick={generateSuggestions} variant="outline" size="sm" className="text-purple-700 border-purple-300">
+                                        Lógica local
+                                    </Button>
+                                    <Button
+                                        onClick={runAiPlan}
+                                        disabled={aiLoading}
+                                        className="bg-gradient-to-r from-purple-600 to-brand-600 text-white"
+                                    >
+                                        {aiLoading
+                                            ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generando...</>
+                                            : <><Sparkles className="w-4 h-4 mr-2" /> Generar Plan con IA</>
+                                        }
+                                    </Button>
+                                </div>
                             </div>
+
+                            {aiError && (
+                                <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg mt-3">{aiError}</p>
+                            )}
+
+                            {/* Fases de rehab generadas por IA */}
+                            {aiPlan?.fases_rehabilitacion && (
+                                <div className="mt-4 space-y-3">
+                                    <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Fases de Rehabilitación</p>
+                                    {aiPlan.fases_rehabilitacion.map((fase: any) => (
+                                        <div key={fase.fase} className="bg-white rounded-xl p-4 border border-purple-100">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">Fase {fase.fase}</span>
+                                                <span className="font-bold text-brand-900 text-sm">{fase.nombre}</span>
+                                                <span className="text-xs text-brand-400">{fase.duracion_estimada}</span>
+                                            </div>
+                                            <ul className="text-sm text-brand-700 space-y-1">
+                                                {fase.intervenciones?.map((inv: string, i: number) => (
+                                                    <li key={i} className="flex gap-2">
+                                                        <span className="text-purple-400">•</span> {inv}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            {fase.tips_dosificacion && (
+                                                <p className="text-xs text-brand-500 mt-2 italic">{fase.tips_dosificacion}</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Pronóstico */}
+                            {aiPlan?.pronostico && (
+                                <div className="mt-3 bg-white rounded-xl p-4 border border-purple-100">
+                                    <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2">Pronóstico</p>
+                                    <div className="grid md:grid-cols-3 gap-3 text-sm">
+                                        <div><span className="font-medium text-brand-600">Corto plazo: </span>{aiPlan.pronostico.corto_plazo}</div>
+                                        <div><span className="font-medium text-brand-600">Mediano plazo: </span>{aiPlan.pronostico.mediano_plazo}</div>
+                                        <div><span className="font-medium text-brand-600">Largo plazo: </span>{aiPlan.pronostico.largo_plazo}</div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-100 space-y-4">
