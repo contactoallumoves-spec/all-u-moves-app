@@ -30,6 +30,7 @@ import TalkEvaluationPage from './pages/public/TalkEvaluationPage'; // [NEW] Pub
 import TalkLeadsPage from './pages/admin/TalkLeadsPage'; // [NEW] Admin View for Leads
 import CuestionarioPrenatalPage from './pages/public/CuestionarioPrenatalPage'; // [NEW] Cuestionario Prenatal
 import AppointmentsPage from './pages/AppointmentsPage';
+import EvaluacionExpressV2Page from './pages/EvaluacionExpressV2Page';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -196,6 +197,7 @@ function App() {
                 <Route path="/users/:id" element={user ? <MainLayout><PatientDetailPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/users/:patientId/sessions/new" element={user ? <MainLayout><EvolutionPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/turnos" element={user ? <MainLayout><AppointmentsPage /></MainLayout> : <Navigate to="/login" />} />
+                <Route path="/evaluacion-express-v2" element={user ? <MainLayout><EvaluacionExpressV2Page /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/evaluaciones-charlas" element={user ? <MainLayout><TalkLeadsPage /></MainLayout> : <Navigate to="/login" />} />
                 <Route path="/settings" element={user ? <MainLayout><SettingsPage /></MainLayout> : <Navigate to="/login" />} />
 

@@ -1,5 +1,6 @@
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 const SYSTEM_P2 = `Actúa como supervisor clínico experto en kinesiología musculoesquelética, deportiva y actividad física moderna basada en evidencia. Tu tarea es analizar el razonamiento clínico del usuario en tres secciones: Anamnesis próxima, remota y evaluación física.
 
