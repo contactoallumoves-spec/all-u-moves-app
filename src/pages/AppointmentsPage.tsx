@@ -275,7 +275,7 @@ export default function AppointmentsPage() {
     const [showForm, setShowForm] = useState(!!prefilledPatientId);
     const [form, setForm] = useState({ ...EMPTY_FORM, patientId: prefilledPatientId });
     const [saving, setSaving] = useState(false);
-    const [calendarConnected, setCalendarConnected] = useState(false);
+    const [calendarConnected, setCalendarConnected] = useState(() => calendarService.isConnected());
     const [calendarLoading, setCalendarLoading] = useState(false);
     const [error, setError] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'week'>('week');

@@ -4,7 +4,14 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
 
-let accessToken: string | null = null;
+const TOKEN_KEY = 'gcal_access_token';
+const TOKEN_EXPIRY_KEY = 'gcal_token_expiry';
+
+let accessToken: string | null = (() => {
+    const expiry = Number(localStorage.getItem(TOKEN_EXPIRY_KEY) || 0);
+    if (Date.now() < expiry) return localStorage.getItem(TOKEN_KEY);
+    return null;
+})();
 
 declare global {
     interface Window {
@@ -45,6 +52,9 @@ export const calendarService = {
                 callback: (response: any) => {
                     if (response.error) { reject(new Error(response.error)); return; }
                     accessToken = response.access_token;
+                    const expiresIn = (response.expires_in || 3600) * 1000;
+                    localStorage.setItem(TOKEN_KEY, accessToken!);
+                    localStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + expiresIn - 60000));
                     resolve();
                 }
             });
@@ -54,6 +64,8 @@ export const calendarService = {
 
     disconnect() {
         accessToken = null;
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_EXPIRY_KEY);
     },
 
     async fetchEvents(daysAhead = 30): Promise<any[]> {
