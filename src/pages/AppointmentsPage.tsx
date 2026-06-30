@@ -27,6 +27,7 @@ const EMPTY_FORM: Omit<Appointment, 'id' | 'patientName' | 'patientPhone'> = {
     time: '09:00',
     durationMinutes: 60,
     type: 'sesion',
+    place: 'local',
     notes: '',
     status: 'pendiente'
 };
@@ -295,6 +296,18 @@ export default function AppointmentsPage() {
                                     <option value="confirmado">Confirmado</option>
                                 </select>
                             </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-brand-600">Lugar de atención <span className="text-brand-300">(solo interno)</span></label>
+                                <select
+                                    className="w-full px-3 py-2 border border-brand-200 rounded-xl text-sm"
+                                    value={form.place}
+                                    onChange={e => setForm({ ...form, place: e.target.value as Appointment['place'] })}
+                                >
+                                    <option value="local">🏥 En consulta / local</option>
+                                    <option value="domicilio">🏠 A domicilio</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div className="space-y-1">
@@ -369,6 +382,11 @@ export default function AppointmentsPage() {
                                                             <span className="text-xs text-brand-400">
                                                                 {APPOINTMENT_TYPES[appt.type]} · {appt.durationMinutes}min
                                                             </span>
+                                                            {appt.place && (
+                                                                <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', appt.place === 'domicilio' ? 'bg-orange-100 text-orange-700' : 'bg-brand-100 text-brand-700')}>
+                                                                    {appt.place === 'domicilio' ? '🏠 Domicilio' : '🏥 Local'}
+                                                                </span>
+                                                            )}
                                                             {appt.googleCalendarEventId && (
                                                                 <span className="text-xs text-green-600 flex items-center gap-1">
                                                                     <Calendar className="w-3 h-3" /> En Google Calendar

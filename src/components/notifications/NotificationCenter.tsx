@@ -51,7 +51,18 @@ export function NotificationCenter() {
     const [acked, setAcked] = useState<Record<string, number>>(getAcked);
     const [open, setOpen] = useState(false);
     const [toastDismissedSig, setToastDismissedSig] = useState('');
+    const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
+        typeof Notification !== 'undefined' ? Notification.permission : 'denied'
+    );
     const panelRef = useRef<HTMLDivElement>(null);
+    const notifiedRespRef = useRef<Set<string>>(new Set());
+    const notifiedRemRef = useRef<Set<string>>(new Set());
+
+    const requestBrowserNotifications = async () => {
+        if (typeof Notification === 'undefined') return;
+        const p = await Notification.requestPermission();
+        setNotifPermission(p);
+    };
 
     const load = useCallback(async () => {
         try {
@@ -96,6 +107,30 @@ export function NotificationCenter() {
     const newResponses = recentResponses.filter(a => acked[a.id!] !== confirmedAtMillis(a));
 
     const badgeCount = pending.length + newResponses.length;
+
+    // Avisos del navegador (sistema operativo) — funciona con la app/pestaña abierta
+    useEffect(() => {
+        if (notifPermission !== 'granted' || typeof Notification === 'undefined') return;
+        newResponses.forEach(a => {
+            const key = `${a.id}:${confirmedAtMillis(a)}`;
+            if (!notifiedRespRef.current.has(key)) {
+                notifiedRespRef.current.add(key);
+                new Notification('All U Moves', {
+                    body: `${a.patientName} ${a.status === 'confirmado' ? 'confirmó' : 'canceló'} su sesión`,
+                    icon: '/allumoves-logo.png',
+                });
+            }
+        });
+        pending.forEach(a => {
+            if (a.id && !notifiedRemRef.current.has(a.id)) {
+                notifiedRemRef.current.add(a.id);
+                new Notification('Recordatorio por enviar', {
+                    body: `${a.patientName} · sesión ${formatWhen(a)}`,
+                    icon: '/allumoves-logo.png',
+                });
+            }
+        });
+    }, [appointments, notifPermission, acked, windowHours]); // eslint-disable-line
 
     // Marcar respuestas como vistas al abrir el panel
     const ackResponses = useCallback(() => {
@@ -164,6 +199,23 @@ export function NotificationCenter() {
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
+
+                        {/* Activar avisos del navegador */}
+                        {notifPermission === 'default' && (
+                            <button
+                                onClick={requestBrowserNotifications}
+                                className="w-full px-4 py-2.5 bg-brand-600/5 hover:bg-brand-600/10 border-b border-brand-100 text-left flex items-center gap-2 transition-colors"
+                            >
+                                <Bell className="w-4 h-4 text-brand-500 shrink-0" />
+                                <span className="text-xs text-brand-700 font-medium">Activar avisos del navegador para que te avisen aunque estés en otra pestaña</span>
+                            </button>
+                        )}
+                        {notifPermission === 'granted' && (
+                            <div className="px-4 py-2 border-b border-brand-50 flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                                <span className="text-[11px] text-brand-400">Avisos del navegador activados</span>
+                            </div>
+                        )}
 
                         <div className="max-h-[65vh] overflow-y-auto">
                             {/* Respuestas recibidas */}

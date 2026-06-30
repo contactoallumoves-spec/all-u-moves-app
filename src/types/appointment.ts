@@ -7,6 +7,7 @@ export interface Appointment {
     time: string; // HH:MM
     durationMinutes: number;
     type: 'evaluacion' | 'sesion' | 'reevaluacion' | 'otro';
+    place?: 'local' | 'domicilio'; // Interno: NO se envía a la paciente
     notes?: string;
     status: 'pendiente' | 'confirmado' | 'cancelado' | 'completado';
     googleCalendarEventId?: string;

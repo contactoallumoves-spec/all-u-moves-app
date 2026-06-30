@@ -75,9 +75,11 @@ export const calendarService = {
         const start = new Date(year, month - 1, day, hours, minutes);
         const end = new Date(start.getTime() + appt.durationMinutes * 60000);
 
+        const placeLabel = appt.place === 'domicilio' ? 'A domicilio' : appt.place === 'local' ? 'En consulta / local' : '';
         const event = {
-            summary: `Kine: ${appt.patientName}`,
-            description: `Tipo: ${appt.type}\n${appt.notes || ''}`,
+            summary: `Kine: ${appt.patientName}${appt.place === 'domicilio' ? ' (Domicilio)' : ''}`,
+            description: `Tipo: ${appt.type}${placeLabel ? `\nLugar: ${placeLabel}` : ''}\n${appt.notes || ''}`,
+            location: placeLabel,
             start: { dateTime: start.toISOString(), timeZone: 'America/Santiago' },
             end: { dateTime: end.toISOString(), timeZone: 'America/Santiago' },
             reminders: {
