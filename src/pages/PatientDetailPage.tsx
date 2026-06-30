@@ -4,7 +4,11 @@ import { PatientService } from '../services/patientService';
 import { EvaluationService } from '../services/evaluationService';
 import { SessionService } from '../services/sessionService';
 import { SessionLogService } from '../services/sessionLogService';
+import { AppointmentService } from '../services/appointmentService';
+import { db } from '../lib/firebase';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { Patient } from '../types/patient';
+import { Appointment } from '../types/appointment';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import {
@@ -128,6 +132,8 @@ export default function PatientDetailPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'clinical' | 'anamnesis' | 'planning'>('clinical'); // [NEW]
 
+    const [nextAppointment, setNextAppointment] = useState<Appointment | null>(null);
+
     // Modal States
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -156,12 +162,30 @@ export default function PatientDetailPage() {
                 ]);
             }
 
-            // Fetch Evaluations, Clinical Sessions, and Patient Home Sessions
-            const [evals, sessions, sessionLogs] = await Promise.all([
+            // Fetch Evaluations, Clinical Sessions, Patient Home Sessions, v2 Evals and Appointments
+            const [evals, sessions, sessionLogs, appointments, v2Snap] = await Promise.all([
                 EvaluationService.getByPatientId(patientId),
                 SessionService.getByPatientId(patientId),
-                SessionLogService.getByPatientId(patientId) // [NEW] Fetch patient logs
+                SessionLogService.getByPatientId(patientId),
+                AppointmentService.getByPatient(patientId),
+                getDocs(query(
+                    collection(db, 'evaluaciones_express_v2'),
+                    where('patientId', '==', patientId),
+                    orderBy('createdAt', 'desc')
+                )).catch(() => ({ docs: [] } as any))
             ]);
+
+            // Next upcoming appointment
+            const now = new Date();
+            const upcoming = appointments.filter(a => {
+                const d = (a as any).dateTimestamp?.toDate?.() || new Date(`${a.date}T${a.time}`);
+                return d >= now && a.status !== 'cancelado';
+            }).sort((a, b) => {
+                const da = (a as any).dateTimestamp?.toDate?.() || new Date(`${a.date}T${a.time}`);
+                const db_ = (b as any).dateTimestamp?.toDate?.() || new Date(`${b.date}T${b.time}`);
+                return da.getTime() - db_.getTime();
+            });
+            setNextAppointment(upcoming[0] || null);
 
             // Normalize and Merge
             const normalizedEvals = evals.map(e => ({
@@ -201,7 +225,25 @@ export default function PatientDetailPage() {
                 timestamp: log.date instanceof Date ? log.date.getTime() : (log.date as any)?.toDate ? (log.date as any).toDate().getTime() : 0
             }));
 
-            const combinedHistory = [...normalizedEvals, ...normalizedSessions, ...normalizedLogs].sort((a, b) => b.timestamp - a.timestamp);
+            const AREA_LABELS: Record<string, string> = { pisoPelvico: 'Piso Pélvico', msk: 'Kine MSK', deportiva: 'Kine Deportiva' };
+            const normalizedV2 = v2Snap.docs.map((d: any) => {
+                const data = d.data();
+                const areaLabel = AREA_LABELS[data.area] || 'Evaluación';
+                const summary = data.p4?.diagnosticoNarrativo || data.razonamientoIA?.slice(0, 200) || data.patientContext || 'Sin resumen';
+                const ts = data.createdAt ? new Date(data.createdAt).getTime() : 0;
+                return {
+                    id: d.id,
+                    type: 'eval_v2',
+                    date: data.createdAt ? new Date(data.createdAt) : new Date(),
+                    title: `Evaluación Inicial — ${areaLabel}`,
+                    summary,
+                    findings: data.p4?.objetivosSmart?.slice(0, 3).map((o: any) => o.texto).filter(Boolean) || [],
+                    raw: data,
+                    timestamp: ts,
+                };
+            });
+
+            const combinedHistory = [...normalizedEvals, ...normalizedSessions, ...normalizedLogs, ...normalizedV2].sort((a, b) => b.timestamp - a.timestamp);
             setHistory(combinedHistory);
 
         } catch (error) {
@@ -538,7 +580,7 @@ export default function PatientDetailPage() {
                                         {/* Dot */}
                                         <div className={cn(
                                             "absolute -left-[41px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm transition-transform group-hover:scale-110",
-                                            item.type.includes('eval') ? "bg-purple-500" : (item.type === 'patient_session' ? "bg-green-500" : "bg-brand-500")
+                                            item.type === 'eval_v2' ? "bg-brand-600" : item.type.includes('eval') ? "bg-purple-500" : (item.type === 'patient_session' ? "bg-green-500" : "bg-brand-500")
                                         )} />
 
                                         <div className="bg-white p-4 rounded-xl border border-brand-100 shadow-sm hover:shadow-md transition-all group-hover:border-brand-300">
@@ -557,8 +599,8 @@ export default function PatientDetailPage() {
                                                         {item.raw?.location && <span className="text-brand-300 ml-2">• {item.raw.location}</span>}
                                                     </p>
                                                 </div>
-                                                <span className="text-xs font-mono text-brand-300 bg-brand-50 px-2 py-1 rounded">
-                                                    {item.type === 'session' ? 'SESIÓN' : 'EVAL'}
+                                                <span className={`text-xs font-mono px-2 py-1 rounded ${item.type === 'eval_v2' ? 'text-brand-700 bg-brand-100' : 'text-brand-300 bg-brand-50'}`}>
+                                                    {item.type === 'session' ? 'SESIÓN' : item.type === 'eval_v2' ? 'EVAL IA' : 'EVAL'}
                                                 </span>
                                             </div>
                                             <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.summary}</p>
@@ -581,6 +623,55 @@ export default function PatientDetailPage() {
 
                     {/* Right Column: Active Plan & Stats */}
                     <div className="space-y-6">
+
+                        {/* Próxima Cita */}
+                        {nextAppointment ? (
+                            <Card className="border-brand-200 bg-brand-50/60">
+                                <CardContent className="pt-4 pb-4 space-y-3">
+                                    <h4 className="text-xs font-bold text-brand-600 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Calendar className="w-3.5 h-3.5" /> Próxima Cita
+                                    </h4>
+                                    <div>
+                                        <p className="font-bold text-brand-900 text-base">
+                                            {(() => {
+                                                const [y, m, d] = nextAppointment.date.split('-').map(Number);
+                                                return new Date(y, m - 1, d).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+                                            })()} — {nextAppointment.time}
+                                        </p>
+                                        <p className="text-xs text-brand-500 capitalize mt-0.5">{nextAppointment.type} · {nextAppointment.durationMinutes} min</p>
+                                        {nextAppointment.notes && <p className="text-xs text-brand-400 mt-1 italic">{nextAppointment.notes}</p>}
+                                    </div>
+                                    {patient.phone && (
+                                        <button
+                                            onClick={() => {
+                                                const [y, m, d] = nextAppointment.date.split('-').map(Number);
+                                                const fecha = new Date(y, m - 1, d).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+                                                const msg = `Hola ${patient.firstName}! Te recuerdo tu cita el ${fecha} a las ${nextAppointment.time}. Por favor confírmame si puedes asistir 🙏`;
+                                                const phone = patient.phone!.replace(/[^0-9]/g, '');
+                                                window.open(`https://wa.me/56${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                            }}
+                                            className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors"
+                                        >
+                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.025.507 3.934 1.395 5.61L0 24l6.545-1.366A11.942 11.942 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.368l-.36-.214-3.733.979.995-3.638-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
+                                            Confirmar por WhatsApp
+                                        </button>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <Card className="border-dashed border-brand-200">
+                                <CardContent className="pt-4 pb-4 text-center">
+                                    <h4 className="text-xs font-bold text-brand-400 uppercase tracking-wider flex items-center justify-center gap-1.5 mb-2">
+                                        <Calendar className="w-3.5 h-3.5" /> Próxima Cita
+                                    </h4>
+                                    <p className="text-xs text-brand-300 italic mb-2">Sin cita agendada</p>
+                                    <button onClick={() => navigate('/turnos')} className="text-xs text-brand-500 hover:text-brand-700 font-bold underline">
+                                        Agendar en Turnos →
+                                    </button>
+                                </CardContent>
+                            </Card>
+                        )}
+
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-sm uppercase tracking-wider text-brand-500">Plan Actual</CardTitle>
