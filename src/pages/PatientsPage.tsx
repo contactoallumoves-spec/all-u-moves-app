@@ -209,11 +209,16 @@ export default function PatientsPage() {
                                             <FileText size={18} />
                                         </button>
                                         <button onClick={async () => {
-                                            if (confirm(`¿Eliminar a ${patient.firstName}? Esta acción es irreversible.`)) {
-                                                await PatientService.deletePatient(patient.id!);
-                                                loadPatients();
-                                            }
-                                        }} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Eliminar">
+                                             if (confirm(`¿Eliminar a ${patient.firstName}? Esta acción es irreversible.`)) {
+                                                 try {
+                                                     await PatientService.deletePatient(patient.id!);
+                                                     await loadPatients();
+                                                 } catch (err: any) {
+                                                     console.error("Error deleting patient:", err);
+                                                     alert(`Error al eliminar: ${err.message || err}`);
+                                                 }
+                                             }
+                                         }} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Eliminar">
                                             <Trash2 size={18} />
                                         </button>
                                         <Button variant="outline" size="sm" onClick={() => navigate(`/eval/new/${patient.id}`)} className="hidden md:flex">

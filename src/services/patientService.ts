@@ -23,7 +23,7 @@ export const PatientService = {
             const querySnapshot = await getDocs(query(collection(db, COLLECTION_NAME), where('__name__', '==', id)));
             if (querySnapshot.empty) return null;
             const doc = querySnapshot.docs[0];
-            return { id: doc.id, ...doc.data() } as Patient;
+            return { ...doc.data(), id: doc.id } as Patient;
         } catch (error) {
             console.error("Error getting patient by id: ", error);
             return null;
@@ -35,8 +35,8 @@ export const PatientService = {
             const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
             const querySnapshot = await getDocs(q);
             return querySnapshot.docs.map((doc: DocumentData) => ({
-                id: doc.id,
-                ...doc.data()
+                ...doc.data(),
+                id: doc.id
             })) as Patient[];
         } catch (error) {
             console.error("Error getting patients: ", error);
@@ -49,8 +49,8 @@ export const PatientService = {
             const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'), limit(limitCount));
             const querySnapshot = await getDocs(q);
             return querySnapshot.docs.map((doc: DocumentData) => ({
-                id: doc.id,
-                ...doc.data()
+                ...doc.data(),
+                id: doc.id
             })) as Patient[];
         } catch (error) {
             console.error("Error getting recent patients: ", error);
@@ -84,7 +84,7 @@ export const PatientService = {
             const querySnapshot = await getDocs(q);
             if (querySnapshot.empty) return null;
             const doc = querySnapshot.docs[0];
-            return { id: doc.id, ...doc.data() } as Patient;
+            return { ...doc.data(), id: doc.id } as Patient;
         } catch (error) {
             console.error("Error finding patient by RUT: ", error);
             return null;
@@ -189,7 +189,7 @@ export const PatientService = {
             const snapshot = await getDocs(q);
             if (snapshot.empty) return null;
             const doc = snapshot.docs[0];
-            return { id: doc.id, ...doc.data() } as Patient;
+            return { ...doc.data(), id: doc.id } as Patient;
         } catch (error) {
             console.error("Error validating token", error);
             return null;
